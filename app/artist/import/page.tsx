@@ -71,7 +71,7 @@ export default function ImportPage() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  });
+  }, []);
 
   const [selectedContentType, setSelectedContentType] =
     useState("Sample One-Shot");
@@ -154,6 +154,7 @@ export default function ImportPage() {
         setSelectedMoods([]);
         setSelectedProcessing([]);
         setSelectedSoundDesign([]);
+        setSelectedFile(null);
       })
       .catch((error) => {
         console.error("Error importing content:", error);
