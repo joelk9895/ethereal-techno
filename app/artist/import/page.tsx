@@ -76,6 +76,7 @@ export default function ImportPage() {
   const [selectedContentType, setSelectedContentType] =
     useState("Sample One-Shot");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
   const [contentName, setContentName] = useState("");
   const [bpm, setBpm] = useState("122");
   const [selectedKey, setSelectedKey] = useState("");
@@ -123,6 +124,7 @@ export default function ImportPage() {
     setSelectedFile(file);
   }
   function importContent() {
+    setLoading(true);
     const formData = new FormData();
     formData.append("file", selectedFile!);
     formData.append("contentType", selectedContentType);
@@ -142,9 +144,22 @@ export default function ImportPage() {
       .then((res) => res.json())
       .then((data) => {
         console.log("Content imported successfully:", data);
+        setContentName("");
+        setSelectedFile(null);
+        setBpm("122");
+        setSelectedKey("");
+        setSelectedSoundGroup("Melodic & Harmonic Element");
+        setSelectedSubGroup("");
+        setSelectedStyles([]);
+        setSelectedMoods([]);
+        setSelectedProcessing([]);
+        setSelectedSoundDesign([]);
       })
       .catch((error) => {
         console.error("Error importing content:", error);
+      })
+      .finally(() => {
+        setLoading(false);
       });
   }
 
@@ -461,12 +476,12 @@ export default function ImportPage() {
             <div className="pt-8">
               <button
                 onClick={importContent}
-                className="w-full bg-primary hover:bg-primary/90 text-black font-medium py-4 text-lg tracking-wide transition-colors duration-200"
+                disabled={!selectedFile || loading}
+                className="disabled:opacity-50 disabled:cursor-not-allowed w-full bg-primary hover:bg-primary/90 text-black font-medium py-4 text-lg tracking-wide transition-colors duration-200"
               >
-                Import Content
+                {loading ? "Importing..." : "Import Content"}
               </button>
             </div>
-
             <div className="flex flex-col gap-6 fixed right-0 top-0 h-screen w-[30vw] bg-gray-600/10 backdrop-blur-lg border-l border-white/10 p-6 overflow-y-auto">
               <h2 className="text-xl font-main font-medium text-white">
                 Imported Content
