@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/app/lib/database";
 
 export async function POST(request: Request) {
-  const { email, name, password, type } = await request.json();
+  const { email, name, password, type, username } = await request.json();
 
   const user = await prisma.user.create({
     data: {
@@ -10,6 +10,7 @@ export async function POST(request: Request) {
       name,
       password,
       type,
+      username,
     },
   });
 
