@@ -1,0 +1,56 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Content {
+  id          String   @id @default(uuid()) @map("_id")
+  contentType String
+  contentName String
+  bpm         String
+  key         String
+  soundGroup  String
+  file        File     @relation(fields: [fileId], references: [id])
+  subGroup    String?
+  styles      String[]
+  moods       String[]
+  processing  String[]
+  soundDesign String[]
+  createdAt   DateTime @default(now())
+  fileId      String   @unique
+}
+
+model File {
+  id        String   @id @default(uuid()) @map("_id")
+  fileName  String
+  fileUrl   String
+  awsKey    String
+  createdAt DateTime @default(now())
+  Content   Content?
+}
+
+model User {
+  id        String   @id @default(uuid()) @map("_id")
+  username  String   @unique
+  email     String   @unique
+  name      String?
+  password  String
+  createdAt DateTime @default(now())
+  type      UserType @default(USER)
+}
+
+enum UserType {
+  ADMIN
+  ARTIST
+  USER
+}
