@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import AudioDropZone from "@/components/general/audioImport";
+import ConstructionKitUpload from "@/components/general/constructionKit";
 
 export default function ImportPage() {
   interface ImportedContentItem {
@@ -196,7 +197,23 @@ export default function ImportPage() {
               </div>
             </div>
 
-            {<AudioDropZone onFileSelected={handleFileSelected} />}
+            {selectedContentType !== "Construction Kit" ? (
+              <AudioDropZone onFileSelected={handleFileSelected} />
+            ) : (
+              <ConstructionKitUpload
+                trigger={
+                  <button className="bg-white/10 hover:bg-primary/80 text-white px-4 py-2 rounded transition-all">
+                    Upload Construction Kit
+                  </button>
+                }
+                onComplete={() => {
+                  // Refresh content or show a message as needed
+                  // For example, you could re-fetch content here
+                  // fetchContent();
+                  console.log("Construction kit upload complete");
+                }}
+              />
+            )}
             {selectedContentType === "MIDI" ||
             selectedContentType === "Sample Loop+MIDI" ? (
               <div className="grid w-full max-w-sm items-center gap-3">
