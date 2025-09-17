@@ -8,7 +8,6 @@ import {
   X,
   Check,
   ChevronDown,
-  Plus,
   Save,
 } from "lucide-react";
 import {
@@ -38,7 +37,6 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 
-// Define the kit types
 const KIT_TYPES = [
   "Full Loop",
   "Sample One-Shot",
@@ -64,7 +62,7 @@ interface AudioFile {
   duration: string;
   currentTime: string;
   audioRef: HTMLAudioElement | null;
-  fileType: string; // The actual type of file (Sample Loop, MIDI, etc.)
+  fileType: string;
   soundGroup?: string;
   subGroup?: string;
 }
@@ -73,7 +71,7 @@ export interface ConstructionKitResult {
   name: string;
   bpm: string;
   key: string;
-  kitType: string; // The selected kit type
+  kitType: string;
   files: {
     file: File;
     fileType: string;
@@ -132,7 +130,6 @@ export default function ConstructionKitModal({
     }
   };
 
-  // Helper to determine file type based on file
   const determineFileType = (file: File) => {
     const fileName = file.name.toLowerCase();
 
@@ -441,7 +438,10 @@ export default function ConstructionKitModal({
     }
   };
 
-  const getSubGroupOptions = (fileType: string, soundGroup: string): string[] => {
+  const getSubGroupOptions = (
+    fileType: string,
+    soundGroup: string
+  ): string[] => {
     if (!soundGroup) return [];
 
     let result: unknown = [];
@@ -465,7 +465,6 @@ export default function ConstructionKitModal({
     return Array.isArray(result) ? result : [];
   };
 
-  // Check if the current kit has all required file types
   const hasAllRequiredFileTypes = () => {
     const allowedTypes = getAllowedFileTypes();
     const currentTypes = new Set(audioFiles.map((file) => file.fileType));
@@ -473,7 +472,6 @@ export default function ConstructionKitModal({
     return allowedTypes.every((type) => currentTypes.has(type));
   };
 
-  // Get missing file types
   const getMissingFileTypes = () => {
     const allowedTypes = getAllowedFileTypes();
     const currentTypes = new Set(audioFiles.map((file) => file.fileType));
@@ -482,7 +480,6 @@ export default function ConstructionKitModal({
   };
 
   const handleCreateKit = () => {
-    // Create a Construction Kit object with all metadata and files
     const result: ConstructionKitResult = {
       name: kitName,
       bpm: kitBpm,
@@ -502,7 +499,6 @@ export default function ConstructionKitModal({
   };
 
   const resetForm = () => {
-    // Clean up and reset state
     audioFiles.forEach((audioFile) => {
       if (audioFile.audioRef) {
         audioFile.audioRef.pause();
@@ -611,7 +607,6 @@ export default function ConstructionKitModal({
             </div>
           </div>
 
-          {/* Kit Metadata */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 py-2">
             <div>
               <Label htmlFor="name" className="text-white/70">
@@ -651,7 +646,6 @@ export default function ConstructionKitModal({
             </div>
           </div>
 
-          {/* File Uploader */}
           <div
             className={`border-2 border-dashed rounded-xl p-6 text-center transition-all duration-300 cursor-pointer mt-2 ${
               isDragging
@@ -682,7 +676,6 @@ export default function ConstructionKitModal({
             </div>
           </div>
 
-          {/* File List */}
           {audioFiles.length > 0 && (
             <div className="space-y-4 mt-4">
               <h3 className="text-md font-medium text-white">
@@ -720,7 +713,6 @@ export default function ConstructionKitModal({
                       </button>
                     </div>
 
-                    {/* Audio Preview */}
                     {file.file.type.startsWith("audio/") && (
                       <>
                         <div className="px-3 py-2 bg-white/5">
@@ -755,7 +747,6 @@ export default function ConstructionKitModal({
                       </>
                     )}
 
-                    {/* Sound Group Selection */}
                     <div className="p-3 pt-0 grid grid-cols-2 gap-3">
                       <div>
                         <label className="block text-xs text-white/60 mb-1">
@@ -820,7 +811,6 @@ export default function ConstructionKitModal({
             </div>
           )}
 
-          {/* Footer */}
           <DialogFooter>
             <Button
               variant="outline"
@@ -843,7 +833,6 @@ export default function ConstructionKitModal({
         </DialogContent>
       </Dialog>
 
-      {/* File Type Selection Modal */}
       <Dialog open={isFileModalOpen} onOpenChange={setIsFileModalOpen}>
         <DialogContent className="bg-black border border-white/10 text-white sm:max-w-[400px]">
           <DialogHeader>

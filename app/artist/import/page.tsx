@@ -1,6 +1,5 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Edit3, Trash2 } from "lucide-react";
 import {
   contentTypes,
   keys,
@@ -18,24 +17,15 @@ import {
   SelectContent,
   SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import AudioDropZone from "@/components/general/audioImport";
 import ConstructionKitUpload from "@/components/general/constructionKit";
+import ImportSidebar from "@/components/general/importSidebar";
 
 export default function ImportPage() {
-  interface ImportedContentItem {
-    id: string | number;
-    contentName: string;
-    type: string;
-    bpm?: number | string;
-    key?: string;
-  }
-
-  const [sideData, setSideData] = useState<ImportedContentItem[] | null>(null);
   useEffect(() => {
     document.title = "Import Content - Ethereal Techno";
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -43,21 +33,6 @@ export default function ImportPage() {
         console.log("Escape key pressed - close sidebar/modal");
       }
     };
-    const fetchContent = async () => {
-      try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/content`
-        );
-        const data = await response.json();
-        setSideData(data);
-      } catch (error) {
-        console.error("Error fetching content:", error);
-      }
-    };
-    fetchContent();
-    fetchContent().then(() => {
-      console.log("Fetched content:", sideData);
-    });
 
     window.addEventListener("keydown", (event) => {
       if (
@@ -78,6 +53,7 @@ export default function ImportPage() {
     useState("Sample One-Shot");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
+  const [tempFile, setTempFile] = useState<File | null>(null);
   const [contentName, setContentName] = useState("");
   const [bpm, setBpm] = useState("122");
   const [selectedKey, setSelectedKey] = useState("");
@@ -94,6 +70,19 @@ export default function ImportPage() {
   const [selectedMoods, setSelectedMoods] = useState([""]);
   const [selectedProcessing, setSelectedProcessing] = useState([""]);
   const [selectedSoundDesign, setSelectedSoundDesign] = useState([""]);
+  const notes: { [key: string]: string } = {
+    "Sample One-Shot":
+      "Single audio files that can be used as individual sounds in your productions. Ideal for drums, percussion, and one-shot instruments.",
+    "Sample Loop":
+      "Short audio loops that can be seamlessly repeated to create rhythmic or melodic patterns. Perfect for building grooves and textures.",
+    "Sample Loop+MIDI":
+      "Includes both audio loops and corresponding MIDI files, allowing you to customize the performance and instrumentation of the loops.",
+    MIDI: "MIDI files that can be imported into your DAW to trigger virtual instruments. Great for melodies, chords, and basslines.",
+    Preset:
+      "Currently we accept only Diva and Serum2. Please upload the preset file, a MIDI file, and a seamlessly looping audio preview. See the guidelines for details.",
+    "Construction Kit":
+      "A collection of related audio loops and samples that can be combined to create full tracks. Often includes multiple elements like drums, bass, and melodies.",
+  };
 
   function toggleSoundDesign(design: (typeof soundDesign)[number]) {
     setSelectedSoundDesign((prev) =>
@@ -121,8 +110,12 @@ export default function ImportPage() {
     );
   }
 
-  function handleFileSelected(file: File) {
-    setSelectedFile(file);
+  function handleFileSelected(file: File | File[]) {
+    if (Array.isArray(file)) {
+      setSelectedFile(file[0] ?? null);
+    } else {
+      setSelectedFile(file);
+    }
   }
   function importContent() {
     setLoading(true);
@@ -167,15 +160,15 @@ export default function ImportPage() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <div className="max-w-6xl mx-auto px-8 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
-          <div className="space-y-12">
+      <div className="max-w-screen px-8 py-12">
+        <div className="flex max-w-2/3 gap-16">
+          <div className="space-y-6">
             <div>
               <h1 className="font-bold uppercase font-main text-4xl tracking-tight mb-12">
                 Import Content
               </h1>
 
-              <div className="space-y-6">
+              <div className="space-y-6 p-0">
                 <h3 className="text-sm font-medium text-white/60 uppercase tracking-wider">
                   Content Type
                 </h3>
@@ -183,7 +176,9 @@ export default function ImportPage() {
                   {contentTypes.map((type) => (
                     <button
                       key={type}
-                      onClick={() => setSelectedContentType(type)}
+                      onClick={() => {
+                        setSelectedContentType(type);
+                      }}
                       className={`px-6 py-3 text-sm font-medium tracking-wide transition-all duration-200 ${
                         selectedContentType === type
                           ? "bg-primary text-black"
@@ -196,9 +191,14 @@ export default function ImportPage() {
                 </div>
               </div>
             </div>
-
+            <p className="text-lg font-regular text-white ">
+              {notes[selectedContentType] || ""}
+            </p>
             {selectedContentType !== "Construction Kit" ? (
-              <AudioDropZone onFileSelected={handleFileSelected} />
+              <AudioDropZone
+                onFileSelected={handleFileSelected}
+                type={selectedContentType}
+              />
             ) : (
               <ConstructionKitUpload
                 trigger={
@@ -207,31 +207,10 @@ export default function ImportPage() {
                   </button>
                 }
                 onComplete={() => {
-                  // Refresh content or show a message as needed
-                  // For example, you could re-fetch content here
-                  // fetchContent();
                   console.log("Construction kit upload complete");
                 }}
               />
             )}
-            {selectedContentType === "MIDI" ||
-            selectedContentType === "Sample Loop+MIDI" ? (
-              <div className="grid w-full max-w-sm items-center gap-3">
-                <label
-                  htmlFor="midi"
-                  className="block text-sm font-medium text-white/60 mb-3 uppercase tracking-wider"
-                >
-                  MIDI File
-                </label>
-                <Input
-                  id="midi"
-                  type="file"
-                  accept=".mid,.midi"
-                  className="border border-white/10 bg-white/5 text-white p-2 rounded"
-                />
-              </div>
-            ) : null}
-
             <div className="grid grid-cols-3 gap-6">
               <div>
                 <label className="block text-sm font-medium text-white/60 mb-3 uppercase tracking-wider">
@@ -277,49 +256,7 @@ export default function ImportPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-white/60 mb-3 uppercase tracking-wider">
-                  Tap Tempo
-                </label>
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    className="bg-white/10 hover:bg-primary/80 text-white px-4 py-2 rounded transition-all"
-                    onClick={() => {
-                      {
-                        const now = Date.now();
-
-                        interface WindowWithTapTimes extends Window {
-                          _tapTimes?: number[];
-                        }
-                        const win = window as WindowWithTapTimes;
-                        if (!win._tapTimes) win._tapTimes = [];
-                        const tapTimes = win._tapTimes;
-                        tapTimes.push(now);
-                        if (tapTimes.length > 5) tapTimes.shift();
-                        if (tapTimes.length > 1) {
-                          const intervals = tapTimes
-                            .slice(1)
-                            .map((t: number, i: number) => t - tapTimes[i]);
-                          const avgMs =
-                            intervals.reduce(
-                              (a: number, b: number) => a + b,
-                              0
-                            ) / intervals.length;
-                          const newBpm = Math.round(60000 / avgMs);
-                          if (!isNaN(newBpm) && newBpm > 0 && newBpm < 400)
-                            setBpm(String(newBpm));
-                        }
-                      }
-                    }}
-                  >
-                    Tap
-                  </button>
-                  <span className="text-white/60 text-sm">Tap to set BPM</span>
-                </div>
-              </div>
             </div>
-
             {selectedContentType !== "Construction Kit" && (
               <>
                 {selectedContentType !== "MIDI" && (
@@ -359,57 +296,46 @@ export default function ImportPage() {
                   <h3 className="text-sm font-medium text-white/60 mb-6 uppercase tracking-wider">
                     Sub Group
                   </h3>
-                  <div className="w-full max-w-Ssm bg-white/5 border border-white/10 px-4 py-3 text-white focus:outline-none focus:border-primary focus:bg-white/10 transition-all">
-                    <Select
-                      value={String(selectedSubGroup) || ""}
-                      onValueChange={(value) => setSelectedSubGroup(value)}
-                    >
-                      <SelectTrigger className="w-full rounded-2xl border border-white/10 bg-black/40 text-white shadow-sm focus:ring-2 focus:ring-yellow-400 transition-colors">
-                        <SelectValue placeholder="🎶 Select sound group" />
-                      </SelectTrigger>
-
-                      <SelectContent className="rounded-2xl border border-white/10 bg-black/95 text-white shadow-lg backdrop-blur-md">
-                        <SelectGroup>
-                          <SelectLabel className="px-2 py-1 text-xs uppercase tracking-wider text-white/40">
-                            {selectedSubGroup as string}
-                          </SelectLabel>
-                          {(
-                            (selectedContentType === "Sample One-Shot"
-                              ? oneShotGroup[
-                                  selectedSoundGroup as keyof typeof oneShotGroup
-                                ] || []
-                              : selectedContentType === "Sample Loop+MIDI"
-                              ? loopGroups[
-                                  selectedSoundGroup as keyof typeof loopGroups
-                                ] || []
-                              : selectedContentType === "Sample Loop"
-                              ? loopGroups[
-                                  selectedSoundGroup as keyof typeof loopGroups
-                                ] || []
-                              : selectedContentType === "Preset"
-                              ? presetGroup[
-                                  selectedSoundGroup as keyof typeof presetGroup
-                                ] || []
-                              : midiGroups[
-                                  selectedSoundGroup as keyof typeof midiGroups
-                                ] || []) as string[]
-                          ).map((group) => (
-                            <SelectItem
-                              key={group}
-                              value={group}
-                              className="cursor-pointer rounded-lg px-3 py-2 text-sm transition-colors hover:bg-yellow-500/20 focus:bg-yellow-500/30"
-                            >
-                              {group}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
+                  <div className="w-full   text-white focus:outline-none focus:border-primary focus:bg-white/10 transition-all">
+                    <div className="flex flex-wrap gap-3">
+                      {(
+                        (selectedContentType === "Sample One-Shot"
+                          ? oneShotGroup[
+                              selectedSoundGroup as keyof typeof oneShotGroup
+                            ] || []
+                          : selectedContentType === "Sample Loop+MIDI"
+                          ? loopGroups[
+                              selectedSoundGroup as keyof typeof loopGroups
+                            ] || []
+                          : selectedContentType === "Sample Loop"
+                          ? loopGroups[
+                              selectedSoundGroup as keyof typeof loopGroups
+                            ] || []
+                          : selectedContentType === "Preset"
+                          ? presetGroup[
+                              selectedSoundGroup as keyof typeof presetGroup
+                            ] || []
+                          : midiGroups[
+                              selectedSoundGroup as keyof typeof midiGroups
+                            ] || []) as string[]
+                      ).map((group) => (
+                        <button
+                          key={group}
+                          onClick={() => setSelectedSubGroup(group)}
+                          className={`px-6 py-3 text-sm font-medium tracking-wide transition-all duration-200 ${
+                            selectedSubGroup === group
+                              ? "bg-primary text-black"
+                              : "bg-white/5 text-white/80 hover:bg-white/10 hover:text-white"
+                          }`}
+                        >
+                          {group}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </>
             )}
-
             <div>
               <h3 className="text-sm font-medium text-white/60 mb-6 uppercase tracking-wider">
                 Style
@@ -430,7 +356,6 @@ export default function ImportPage() {
                 ))}
               </div>
             </div>
-
             <div>
               <h3 className="text-sm font-medium text-white/60 mb-6 uppercase tracking-wider">
                 Mood
@@ -491,7 +416,11 @@ export default function ImportPage() {
                 ))}
               </div>
             </div>
-            <div className="pt-8">
+            <p className="text-sm text-white/60 mt-4">
+              By clicking Import, you confirm that the uploaded material is your
+              original work and does not infringe on any third-party copyrights.
+            </p>
+            <div className="pt-1">
               <button
                 onClick={importContent}
                 disabled={!selectedFile || loading}
@@ -500,38 +429,7 @@ export default function ImportPage() {
                 {loading ? "Importing..." : "Import Content"}
               </button>
             </div>
-            <div className="flex flex-col gap-6 fixed right-0 top-0 h-screen w-[30vw] bg-gray-600/10 backdrop-blur-lg border-l border-white/10 p-6 overflow-y-auto">
-              <h2 className="text-xl font-main font-medium text-white">
-                Imported Content
-              </h2>
-              {sideData?.map((item: ImportedContentItem) => (
-                <div
-                  key={item.id}
-                  className="border border-white/10 p-6 hover:border-white/20 transition-colors duration-300"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-xl font-medium">
-                        {item.contentName ?? "Untitled"}
-                      </h3>
-                      <p className="text-sm text-white/60 mt-1">
-                        {item.type ?? "Type"}
-                        {item.bpm ? ` • ${item.bpm} BPM` : ""}
-                        {item.key ? ` • ${item.key}` : ""}
-                      </p>
-                    </div>
-                    <div className="flex items-center space-x-4">
-                      <button className="p-2 bg-white/5 rounded hover:bg-white/10 transition-colors">
-                        <Edit3 className="h-5 w-5 text-white/80" />
-                      </button>
-                      <button className="p-2 bg-white/5 rounded hover:bg-white/10 transition-colors">
-                        <Trash2 className="h-5 w-5 text-white/80" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <ImportSidebar />
           </div>
         </div>
       </div>

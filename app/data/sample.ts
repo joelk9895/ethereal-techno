@@ -8,18 +8,6 @@ export const contentTypes = [
 ];
 
 export const keys = [
-  "C",
-  "C#",
-  "D",
-  "D#",
-  "E",
-  "F",
-  "F#",
-  "G",
-  "G#",
-  "A",
-  "A#",
-  "B",
   "Cmin",
   "C#min",
   "Dmin",
@@ -32,6 +20,18 @@ export const keys = [
   "Amin",
   "A#min",
   "Bmin",
+  "Cmaj",
+  "C#maj",
+  "Dmaj",
+  "D#maj",
+  "Emaj",
+  "Fmaj",
+  "F#maj",
+  "Gmaj",
+  "G#maj",
+  "Amaj",
+  "A#maj",
+  "Bmaj",
   "No Key",
 ];
 
