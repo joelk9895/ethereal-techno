@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Edit3, Trash2 } from "lucide-react";
-import Loading from "./loading";
+import Loading from "@/components/general/loading";
 
 interface ImportedContentItem {
   id: string | number;
@@ -33,7 +33,7 @@ export default function ImportSidebar() {
   }, []);
   return (
     <div className="flex flex-col gap-6 fixed right-0 top-0 h-screen w-1/4 bg-gray-600/10 backdrop-blur-lg border-l border-white/10 p-6 overflow-y-auto">
-      <h2 className="text-xl font-main font-medium text-white">
+      <h2 className="text-4xl uppercase font-main font-medium text-white">
         Imported Content
       </h2>
       {loading ? (

@@ -1,5 +1,5 @@
 export const contentTypes = [
-  "Sample One-Shot",
+  "One-Shot",
   "Sample Loop",
   "Sample Loop+MIDI",
   "MIDI",
@@ -291,3 +291,17 @@ export const midiGroups = [
   "Synth",
   "Tonal Fx",
 ];
+
+export const notes: { [key: string]: string } = {
+  "One-Shot":
+    "Single audio files that can be used as individual sounds in your productions. Ideal for drums, percussion, and one-shot instruments.",
+  "Sample Loop":
+    "Short audio loops that can be seamlessly repeated to create rhythmic or melodic patterns. Perfect for building grooves and textures.",
+  "Sample Loop+MIDI":
+    "Includes both audio loops and corresponding MIDI files, allowing you to customize the performance and instrumentation of the loops.",
+  MIDI: "MIDI files that can be imported into your DAW to trigger virtual instruments. Great for melodies, chords, and basslines.",
+  Preset:
+    "Currently we accept only Diva and Serum2. Please upload the preset file, a MIDI file, and a seamlessly looping audio preview. See the guidelines for details.",
+  "Construction Kit":
+    "A collection of related audio loops and samples that can be combined to create full tracks. Often includes multiple elements like drums, bass, and melodies.",
+};

@@ -1,0 +1,21 @@
+export const FILE_TYPES = {
+  AUDIO: "Audio",
+  MIDI: "MIDI",
+  PRESET: "Preset",
+};
+
+export interface AudioFile {
+  id: string;
+  file: File;
+  url: string;
+  isPlaying: boolean;
+  duration: string;
+  currentTime: string;
+  audioRef: HTMLAudioElement | null;
+  fileType: string;
+}
+
+export interface AudioDropZoneProps {
+  onFileSelected: (file: File | File[]) => void;
+  type: string;
+}

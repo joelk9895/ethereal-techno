@@ -1,15 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, DragEvent } from "react";
-import {
-  Play,
-  Pause,
-  Upload,
-  X,
-  Check,
-  ChevronDown,
-  Save,
-} from "lucide-react";
+import { Play, Pause, Upload, X, Check, ChevronDown, Save } from "lucide-react";
 import {
   oneShotGroup,
   loopGroups,
@@ -39,7 +31,7 @@ import { Label } from "../ui/label";
 
 const KIT_TYPES = [
   "Full Loop",
-  "Sample One-Shot",
+  "One-Shot",
   "Sample Loop",
   "Sample Loop + MIDI",
   "Sample Loop + MIDI + Preset",
@@ -48,7 +40,7 @@ const KIT_TYPES = [
 // Define the file types
 const FILE_TYPES = {
   AUDIO_LOOP: "Sample Loop",
-  AUDIO_ONE_SHOT: "Sample One-Shot",
+  AUDIO_ONE_SHOT: "One-Shot",
   MIDI: "MIDI",
   PRESET: "Preset",
   FULL_LOOP: "Full Loop",
@@ -117,7 +109,7 @@ export default function ConstructionKitModal({
     switch (selectedKitType) {
       case "Full Loop":
         return [FILE_TYPES.FULL_LOOP];
-      case "Sample One-Shot":
+      case "One-Shot":
         return [FILE_TYPES.AUDIO_ONE_SHOT];
       case "Sample Loop":
         return [FILE_TYPES.AUDIO_LOOP];
