@@ -116,3 +116,35 @@ export default function Waveform({
     </div>
   );
 }
+
+export const generateWaveformData = async (file: File) => {
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const audioContext = new AudioContext();
+    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+    const rawData = audioBuffer.getChannelData(0);
+    const samples = 500;
+    const blockSize = Math.floor(rawData.length / samples);
+    const filteredData = [];
+
+    for (let i = 0; i < samples; i++) {
+      const blockStart = blockSize * i;
+      let sum = 0;
+      for (let j = 0; j < blockSize; j++) {
+        sum += Math.abs(rawData[blockStart + j]);
+      }
+      filteredData.push(sum / blockSize);
+    }
+
+    const multiplier = Math.pow(Math.max(...filteredData), -1);
+    const normalizedData = filteredData.map((n) => n * multiplier);
+
+    audioContext.close();
+
+    return normalizedData;
+  } catch (error) {
+    console.error("Error generating waveform:", error);
+    return [];
+  }
+};

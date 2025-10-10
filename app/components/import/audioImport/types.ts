@@ -13,6 +13,7 @@ export interface AudioFile {
   currentTime: string;
   audioRef: HTMLAudioElement | null;
   fileType: string;
+  contentType?: string;
 }
 
 export interface AudioDropZoneProps {

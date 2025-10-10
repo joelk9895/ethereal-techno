@@ -1,6 +1,6 @@
 export default function Loading() {
   return (
-    <div className="flex flex-col items-center justify-center h-full bg-black">
+    <div className="flex flex-col items-center justify-center h-full">
       <div className="mb-8 relative">
         {/* Pulsing Circle */}
         <div className="w-16 h-16 border-4 border-white/20 rounded-full">

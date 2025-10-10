@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -17,26 +11,103 @@ model Content {
   id          String   @id @default(uuid()) @map("_id")
   contentType String
   contentName String
-  bpm         String
-  key         String
   soundGroup  String
-  file        File     @relation(fields: [fileId], references: [id])
   subGroup    String?
-  styles      String[]
-  moods       String[]
-  processing  String[]
-  soundDesign String[]
   createdAt   DateTime @default(now())
-  fileId      String   @unique
+
+  fileId String @unique
+  file   File   @relation(fields: [fileId], references: [id])
+
+  constructionkitId String?
+  constructionkit   Constructionkit? @relation(fields: [constructionkitId], references: [id])
+
+  metadataId String
+  metadata   Metadata @relation(fields: [metadataId], references: [id])
+
+  loopandmidiLoop Loopandmidi[] @relation("LoopContent")
+  loopandmidiMidi Loopandmidi[] @relation("MidiContent")
+
+  presetLoop    Preset[] @relation("PresetLoop")
+  presetMidi    Preset[] @relation("PresetMidi")
+  presetContent Preset[] @relation("PresetMain")
+}
+
+model Loopandmidi {
+  id        String   @id @default(uuid()) @map("_id")
+  name      String
+  createdAt DateTime @default(now())
+
+  loopContentId String?
+  loopContent   Content? @relation("LoopContent", fields: [loopContentId], references: [id])
+
+  midiContentId String?
+  midiContent   Content? @relation("MidiContent", fields: [midiContentId], references: [id])
+
+  metadataId String
+  metadata   Metadata @relation("Metadata_Loopandmidis", fields: [metadataId], references: [id])
+
+  constructionkitId String?
+  constructionkit   Constructionkit? @relation(fields: [constructionkitId], references: [id])
+}
+
+model Preset {
+  id        String   @id @default(uuid()) @map("_id")
+  name      String
+  createdAt DateTime @default(now())
+
+  loopContentId String?
+  loopContent   Content? @relation("PresetLoop", fields: [loopContentId], references: [id])
+
+  midiContentId String?
+  midiContent   Content? @relation("PresetMidi", fields: [midiContentId], references: [id])
+
+  presetContentId String?
+  presetContent   Content? @relation("PresetMain", fields: [presetContentId], references: [id])
+
+  metadataId String
+  metadata   Metadata @relation(fields: [metadataId], references: [id])
+
+  constructionkitId String?
+  constructionkit   Constructionkit? @relation(fields: [constructionkitId], references: [id])
+}
+
+model Constructionkit {
+  id          String   @id @default(uuid()) @map("_id")
+  kitName     String
+  description String?
+  createdAt   DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  metadataId String
+  metadata   Metadata @relation(fields: [metadataId], references: [id])
+
+  contents     Content[]
+  presets      Preset[]
+  loopAndMidis Loopandmidi[]
+}
+
+model Metadata {
+  id               String            @id @default(uuid()) @map("_id")
+  styles           String[]
+  moods            String[]
+  processing       String[]
+  soundDesign      String[]
+  bpm              String?
+  key              String?
+  contents         Content[]
+  constructionkits Constructionkit[]
+  loopAndMidis     Loopandmidi[]     @relation("Metadata_Loopandmidis")
+  presets          Preset[]
 }
 
 model File {
   id        String   @id @default(uuid()) @map("_id")
   fileName  String
-  fileUrl   String
   awsKey    String
   createdAt DateTime @default(now())
-  Content   Content?
+  content   Content?
 }
 
 model User {
@@ -47,6 +118,8 @@ model User {
   password  String
   createdAt DateTime @default(now())
   type      UserType @default(USER)
+
+  constructionkits Constructionkit[]
 }
 
 enum UserType {

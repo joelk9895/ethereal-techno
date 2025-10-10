@@ -6,23 +6,43 @@ export const formatTime = (seconds: number) => {
   return `${mins}:${secs.toString().padStart(2, "0")}`;
 };
 
-export const determineFileType = (file: File): string => {
+export function determineFileType(file: File): string {
   const fileName = file.name.toLowerCase();
-  if (fileName.endsWith(".mid") || fileName.endsWith(".midi")) {
+  const fileType = file.type;
+
+  if (fileName.endsWith(".mid") || fileType.includes("midi")) {
     return FILE_TYPES.MIDI;
   }
-  if (file.type.startsWith("audio/")) {
-    return FILE_TYPES.AUDIO;
-  }
+
   if (
-    fileName.endsWith(".fxp") ||
     fileName.endsWith(".serumpreset") ||
-    fileName.endsWith(".h2p")
+    fileName.endsWith(".h2p") ||
+    fileName.endsWith(".fxp") ||
+    fileName.endsWith(".preset")
   ) {
     return FILE_TYPES.PRESET;
   }
-  return FILE_TYPES.AUDIO;
-};
+
+  if (
+    fileType.includes("audio") ||
+    fileName.endsWith(".wav") ||
+    fileName.endsWith(".mp3") ||
+    fileName.endsWith(".aiff") ||
+    fileName.endsWith(".aif")
+  ) {
+    return FILE_TYPES.AUDIO;
+  }
+
+  if (fileName.includes("preset")) {
+    return FILE_TYPES.PRESET;
+  }
+
+  if (fileType.includes("audio")) {
+    return FILE_TYPES.AUDIO;
+  }
+
+  return "Unknown";
+}
 
 export const getFileTypeColor = (fileType: string) => {
   switch (fileType) {

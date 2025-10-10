@@ -1,4 +1,4 @@
-import ContentList from "@/components/general/contentList";
+import ContentList from "@/app/components/general/contentList";
 
 interface ContentItem {
   id: string;
@@ -20,9 +20,22 @@ interface ContentItem {
     awsKey: string;
   };
 }
+interface ConstructionKit {
+  id: string;
+  kitName: string;
+  description: string;
+  bpm: string;
+  key: string;
+  styles: string[];
+  moods: string[];
+  userId: string;
+  contents: ContentItem[];
+  createdAt: string;
+}
 
 export default async function Home() {
   let content: ContentItem[] = [];
+  let constructionKits: ConstructionKit[] = [];
 
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/content`, {
@@ -34,11 +47,9 @@ export default async function Home() {
     }
 
     const data = await res.json();
-    if (Array.isArray(data)) {
-      content = data as ContentItem[];
-    } else {
-      content = [];
-    }
+
+    content = data.contents as ContentItem[];
+    constructionKits = data.constructionKit as ConstructionKit[];
   } catch (error: Error | unknown) {
     console.error("Error fetching content:", error);
     content = [];
@@ -46,7 +57,11 @@ export default async function Home() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <ContentList items={content} />
+      <ContentList
+        items={content}
+        constructionKits={constructionKits}
+        showKits={true}
+      />
     </main>
   );
 }

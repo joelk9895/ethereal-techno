@@ -3,6 +3,13 @@ import prisma from "@/app/lib/database";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 import s3 from "@/app/lib/storage";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+interface file {
+  id: string;
+  createdAt: Date;
+  fileName: string;
+  awsKey: string;
+  fileUrl?: string;
+}
 
 export async function GET() {
   const contents = await prisma.content.findMany({
@@ -10,6 +17,7 @@ export async function GET() {
       file: true,
     },
   });
+
   await Promise.all(
     contents.map(async (content) => {
       if (content.file) {
@@ -21,9 +29,15 @@ export async function GET() {
           }),
           { expiresIn: 3600 }
         );
-        content.file.fileUrl = signedUrl;
+        content.file = {
+          id: content.file.id,
+          createdAt: content.file.createdAt,
+          fileName: content.file.fileName,
+          awsKey: content.file.awsKey,
+          fileUrl: signedUrl,
+        } as file;
       }
     })
   );
-  return NextResponse.json(contents);
+  return NextResponse.json({ contents });
 }

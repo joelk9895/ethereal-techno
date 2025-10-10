@@ -28,7 +28,7 @@ export default function SubGroup({
   return (
     <div className="py-8">
       <h3 className="text-sm font-medium text-white/60 mb-6 uppercase tracking-wider">
-        {selectedContentType === "MIDI" ? "Sound Group" : "Sound Type"}
+        Sound Type
       </h3>
       <div className="w-full   text-white focus:outline-none focus:border-primary focus:bg-white/10 transition-all">
         <div className="flex flex-wrap gap-3">
