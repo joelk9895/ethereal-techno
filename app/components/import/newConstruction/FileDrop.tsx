@@ -328,7 +328,7 @@ export default function FileDrop({
       </div>
       {files.length > 0 && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-6">
-          <div className="bg-black/90 border border-white/20 rounded-xl w-full max-w-6xl max-h-[90vh] overflow-hidden">
+          <div className="bg-black/90 border border-white/20 rounded-xl w-full max-w-6xl min-h-[60vh] max-h-[90vh] overflow-hidden">
             <div className="p-6 border-b border-white/10">
               <div className="flex items-center justify-between">
                 <div>
@@ -390,7 +390,7 @@ export default function FileDrop({
               )}
             </div>
 
-            <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)] min-h-[60vh]">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {files.map((file, index) => {
                   const fileType = determineFileType(file);
