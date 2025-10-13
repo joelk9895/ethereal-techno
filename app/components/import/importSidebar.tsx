@@ -57,8 +57,8 @@ export default function ImportSidebar() {
 
   useEffect(() => {
     if (typeof window !== "undefined" && !audioContext) {
-      audioContext = new (window.AudioContext ||
-        (window as any).webkitAudioContext)();
+      audioContext = new (window.AudioContext || 
+        (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext)();
 
       const gainNode = audioContext.createGain();
       gainNode.gain.value = 1;
@@ -127,8 +127,8 @@ export default function ImportSidebar() {
   const handlePlayAudio = useCallback(
     async (key: string, id: string) => {
       if (!audioContext) {
-        audioContext = new (window.AudioContext ||
-          (window as any).webkitAudioContext)();
+        audioContext = new (window.AudioContext || 
+          (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext)();
         const gainNode = audioContext.createGain();
         gainNode.gain.value = isMuted ? 0 : 1;
         gainNode.connect(audioContext.destination);
