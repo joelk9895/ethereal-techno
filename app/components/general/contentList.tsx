@@ -36,7 +36,6 @@ type ContentItem = {
     fileUrl: string;
     awsKey: string;
   };
-  // Optional constructionKitId for content within a kit
   constructionKitId?: string;
 };
 
@@ -64,7 +63,6 @@ export default function ContentList({
   constructionKits = [],
   showKits = false,
 }: ContentListProps) {
-  // State to track which kits are expanded
   const [expandedKits, setExpandedKits] = useState<Record<string, boolean>>({});
 
   const toggleKit = (kitId: string) => {
@@ -74,12 +72,10 @@ export default function ContentList({
     }));
   };
 
-  // Determine which items to show based on props
   const standaloneItems = showKits
     ? items.filter((item) => !item.constructionKitId)
     : items;
 
-  // Render a single content item
   const renderContentItem = (item: ContentItem, isInKit = false) => (
     <Card
       key={item.id}
@@ -165,7 +161,6 @@ export default function ContentList({
     </Card>
   );
 
-  // Render a construction kit with its contents
   const renderConstructionKit = (kit: ConstructionKit) => {
     const isExpanded = expandedKits[kit.id] || false;
 
@@ -252,10 +247,8 @@ export default function ContentList({
 
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-      {/* Display Construction Kits if showKits is enabled */}
       {showKits && constructionKits.map(renderConstructionKit)}
 
-      {/* Display standalone content items */}
       {standaloneItems.map((item) => renderContentItem(item))}
     </div>
   );

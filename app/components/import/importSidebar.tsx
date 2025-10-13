@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import {
   Edit3,
   Trash2,
@@ -10,9 +10,13 @@ import {
   Package,
   FileAudio,
   Music,
-  FileCode, // Add these icons
+  FileCode,
+  VolumeX,
+  Volume2,
 } from "lucide-react";
 import Loading from "@/app/components/general/loading";
+
+let audioContext: AudioContext | null = null;
 
 interface ImportedContentItem {
   id: string;
@@ -33,7 +37,6 @@ interface ImportedContentItem {
     key: string;
     contentId: string;
   }>;
-  // Add properties for construction kits
   contents?: number;
   presets?: number;
   loopAndMidis?: number;
@@ -44,10 +47,32 @@ export default function ImportSidebar() {
   const [loading, setLoading] = useState(true);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [loopEnabled, setLoopEnabled] = useState(true);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-
-  // Add filter state to toggle between showing all content vs specific types
+  const [isMuted, setIsMuted] = useState(false);
   const [contentFilter, setContentFilter] = useState<string | null>(null);
+
+  const sourceRef = useRef<AudioBufferSourceNode | null>(null);
+  const gainNodeRef = useRef<GainNode | null>(null);
+  const audioBufferCache = useRef<Record<string, AudioBuffer>>({});
+  const previousVolume = useRef<number>(1);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && !audioContext) {
+      audioContext = new (window.AudioContext ||
+        (window as any).webkitAudioContext)();
+
+      const gainNode = audioContext.createGain();
+      gainNode.gain.value = 1;
+      gainNode.connect(audioContext.destination);
+      gainNodeRef.current = gainNode;
+    }
+
+    return () => {
+      if (sourceRef.current) {
+        sourceRef.current.stop();
+        sourceRef.current.disconnect();
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const fetchContent = async () => {
@@ -72,80 +97,129 @@ export default function ImportSidebar() {
     fetchContent();
   }, []);
 
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    const handleTimeUpdate = () => {
-      if (!loopEnabled) return;
-
-      const buffer = 0.5;
-      if (audio.currentTime > audio.duration - buffer) {
-        audio.currentTime = 0;
-        audio.play();
+  const loadAudioBuffer = useCallback(
+    async (url: string): Promise<AudioBuffer> => {
+      if (audioBufferCache.current[url]) {
+        return audioBufferCache.current[url];
       }
-    };
 
-    audio.addEventListener("timeupdate", handleTimeUpdate);
+      try {
+        const response = await fetch(url);
+        const arrayBuffer = await response.arrayBuffer();
 
-    return () => {
-      audio.removeEventListener("timeupdate", handleTimeUpdate);
-    };
-  }, [loopEnabled]);
+        if (!audioContext) {
+          throw new Error("Audio context not initialized");
+        }
 
-  const handlePlayAudio = async (key: string, id: string) => {
-    const audio = audioRef.current;
+        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
 
-    if (!audio) return;
+        audioBufferCache.current[url] = audioBuffer;
 
-    try {
-      if (playingId === id) {
-        audio.pause();
-        audio.currentTime = 0;
+        return audioBuffer;
+      } catch (error) {
+        console.error("Error loading audio:", error);
+        throw error;
+      }
+    },
+    []
+  );
+
+  const handlePlayAudio = useCallback(
+    async (key: string, id: string) => {
+      if (!audioContext) {
+        audioContext = new (window.AudioContext ||
+          (window as any).webkitAudioContext)();
+        const gainNode = audioContext.createGain();
+        gainNode.gain.value = isMuted ? 0 : 1;
+        gainNode.connect(audioContext.destination);
+        gainNodeRef.current = gainNode;
+      }
+
+      if (audioContext.state === "suspended") {
+        await audioContext.resume();
+      }
+
+      if (playingId === id && sourceRef.current) {
+        sourceRef.current.stop();
+        sourceRef.current.disconnect();
+        sourceRef.current = null;
         setPlayingId(null);
-        setLoopEnabled(false);
         return;
       }
 
-      if (playingId) {
-        audio.pause();
-        audio.currentTime = 0;
+      if (sourceRef.current) {
+        sourceRef.current.stop();
+        sourceRef.current.disconnect();
+        sourceRef.current = null;
       }
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/content/stream?key=${key}`
-      );
-      const data = await response.json();
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/content/stream?key=${key}`
+        );
+        const data = await response.json();
 
-      if (data.url) {
-        audio.src = data.url;
-        await audio.play();
-        setPlayingId(id);
+        if (data.url) {
+          const audioBuffer = await loadAudioBuffer(data.url);
+
+          const source = audioContext.createBufferSource();
+          source.buffer = audioBuffer;
+
+          source.connect(gainNodeRef.current!);
+
+          source.loop = loopEnabled;
+
+          source.start(0);
+          sourceRef.current = source;
+          setPlayingId(id);
+
+          source.onended = () => {
+            if (!loopEnabled) {
+              setPlayingId(null);
+              sourceRef.current = null;
+            }
+          };
+        }
+      } catch (error) {
+        console.error("Error playing audio:", error);
       }
-    } catch (error) {
-      console.error("Error getting audio URL:", error);
-    }
-  };
+    },
+    [playingId, loopEnabled, isMuted, loadAudioBuffer]
+  );
 
-  const toggleLoop = () => {
-    setLoopEnabled(!loopEnabled);
-  };
+  const toggleLoop = useCallback(() => {
+    setLoopEnabled((prev) => {
+      const newLoopState = !prev;
+
+      if (sourceRef.current) {
+        sourceRef.current.loop = newLoopState;
+      }
+
+      return newLoopState;
+    });
+  }, []);
+
+  const toggleMute = useCallback(() => {
+    if (!gainNodeRef.current) return;
+
+    setIsMuted((prev) => {
+      const newMuteState = !prev;
+
+      if (newMuteState) {
+        previousVolume.current = gainNodeRef.current!.gain.value;
+        gainNodeRef.current!.gain.value = 0;
+      } else {
+        gainNodeRef.current!.gain.value = previousVolume.current;
+      }
+
+      return newMuteState;
+    });
+  }, []);
 
   useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    const handleAudioEnded = () => {
-      if (!loopEnabled) {
-        setPlayingId(null);
-      }
-    };
-
-    audio.addEventListener("ended", handleAudioEnded);
-
-    return () => {
-      audio.removeEventListener("ended", handleAudioEnded);
-    };
+    if (sourceRef.current) {
+      sourceRef.current.loop = loopEnabled;
+    }
   }, [loopEnabled]);
 
   const isAudioFile = (fileName: string | undefined): boolean => {
@@ -159,7 +233,6 @@ export default function ImportSidebar() {
     );
   };
 
-  // Get icon for content type
   const getContentTypeIcon = (contentType: string) => {
     switch (contentType) {
       case "Construction Kit":
@@ -173,7 +246,6 @@ export default function ImportSidebar() {
     }
   };
 
-  // Filter content items based on the current filter
   const filteredData = contentFilter
     ? sideData?.filter((item) => item.contentType === contentFilter)
     : sideData;
@@ -181,12 +253,29 @@ export default function ImportSidebar() {
   return (
     <aside className="flex flex-col fixed right-0 top-0 h-screen w-1/4 bg-black border-l border-white/5 overflow-hidden pt-12">
       <div className="px-4 border-b border-white/10">
-        <h2 className="font-bold uppercase font-main text-4xl mb-12 tracking-wide">
-          Imported Content
-        </h2>
+        <div className="flex justify-between items-center mb-12">
+          <h2 className="font-bold uppercase font-main text-4xl tracking-wide">
+            Imported Content
+          </h2>
+
+          <button
+            onClick={toggleMute}
+            className={`p-1.5 rounded-full transition-all ${
+              isMuted
+                ? "bg-red-900/30 text-red-400"
+                : "bg-white/5 hover:bg-white/10 text-white/60"
+            }`}
+            title={isMuted ? "Unmute" : "Mute"}
+          >
+            {isMuted ? (
+              <VolumeX className="h-4 w-4" />
+            ) : (
+              <Volume2 className="h-4 w-4" />
+            )}
+          </button>
+        </div>
       </div>
 
-      {/* Optional: Add content type filters */}
       <div className="flex gap-1 p-2 border-b border-white/10 overflow-x-auto">
         <button
           onClick={() => setContentFilter(null)}
@@ -208,10 +297,7 @@ export default function ImportSidebar() {
         >
           <Package className="w-3 h-3" /> Kits
         </button>
-        {/* Add more filter buttons if needed */}
       </div>
-
-      <audio ref={audioRef} className="hidden" />
 
       <div className="flex-1 overflow-y-scroll p-3 space-y-2">
         {loading ? (
@@ -260,7 +346,6 @@ export default function ImportSidebar() {
                 </div>
               </div>
 
-              {/* Construction Kit specific info */}
               {item.contentType === "Construction Kit" && (
                 <div className="px-3 pb-2 pt-2 border-t border-white/5">
                   <div className="flex justify-between text-[11px] text-white/40">
@@ -271,7 +356,6 @@ export default function ImportSidebar() {
                 </div>
               )}
 
-              {/* Regular file display */}
               {item.file && (
                 <div className="px-3 pb-2 flex items-center justify-between gap-2 border-t border-white/5 pt-2">
                   <span className="text-[11px] text-white/40 truncate flex-1">
@@ -282,7 +366,8 @@ export default function ImportSidebar() {
                       <button
                         onClick={toggleLoop}
                         className={`p-1 rounded-full transition-all ${
-                          loopEnabled && playingId === item.id
+                          loopEnabled &&
+                          (playingId === item.id || playingId === null)
                             ? "bg-primary/30 text-primary"
                             : "bg-white/5 text-white/40 hover:bg-white/10 hover:text-white/60"
                         }`}
@@ -309,7 +394,6 @@ export default function ImportSidebar() {
                 </div>
               )}
 
-              {/* Files collection display */}
               {item.files && item.files.length > 0 && (
                 <div className="border-t border-white/5">
                   <details className="group">
@@ -338,7 +422,9 @@ export default function ImportSidebar() {
                               <button
                                 onClick={toggleLoop}
                                 className={`p-1 rounded-full transition-all ${
-                                  loopEnabled && playingId === file.contentId
+                                  loopEnabled &&
+                                  (playingId === file.contentId ||
+                                    playingId === null)
                                     ? "bg-primary/30 text-primary"
                                     : "bg-white/5 text-white/40 hover:bg-white/10 hover:text-white/60"
                                 }`}

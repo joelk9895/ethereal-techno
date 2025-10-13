@@ -359,11 +359,6 @@ export const GET = async () => {
         ]),
       ])
       .filter((id): id is string => id !== null);
-    console.log(
-      "Construction Kits:",
-      constructionKits.flatMap((kit) => kit.presets)
-    );
-    console.log("Used Content IDs:", usedContentIds);
 
     const presets = await prisma.preset.findMany({
       where: {
@@ -506,9 +501,7 @@ export const GET = async () => {
         key: content.file.awsKey,
       },
     }));
-    console.log("Mapped Contents:", mappedContents);
 
-    // Map preset bundles
     const mappedPresets = presets.map((preset) => ({
       id: preset.id,
       name: preset.name,
@@ -540,7 +533,6 @@ export const GET = async () => {
       ].filter(Boolean),
     }));
 
-    // Map loop and MIDI bundles
     const mappedLoopAndMidi = loopandmidis.map((lm) => ({
       id: lm.id,
       name: lm.name,
@@ -581,14 +573,12 @@ export const GET = async () => {
       },
     }));
 
-    // Include mappedConstructionKits in combinedData
     const combinedData = [
       ...mappedContents,
       ...mappedPresets,
       ...mappedLoopAndMidi,
-      ...mappedConstructionKits, // Add construction kits to the combined data
+      ...mappedConstructionKits,
     ];
-    console.log("Combined Data:", combinedData);
     combinedData.sort((a, b) => {
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });

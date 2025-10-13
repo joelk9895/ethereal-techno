@@ -370,7 +370,6 @@ export default function FileDrop({
                 </div>
               </div>
 
-              {/* Upload Progress Bar */}
               {uploading && (
                 <div className="mt-4">
                   <div className="flex items-center justify-between mb-2">
@@ -573,7 +572,6 @@ export default function FileDrop({
                         </div>
                       )}
 
-                      {/* Upload Complete Indicator */}
                       {uploading && fileProgress === 100 && (
                         <div className="flex items-center gap-1 text-green-400 text-xs mt-3">
                           <Check size={14} />

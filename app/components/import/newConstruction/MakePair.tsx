@@ -329,7 +329,6 @@ export default function MakePair({
           </div>
         ) : (
           <div className="flex flex-col h-full">
-            {/* Header area - fixed height */}
             <div className="px-6 py-4 border-b border-white/20">
               <div className="flex justify-between items-start">
                 <div>
@@ -367,9 +366,7 @@ export default function MakePair({
               )}
             </div>
 
-            {/* Content area - scrollable with flex-1 */}
             <div className="flex flex-1 min-h-0">
-              {/* Left panel - file list */}
               <div className="flex-1 flex flex-col min-h-0 border-r border-white/20">
                 <div className="p-6 pb-3">
                   <div className="flex items-center justify-between mb-4">
@@ -380,7 +377,6 @@ export default function MakePair({
                   </div>
                 </div>
 
-                {/* Scrollable file list */}
                 <div className="flex-1 overflow-y-auto px-6 pb-6 min-h-0">
                   <div className="space-y-2">
                     {contentItems.length > 0 ? (
@@ -416,7 +412,6 @@ export default function MakePair({
                               }
                             }}
                           >
-                            {/* Item contents stay the same */}
                             <div className="flex-1 flex items-center gap-3">
                               <div
                                 className={`rounded-lg p-2 ${
@@ -470,7 +465,6 @@ export default function MakePair({
                 </div>
               </div>
 
-              {/* Right panel - controls and pairs */}
               <div className="w-80 flex flex-col min-h-0 bg-black/50">
                 <div className="flex-1 overflow-y-auto p-6 min-h-0">
                   <div className="space-y-6">
@@ -489,7 +483,6 @@ export default function MakePair({
                             }`}
                             onClick={() => setSelectedPairType(type.name)}
                           >
-                            {/* Pair type content stays the same */}
                             <div className="flex items-center justify-between mb-1">
                               <h4 className="font-medium text-white text-sm">
                                 {type.name}
@@ -523,14 +516,12 @@ export default function MakePair({
                       </div>
                     </div>
 
-                    {/* Selected files section */}
                     {selectedItems.length > 0 && (
                       <div>
                         <label className="block text-sm font-medium text-white mb-2">
                           Selected Files ({selectedItems.length})
                         </label>
                         <div className="space-y-2 max-h-32 overflow-y-auto border border-white/10 rounded-lg p-2">
-                          {/* Selected items content stays the same */}
                           {selectedItems.map((id) => {
                             const item = contentItems.find((i) => i.id === id);
                             return item ? (
@@ -584,7 +575,6 @@ export default function MakePair({
                       )}
                     </Button>
 
-                    {/* Created pairs section */}
                     {pairs.length > 0 && (
                       <div className="pt-4 border-t border-white/20">
                         <div className="flex items-center justify-between mb-3">

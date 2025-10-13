@@ -58,10 +58,8 @@ export default function AudioDropZone({
   };
 
   const getFileTypePrompt = () => {
-    // First check what files we already have
     const currentTypes = new Set(audioFiles.map((file) => file.fileType));
 
-    // For multi-file types, return specific prompts based on what's missing
     if (isMidiMode) {
       if (
         currentTypes.has(FILE_TYPES.AUDIO) &&
@@ -92,7 +90,6 @@ export default function AudioDropZone({
       return "Drop your audio (.wav), MIDI (.mid), and preset (.SerumPreset, .h2p) files";
     }
 
-    // For single file types
     if (isMidiOnly) {
       return "Drop your MIDI file (.mid)";
     }
@@ -244,7 +241,6 @@ export default function AudioDropZone({
     const input = document.createElement("input");
     input.type = "file";
 
-    // Set appropriate file types based on what's missing
     const currentTypes = new Set(audioFiles.map((file) => file.fileType));
 
     if (isMidiOnly) {
@@ -383,5 +379,3 @@ export default function AudioDropZone({
     </>
   );
 }
-
-

@@ -105,7 +105,6 @@ export default function ImportPage() {
         }
 
         const data = await response.json();
-        console.log("Construction kit created:", data);
 
         resetForm();
         return;

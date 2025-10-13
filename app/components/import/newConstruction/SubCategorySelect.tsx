@@ -35,7 +35,7 @@ export const SubcategorySelect = ({
   useEffect(() => {
     if (isOpen && containerRef.current && menuRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
-      const menuHeight = 320; // Fixed height for calculation
+      const menuHeight = 320;
       const viewportHeight = window.innerHeight;
 
       const spaceBelow = viewportHeight - rect.bottom;

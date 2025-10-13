@@ -198,7 +198,7 @@ export default function AudioFile({ file, onRemove }: AudioFileProps) {
       document.querySelectorAll("audio").forEach((audio) => audio.pause());
       isPlayingRef.current = true;
       setIsPlaying(true);
-      await playAudioBuffer(); // Await to ensure context is resumed
+      await playAudioBuffer();
       updateProgressRef.current!();
     }
   };
