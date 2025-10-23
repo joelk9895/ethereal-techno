@@ -1,104 +1,92 @@
 import FileDrop from "./FileDrop";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import MakePair from "./MakePair";
 import { InfoIcon, ArrowDown } from "lucide-react";
+import StepNavigation from "./StepNavigation";
+
+type Step = "upload" | "pair" | "metadata";
 
 export default function ConstructionKit({ id }: { id: string }) {
-  const [fileUploaded, setFileUploaded] = useState(false);
-  const [pairingDone, setPairingDone] = useState(false);
-  const [pulseEffect, setPulseEffect] = useState(true);
+  const [currentStep, setCurrentStep] = useState<Step>("upload");
+  const [fileCount, setFileCount] = useState(0);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setPulseEffect((prev) => !prev);
-    }, 2000);
 
-    return () => clearInterval(interval);
-  }, []);
+
+  const handleFileUploaded = () => {
+    setCurrentStep("pair");
+  };
+
+  const handlePairDone = () => {
+    setCurrentStep("metadata");
+  };
+
+  const handleBackToUpload = () => {
+    setCurrentStep("upload");
+  };
 
   return (
     <div>
-      {!fileUploaded && (
-        <FileDrop
-          id={id}
-          onFileUploaded={() => {
-            setFileUploaded(true);
-          }}
-        />
-      )}
+      <div
+        className={` ${
+          fileCount > 0 && (currentStep === "pair" || currentStep === "upload")
+            ? "justify-center items-center px-6 border-b border-white/10 fixed top-0 left-0 h-screen w-screen bg-black/80 backdrop-blur-sm z-50 flex flex-col"
+            : "justify-center items-center flex flex-col"
+        }`}
+      >
+        {(fileCount > 0 || currentStep === "pair") && (
+          <StepNavigation currentStep={currentStep} constructionKitId={id} />
+        )}
+        {currentStep === "upload" && (
+          <FileDrop
+            id={id}
+            onFileUploaded={handleFileUploaded}
+            onFileCountChange={(count) => {
+              setFileCount(count);
+            }}
+          />
+        )}
 
-      {fileUploaded && !pairingDone && (
-        <MakePair
-          id={id}
-          handlePairDone={() => {
-            setPairingDone(true);
-          }}
-        />
-      )}
+        {currentStep === "pair" && (
+          <MakePair
+            id={id}
+            handlePairDone={handlePairDone}
+            onBack={handleBackToUpload}
+          />
+        )}
 
-      {fileUploaded && pairingDone && (
-        <div className="flex justify-center items-center h-96">
-          <div
-            role="alert"
-            aria-live="polite"
-            className={`bg-gradient-to-r from-black via-gray-900 to-black 
-                      border-l-4 border-primary rounded-lg shadow-xl 
-                      max-w-lg w-full overflow-hidden ${
-                        pulseEffect ? "shadow-primary/20" : ""
-                      } transition-all duration-700`}
-          >
-            <div className="relative">
-              <div
-                className={`absolute inset-0 bg-primary/5 ${
-                  pulseEffect ? "opacity-30" : "opacity-10"
-                } transition-opacity duration-700`}
-              ></div>
-
-              <div className="flex p-5 relative z-10">
-                <div
-                  className={`flex-shrink-0 flex items-center justify-center w-12 h-12 
-                              rounded-full bg-primary/10 text-primary mr-4 ${
-                                pulseEffect ? "animate-pulse" : ""
-                              }`}
-                >
-                  <InfoIcon size={24} />
-                </div>
-
-                <div className="flex-1">
-                  <div className="flex justify-between items-start">
-                    <h3 className="text-xl font-bold text-white mb-1">
-                      Almost Done!
-                    </h3>
+        {currentStep === "metadata" && (
+          <div className="flex justify-center items-center">
+            <div
+              role="alert"
+              aria-live="assertive"
+              className="bg-black/90 border border-white/30 rounded-2xl max-w-4xl w-full overflow-hidden backdrop-blur-sm"
+            >
+              <div className="p-8">
+                <div className="flex items-start gap-6 mb-6">
+                  <div className="flex-shrink-0 w-14 h-14 rounded-lg bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-center">
+                    <InfoIcon size={24} className="text-primary" />
                   </div>
-
-                  <p className="text-white/70 mb-3">
-                    Your kit is ready. Complete the metadata to make it easier
-                    to find and use.
-                  </p>
-
-                  <button
-                    className={`group flex items-center gap-1.5 px-4 py-2 
-                             bg-gradient-to-r from-primary/80 to-primary
-                             text-black font-medium rounded-md
-                             hover:from-primary hover:to-primary/90
-                             transition-all duration-300
-                             ${
-                               pulseEffect ? "shadow-lg shadow-primary/20" : ""
-                             }`}
-                  >
-                    Complete Kit Setup Below
-                    <ArrowDown className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                  </button>
+                  <div className="flex-1">
+                    <h3 className="text-2xl font-medium font-main uppercase tracking-wider text-white mb-2">
+                      Metadata Required
+                    </h3>
+                    <p className="text-white/60 text-base leading-relaxed">
+                      Please complete all required fields to finish your
+                      construction kit creation. This information helps organize
+                      and categorize your content properly.
+                    </p>
+                  </div>
                 </div>
-              </div>
 
-              <div className="h-1 bg-gradient-to-r from-primary/50 via-primary to-primary/50 w-full relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-slide"></div>
+                <button className="w-full px-6 py-3 text-sm font-medium tracking-wide transition-all duration-200 border border-primary/20 bg-primary text-black hover:bg-primary/90 rounded-lg flex items-center justify-center gap-2">
+                  Complete Setup
+                  <ArrowDown className="w-4 h-4" />
+                </button>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

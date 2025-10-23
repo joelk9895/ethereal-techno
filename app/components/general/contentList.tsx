@@ -116,6 +116,7 @@ export default function ContentList({
                   try {
                     return typeof p === "string" ? JSON.parse(p) : p;
                   } catch (e) {
+                    console.error("Error parsing processing data:", e);
                     return p;
                   }
                 })
@@ -132,6 +133,7 @@ export default function ContentList({
                   try {
                     return typeof s === "string" ? JSON.parse(s) : s;
                   } catch (e) {
+                    console.error("Error parsing sound design data:", e);
                     return s;
                   }
                 })

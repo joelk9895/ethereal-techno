@@ -12,6 +12,7 @@ import {
   AlertCircle,
   Plus,
   Trash2,
+  ArrowLeft,
 } from "lucide-react";
 
 type ContentItem = {
@@ -85,14 +86,15 @@ export default function MakePair({
     },
   ],
   handlePairDone = () => {},
+  onBack,
 }: {
   id: string;
   pairTypes?: PairType[];
   handlePairDone?: () => void;
+  onBack?: () => void;
 }) {
   const [loading, setLoading] = useState(true);
-  const [constructionKitData, setConstructionKitData] =
-    useState<ConstructionKitData | null>(null);
+
   const [contentItems, setContentItems] = useState<ContentItem[]>([]);
   const [pairs, setPairs] = useState<Pair[]>([]);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -109,7 +111,6 @@ export default function MakePair({
     )
       .then((res) => res.json())
       .then((data) => {
-        setConstructionKitData(data);
         if (data.contents) {
           const processedContents = data.contents.map(
             (item: {
@@ -260,7 +261,7 @@ export default function MakePair({
         throw new Error("Failed to create pair");
       }
 
-      const result = await response.json();
+      await response.json();
 
       const newPair = {
         id: `pair-${Date.now()}`,
@@ -321,8 +322,8 @@ export default function MakePair({
   }, [selectedPairType]);
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-black border border-white/20 rounded-xl shadow-2xl max-w-6xl w-full h-[90vh] flex flex-col overflow-hidden">
+    <div className="">
+      <div className="bg-black w-[95vw] border border-white/20  shadow-2xl  h-[70vh] flex flex-col overflow-hidden rounded-2xl">
         {loading ? (
           <div className="p-12 flex items-center justify-center h-full">
             <Loading />
@@ -330,14 +331,24 @@ export default function MakePair({
         ) : (
           <div className="flex flex-col h-full">
             <div className="px-6 py-4 border-b border-white/20">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h2 className="text-xl font-main uppercase font-semibold text-white">
-                    Create Sound Pairs
-                  </h2>
-                  <p className="text-sm text-white/70 mt-1">
-                    Group related files together to create logical sound pairs
-                  </p>
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-4">
+                  {onBack && (
+                    <button
+                      onClick={onBack}
+                      className="flex items-center gap-2 rounded-full bg-white/10 p-2 text-white/70 hover:text-white transition-colors"
+                    >
+                      <ArrowLeft className="w-4 h-4" />
+                    </button>
+                  )}
+                  <div>
+                    <h2 className="text-2xl font-main uppercase tracking-wider text-white">
+                      Create Sound Pairs
+                    </h2>
+                    <p className="text-sm text-white/70 mt-1">
+                      Group related files together to create logical sound pairs
+                    </p>
+                  </div>
                 </div>
                 <Button
                   variant="default"
@@ -347,23 +358,6 @@ export default function MakePair({
                   Continue
                 </Button>
               </div>
-
-              {constructionKitData && (
-                <div className="mt-4 p-3 bg-white/5 rounded-lg">
-                  <h3 className="font-medium text-white text-sm">
-                    {constructionKitData.kitName || "Untitled Kit"}
-                  </h3>
-                  <div className="flex gap-6 mt-1 text-xs text-white/70">
-                    <span>
-                      BPM: {constructionKitData.metadata?.bpm || "N/A"}
-                    </span>
-                    <span>
-                      Key: {constructionKitData.metadata?.key || "N/A"}
-                    </span>
-                    <span>Files: {contentItems.length}</span>
-                  </div>
-                </div>
-              )}
             </div>
 
             <div className="flex flex-1 min-h-0">

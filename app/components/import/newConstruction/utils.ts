@@ -37,6 +37,21 @@ export const determineFileType = (
   return "Other";
 };
 
+export const determineMimeType = (contentType: string): string => {
+  switch (contentType.toLowerCase()) {
+    case "midi":
+      return "audio/midi";
+    case "preset":
+      return "application/octet-stream";
+    case "one-shot":
+    case "sample loop":
+    case "full loop":
+      return "audio/wav";
+    default:
+      return "application/octet-stream";
+  }
+};
+
 export const generatePairId = (
   wav: File,
   midi: File,
@@ -66,6 +81,8 @@ export const getCategoryTypeOptions = (
     case "One-Shot":
       return transformGroup(oneShotGroup);
     case "Sample Loop":
+      return transformGroup(loopGroups);
+    case "Full Loop":
       return transformGroup(loopGroups);
     case "Preset":
       return transformGroup(presetGroup);

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef} from "react";
 import { CustomSelectProps, SelectOption } from "./types";
 import { ChevronDown } from "lucide-react";
 

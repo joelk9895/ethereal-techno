@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, DragEvent } from "react";
+import { useState, useEffect, DragEvent } from "react";
 import { Upload } from "lucide-react";
 import { AudioFile, AudioDropZoneProps, FILE_TYPES } from "./types";
 import { determineFileType } from "./utils";
@@ -238,6 +238,9 @@ export default function AudioDropZone({
   };
 
   const handleBrowse = () => {
+    if (type === "") {
+      return;
+    }
     const input = document.createElement("input");
     input.type = "file";
 
@@ -312,70 +315,85 @@ export default function AudioDropZone({
 
   return (
     <>
-      <div className="h-fit transition-all bg-black text-white p-6">
-        <div className="max-w-2xl mx-auto space-y-6">
-          {(isMidiMode || isPreset) && (
-            <RequiredFiles
-              title={`Required Files for ${type}`}
-              requiredTypes={getRequiredFileTypes() || []}
-              uploadedFiles={audioFiles}
-            />
-          )}
+      {type !== "" && (
+        <div className="h-fit transition-all bg-black text-white p-6">
+          <div className="max-w-2xl mx-auto space-y-6">
+            {(isMidiMode || isPreset) && (
+              <RequiredFiles
+                title={`Required Files for ${type}`}
+                requiredTypes={getRequiredFileTypes() || []}
+                uploadedFiles={audioFiles}
+              />
+            )}
 
-          <div
-            className={`border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-300 cursor-pointer ${
-              isDragging
-                ? "border-primary bg-primary/10"
-                : "border-white/20 hover:border-white/40"
-            }`}
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onClick={handleBrowse}
-          >
-            <div className="space-y-4">
-              <div className="mx-auto w-16 h-16 bg-white/10 rounded-full flex items-center justify-center">
-                <Upload className="w-8 h-8 text-white/60" />
-              </div>
-              <div>
-                <p className="text-lg font-medium text-white mb-2">
-                  {getFileTypePrompt()}
-                </p>
-                <p className="text-sm text-white/60">
-                  or click to browse{" "}
-                  {audioFiles.length > 0 && getMissingFileTypes().length > 0
-                    ? "the missing files"
-                    : "files"}
-                </p>
+            <div
+              className={`border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-300 cursor-pointer ${
+                isDragging
+                  ? "border-primary bg-primary/10"
+                  : "border-white/20 hover:border-white/40"
+              }`}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onClick={handleBrowse}
+            >
+              <div className="space-y-4">
+                <div className="mx-auto w-16 h-16 bg-white/10 rounded-full flex items-center justify-center">
+                  <Upload className="w-8 h-8 text-white/60" />
+                </div>
+                <div>
+                  <p className="text-lg font-medium text-white mb-2">
+                    {getFileTypePrompt()}
+                  </p>
+                  <p className="text-sm text-white/60">
+                    or click to browse{" "}
+                    {audioFiles.length > 0 && getMissingFileTypes().length > 0
+                      ? "the missing files"
+                      : "files"}
+                  </p>
+                </div>
               </div>
             </div>
+
+            {audioFiles.length > 0 && (
+              <div className="space-y-4">
+                <h3 className="text-md font-medium text-white">
+                  Files {getFileCountText()}
+                </h3>
+                <div className="space-y-3">
+                  {audioFiles.map((file) => (
+                    <AudioFileComponent
+                      key={file.id}
+                      file={file}
+                      onRemove={() => removeAudioFile(file.id)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {(isMidiMode || isPreset) && audioFiles.length > 0 && (
+              <StatusMessage
+                isComplete={hasAllRequiredFiles()}
+                missingTypes={getMissingFileTypes()}
+              />
+            )}
           </div>
-
-          {audioFiles.length > 0 && (
-            <div className="space-y-4">
-              <h3 className="text-md font-medium text-white">
-                Files {getFileCountText()}
-              </h3>
-              <div className="space-y-3">
-                {audioFiles.map((file) => (
-                  <AudioFileComponent
-                    key={file.id}
-                    file={file}
-                    onRemove={() => removeAudioFile(file.id)}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {(isMidiMode || isPreset) && audioFiles.length > 0 && (
-            <StatusMessage
-              isComplete={hasAllRequiredFiles()}
-              missingTypes={getMissingFileTypes()}
-            />
-          )}
         </div>
-      </div>
+      )}
+      {type === "" && (
+        <div className="p-12 text-center border-2 border-dashed rounded-2xl border-white/10 max-w-2xl mx-auto opacity-50">
+          <div className="mx-auto w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4">
+            <Upload className="w-8 h-8 text-white/30" />
+          </div>
+          <p className="text-center text-lg font-medium text-white mb-2">
+            No Content Type Selected
+          </p>
+          <p className="text-center text-sm text-white/40">
+            Please select a content type above to upload files.
+          </p>
+        </div>
+      )}
     </>
   );
 }

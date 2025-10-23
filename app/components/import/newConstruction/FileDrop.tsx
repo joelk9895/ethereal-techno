@@ -1,4 +1,4 @@
-import React, { useState, JSX } from "react";
+import React, { useState, JSX, useEffect } from "react";
 import {
   Upload,
   Music,
@@ -15,15 +15,53 @@ import {
   determineFileType,
   getCategoryTypeOptions,
   updateFileData,
+  determineMimeType,
 } from "./utils";
 import { FileObject, FileDataMap, FileDataItem } from "./types";
+
 type ExtendedFile = File & FileObject;
 import { SubcategorySelect } from "./SubCategorySelect";
 import AudioFile from "../audioImport/AudioFile";
+import Loading from "../../general/loading";
 
-const contentTypes = ["One-Shot", "Sample Loop"];
+const contentTypes = ["One-Shot", "Sample Loop", "Full Loop"];
 
 type FileIconType = "wav" | "MIDI" | "Preset" | string;
+
+// Define types for API responses
+interface ContentItem {
+  id: string;
+  contentType: string;
+  contentName: string;
+  soundGroup: string;
+  subGroup: string;
+}
+
+interface ConstructionKitData {
+  contents: ContentItem[];
+}
+
+interface UploadData {
+  presignedUrl: string;
+  key: string;
+  url: string;
+}
+
+interface UploadResponse {
+  uploads: UploadData[];
+}
+
+interface AudioFileType {
+  id: string;
+  file: File;
+  url: string;
+  fileType: string;
+  isPlaying: boolean;
+  duration: string;
+  currentTime: string;
+  audioRef: HTMLAudioElement | null;
+  contentType: string;
+}
 
 const getFileIcon = (fileType: FileIconType): JSX.Element => {
   switch (fileType) {
@@ -37,12 +75,15 @@ const getFileIcon = (fileType: FileIconType): JSX.Element => {
       return <Upload className="w-5 h-5 text-primary/70" />;
   }
 };
+
 export default function FileDrop({
   id,
   onFileUploaded,
+  onFileCountChange,
 }: {
   id: string;
   onFileUploaded: () => void;
+  onFileCountChange: (count: number) => void;
 }) {
   const [isDragging, setIsDragging] = useState(false);
   const [files, setFiles] = useState<FileObject[]>([]);
@@ -53,6 +94,100 @@ export default function FileDrop({
     {}
   );
   const [overallProgress, setOverallProgress] = useState(0);
+  const [previewAudioFile, setPreviewAudioFile] =
+    useState<AudioFileType | null>(null);
+  const [loadingExisting, setLoadingExisting] = useState(false);
+
+  useEffect(() => {
+    if (previewIndex !== null && files[previewIndex]) {
+      const file = files[previewIndex];
+      const audioFile: AudioFileType = {
+        id: `preview-${previewIndex}`,
+        file: file as File,
+        url: URL.createObjectURL(file as File),
+        fileType: "Audio",
+        isPlaying: false,
+        duration: "0:00",
+        currentTime: "0:00",
+        audioRef: null,
+        contentType: fileData[previewIndex]?.category || "Sample Loop",
+      };
+      setPreviewAudioFile(audioFile);
+    } else {
+      setPreviewAudioFile(null);
+    }
+  }, [previewIndex, files, fileData]);
+
+  useEffect(() => {
+    return () => {
+      if (previewAudioFile?.url) {
+        URL.revokeObjectURL(previewAudioFile.url);
+      }
+    };
+  }, [previewAudioFile]);
+
+  useEffect(() => {
+    if (onFileCountChange) {
+      onFileCountChange(files.length);
+    }
+  }, [files.length, onFileCountChange]);
+
+  useEffect(() => {
+    setLoadingExisting(true);
+    const fetchExistingContents = async () => {
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/import/constructionKit/${id}`
+        );
+        if (response.ok) {
+          const data: ConstructionKitData = await response.json();
+          if (data.contents && data.contents.length > 0) {
+            const existingFiles: FileObject[] = data.contents.map(
+              (content: ContentItem) => ({
+                id: `existing-${content.id}`,
+                name: content.contentName,
+                size: 0,
+                type: determineMimeType(content.contentType),
+                isExisting: true,
+                contentId: content.id,
+                lastModified: Date.now(),
+              })
+            );
+
+            setFiles(existingFiles);
+
+            const newData: Record<number, FileDataItem> = {};
+            data.contents.forEach((content: ContentItem, index: number) => {
+              const soundGroup = content.soundGroup || "Default";
+              const subGroup = content.subGroup || "Default";
+              const typeValue =
+                content.contentType === "MIDI"
+                  ? soundGroup
+                  : `${soundGroup} > ${subGroup}`;
+
+              newData[index] = {
+                category: content.contentType || "",
+                type: typeValue,
+                isExisting: true,
+                originalCategory: content.contentType || "",
+                originalType: typeValue,
+                contentId: content.id,
+              };
+            });
+
+            setFileData(newData);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching existing contents:", error);
+      } finally {
+        setLoadingExisting(false);
+      }
+    };
+
+    fetchExistingContents();
+  }, [id]);
+
   const handleDrop = (e: React.DragEvent<HTMLDivElement>): void => {
     e.preventDefault();
     setIsDragging(false);
@@ -69,6 +204,7 @@ export default function FileDrop({
     e.preventDefault();
     setIsDragging(false);
   };
+
   const addFiles = (newFiles: (FileObject | File)[]): void => {
     if (!newFiles || newFiles.length === 0) return;
 
@@ -108,7 +244,12 @@ export default function FileDrop({
         category = "Preset";
       }
 
-      newData[currentLength + index] = { category, type: "" };
+      newData[currentLength + index] = {
+        category,
+        type: "",
+        originalCategory: category,
+        originalType: "",
+      };
     });
     setFileData(newData);
   };
@@ -169,6 +310,70 @@ export default function FileDrop({
       setUploadProgress({});
       setOverallProgress(0);
 
+      const newFilesToUpload = files.filter(
+        (_, index) => !fileData[index]?.isExisting
+      );
+      const newFilesIndices = files
+        .map((_, index) => index)
+        .filter((index) => !fileData[index]?.isExisting);
+
+      const modifiedExistingFiles = files.filter((_, index) => {
+        const data = fileData[index];
+        if (!data?.isExisting) return false;
+
+        const currentCategory = data.category || "";
+        const currentType = data.type || "";
+        const originalCategory = data.originalCategory || "";
+        const originalType = data.originalType || "";
+
+        return (
+          currentCategory !== originalCategory || currentType !== originalType
+        );
+      });
+
+      const updatePromises = modifiedExistingFiles.map(async (file) => {
+        const fileIndex = files.findIndex((f) => f === file);
+        const data = fileData[fileIndex];
+
+        if (!data?.contentId || !data.category || !data.type) {
+          throw new Error(`Invalid data for file ${file.name}`);
+        }
+
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/import/constructionKit/${id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            mode: "cors",
+            credentials: "same-origin",
+            body: JSON.stringify({
+              contentId: data.contentId,
+              category: data.category,
+              type: data.type,
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Failed to update ${file.name}: ${errorText}`);
+        }
+
+        return file.name;
+      });
+
+      await Promise.all(updatePromises);
+
+      if (newFilesToUpload.length === 0) {
+        if (modifiedExistingFiles.length > 0) {
+          alert(`Successfully updated ${modifiedExistingFiles.length} file(s)`);
+        }
+        onFileUploaded();
+        return;
+      }
+
       const response = await fetch(
         process.env.NEXT_PUBLIC_API_BASE_URL + "/import/upload/" + id,
         {
@@ -179,7 +384,7 @@ export default function FileDrop({
           mode: "cors",
           credentials: "same-origin",
           body: JSON.stringify({
-            files: files.map((file) => ({
+            files: newFilesToUpload.map((file) => ({
               filename: file.name,
               contentType: file.type || "application/octet-stream",
             })),
@@ -191,17 +396,13 @@ export default function FileDrop({
         throw new Error("Failed to get upload URLs");
       }
 
-      const data = await response.json();
-
-      interface UploadData {
-        presignedUrl: string;
-        key: string;
-        url: string;
-      }
+      const data: UploadResponse = await response.json();
 
       const uploadPromises = data.uploads.map(
-        async (uploadData: UploadData, index: number) => {
-          const file = files[index];
+        async (uploadData: UploadData, uploadIndex: number) => {
+          const fileIndex = newFilesIndices[uploadIndex];
+          const file = files[fileIndex];
+
           await new Promise<void>((resolve, reject) => {
             const xhr = new XMLHttpRequest();
 
@@ -213,7 +414,7 @@ export default function FileDrop({
                 setUploadProgress((prev) => {
                   const newProgress = {
                     ...prev,
-                    [index]: percentComplete,
+                    [fileIndex]: percentComplete,
                   };
 
                   const totalProgress = Object.values(newProgress);
@@ -221,7 +422,7 @@ export default function FileDrop({
 
                   if (totalProgress.length > 0) {
                     const sum = totalProgress.reduce((a, b) => a + b, 0);
-                    averageProgress = sum / files.length;
+                    averageProgress = sum / newFilesToUpload.length;
                   }
 
                   setOverallProgress(Math.round(averageProgress));
@@ -258,7 +459,6 @@ export default function FileDrop({
               id,
             {
               method: "POST",
-
               headers: {
                 "Content-Type": "application/json",
               },
@@ -267,8 +467,8 @@ export default function FileDrop({
               body: JSON.stringify({
                 id,
                 fileName: file.name,
-                category: fileData[index]?.category,
-                type: fileData[index]?.type,
+                category: fileData[fileIndex]?.category,
+                type: fileData[fileIndex]?.type,
                 key: uploadData.key,
                 url: uploadData.url,
               }),
@@ -281,9 +481,19 @@ export default function FileDrop({
 
       const uploadedFiles = await Promise.all(uploadPromises);
 
-      alert(`Successfully uploaded ${uploadedFiles.length} files`);
-      setFiles([]);
-      setFileData({});
+      const remainingFiles = files.filter(
+        (_, index) => fileData[index]?.isExisting
+      );
+      setFiles(remainingFiles);
+
+      const remainingData: Record<number, FileDataItem> = {};
+      remainingFiles.forEach((_, newIndex) => {
+        const originalIndex = files.findIndex(
+          (f) => f === remainingFiles[newIndex]
+        );
+        remainingData[newIndex] = fileData[originalIndex];
+      });
+      setFileData(remainingData);
     } catch (error) {
       console.error("Upload failed:", error);
       alert("Failed to upload files. Please try again.");
@@ -297,326 +507,370 @@ export default function FileDrop({
 
   return (
     <>
-      <div className="h-fit transition-all bg-black text-white p-6">
-        <div className="max-w-2xl mx-auto space-y-6">
-          <div
-            className={`border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-300 cursor-pointer ${
-              isDragging
-                ? "border-blue-400 bg-blue-400/10"
-                : "border-white/20 hover:border-white/40"
-            }`}
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onClick={handleBrowse}
-          >
-            <div className="space-y-4">
-              <div className="mx-auto w-16 h-16 bg-white/10 rounded-full flex items-center justify-center">
-                <Upload className="w-8 h-8 text-white/60" />
-              </div>
-              <div>
-                <p className="text-lg font-medium text-white mb-2">
-                  Drop your audio files, MIDI or presets here
-                </p>
-                <p className="text-sm text-white/60">
-                  Supports WAV, MIDI, Serum and H2P presets • Click to browse
-                </p>
-              </div>
-            </div>
-          </div>
+      {loadingExisting ? (
+        <div className="h-screen w-full fixed inset-0 transition-all bg-black/90 backdrop-blur-md text-white z-50">
+          <Loading />
         </div>
-      </div>
-      {files.length > 0 && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-6">
-          <div className="bg-black/90 border border-white/20 rounded-xl w-full max-w-6xl min-h-[60vh] max-h-[90vh] overflow-hidden">
-            <div className="p-6 border-b border-white/10">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-medium text-white mb-1">
-                    Organize Your Files ({files.length})
-                  </h2>
-                  <p className="text-white/60">
-                    Choose category and type for each file
-                  </p>
-                </div>
-                <div className="flex gap-3">
-                  <button
-                    onClick={handleBrowse}
-                    disabled={uploading}
-                    className="px-4 py-2 text-sm bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-all text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Add More
-                  </button>
-                  <button
-                    disabled={!allFilesOrganized || uploading}
-                    className={`px-6 py-2 rounded-lg flex items-center gap-2 transition-all ${
-                      allFilesOrganized && !uploading
-                        ? "bg-white text-black hover:bg-white/90"
-                        : "bg-white/10 text-white/50 cursor-not-allowed"
-                    }`}
-                    onClick={handleUploadAllFiles}
-                  >
-                    {uploading ? (
-                      <>
-                        <Loader2 size={16} className="animate-spin" />{" "}
-                        Uploading...
-                      </>
-                    ) : (
-                      <>
-                        Continue <ArrowRight size={16} />
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {uploading && (
-                <div className="mt-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-white/70">
-                      Uploading files...
-                    </span>
-                    <span className="text-sm text-white/70">
-                      {overallProgress}%
-                    </span>
-                  </div>
-                  <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-blue-500 transition-all duration-300"
-                      style={{ width: `${overallProgress}%` }}
-                    ></div>
+      ) : (
+        <>
+          <div className="h-fit w-full transition-all text-white">
+            <div className="max-w-7xl mx-auto">
+              {files.length === 0 && (
+                <div
+                  className={`border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-300 cursor-pointer ${
+                    isDragging
+                      ? "border-blue-400 bg-blue-400/10"
+                      : "border-white/20 hover:border-white/40"
+                  }`}
+                  onDrop={handleDrop}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onClick={handleBrowse}
+                >
+                  <div className="space-y-4">
+                    <div className="mx-auto w-16 h-16 bg-white/10 rounded-full flex items-center justify-center">
+                      <Upload className="w-8 h-8 text-white/60" />
+                    </div>
+                    <div>
+                      <p className="text-lg font-medium text-white mb-2">
+                        Drop your audio files, MIDI or presets here
+                      </p>
+                      <p className="text-sm text-white/60">
+                        Supports WAV, MIDI, Serum and H2P presets • Click to
+                        browse
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}
             </div>
+          </div>
+          {files.length > 0 && (
+            <div className=" bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center w-full">
+              <div className="bg-black/90 border border-white/20 rounded-xl w-full min-h-[60vh] max-h-[90vh] overflow-hidden">
+                <div className="p-6 border-b border-white/10">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-2xl font-medium font-main uppercase tracking-wider text-white mb-1">
+                        Organize Your Files ({files.length})
+                      </h2>
+                      <p className="text-sm text-white/70 mt-1">
+                        Choose category and type for each file
+                      </p>
+                    </div>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={handleBrowse}
+                        disabled={uploading}
+                        className="px-4 py-2 text-sm bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-all text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Add More
+                      </button>
+                      <button
+                        disabled={!allFilesOrganized || uploading}
+                        className={`px-6 py-2 rounded-lg flex items-center gap-2 transition-all ${
+                          allFilesOrganized && !uploading
+                            ? "bg-white text-black hover:bg-white/90"
+                            : "bg-white/10 text-white/50 cursor-not-allowed"
+                        }`}
+                        onClick={handleUploadAllFiles}
+                      >
+                        {uploading ? (
+                          <>
+                            <Loader2 size={16} className="animate-spin" />{" "}
+                            Uploading...
+                          </>
+                        ) : (
+                          <>
+                            Continue <ArrowRight size={16} />
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
 
-            <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)] min-h-[60vh]">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {files.map((file, index) => {
-                  const fileType = determineFileType(file);
-                  const data = fileData[index] || { category: "", type: "" };
-                  const isComplete = data.category && data.type;
-                  const categorySelected = Boolean(data.category);
-                  const fileProgress = uploadProgress[index] || 0;
-
-                  const getMidiTypeOptions = () => {
-                    return midiGroups.map((item) => ({
-                      value: item,
-                      label: item,
-                    }));
-                  };
-
-                  const midiTypeOptions = getMidiTypeOptions();
-                  const categoryTypeOptions = getCategoryTypeOptions(
-                    categorySelected,
-                    data
-                  );
-                  const isMidiCategory = data.category === "MIDI";
-
-                  return (
-                    <div
-                      key={`${file.name}-${index}`}
-                      className={`bg-white/[0.03] rounded-lg p-5 border transition-all ${
-                        isComplete
-                          ? "border-green-500/30 shadow-[0_0_10px_rgba(34,197,94,0.1)]"
-                          : "border-white/10"
-                      }`}
-                    >
-                      <div className="flex items-start gap-4 mb-5">
+                  {uploading && (
+                    <div className="mt-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm text-white/70">
+                          Uploading files...
+                        </span>
+                        <span className="text-sm text-white/70">
+                          {overallProgress}%
+                        </span>
+                      </div>
+                      <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
                         <div
-                          className={`w-12 h-12 rounded-lg flex items-center justify-center transition-all ${
+                          className="h-full bg-blue-500 transition-all duration-300"
+                          style={{ width: `${overallProgress}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)] min-h-[60vh]">
+                  <div className="space-y-3">
+                    {files.map((file, index) => {
+                      const fileType = determineFileType(file);
+                      const data = fileData[index] || {
+                        category: "",
+                        type: "",
+                      };
+
+                      // Add validation for data integrity
+                      const category = data.category || "";
+                      const type = data.type || "";
+                      const originalCategory = data.originalCategory || "";
+                      const originalType = data.originalType || "";
+
+                      const isComplete = category && type;
+                      const categorySelected = Boolean(category);
+                      const fileProgress = uploadProgress[index] || 0;
+
+                      const getMidiTypeOptions = () => {
+                        return midiGroups.map((item) => ({
+                          value: item,
+                          label: item,
+                        }));
+                      };
+
+                      const midiTypeOptions = getMidiTypeOptions();
+                      const categoryTypeOptions = getCategoryTypeOptions(
+                        categorySelected,
+                        data
+                      );
+                      const isMidiFile = fileType === "MIDI";
+                      const isPresetFile = fileType === "Preset";
+
+                      return (
+                        <div
+                          key={`${file.name}-${index}`}
+                          className={`bg-white/[0.03] rounded-lg p-4 border transition-all ${
                             isComplete
-                              ? "bg-green-500/10 border border-green-500/30"
-                              : "bg-white/5 border border-white/10"
+                              ? "border-green-500/30 shadow-[0_0_10px_rgba(34,197,94,0.1)]"
+                              : "border-white/10"
                           }`}
                         >
-                          {getFileIcon(fileType as string)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-4">
+                            {/* File Icon */}
+                            <div
+                              className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all flex-shrink-0 ${
+                                isComplete
+                                  ? "bg-green-500/10 border border-green-500/30"
+                                  : "bg-white/5 border border-white/10"
+                              }`}
+                            >
+                              {getFileIcon(fileType as string)}
+                            </div>
+
+                            {/* File Info */}
+                            <div className="flex-1 min-w-0">
                               <p
-                                className="font-medium truncate text-sm text-white"
+                                className="font-medium truncate text-sm text-white leading-tight"
                                 title={file.name}
                               >
                                 {file.name}
                               </p>
-                              <p className="text-xs text-white/50 mt-1">
+                              <p className="text-xs text-white/50">
                                 {String(fileType).toUpperCase()} •{" "}
                                 {Math.round((file.size || 0) / 1024)} KB
                               </p>
                             </div>
-                            <div className="flex items-center gap-3 flex-shrink-0">
-                              {(() => {
-                                const audioFileType = determineFileType(file);
-                                if (
-                                  audioFileType === "wav" ||
-                                  audioFileType === "mp3" ||
-                                  audioFileType === "aiff"
-                                ) {
-                                  return (
-                                    <button
-                                      onClick={() => {
-                                        setPreviewIndex(
-                                          index === previewIndex ? null : index
-                                        );
-                                      }}
-                                      className="text-white/60 hover:text-white transition-colors text-xs px-2 py-1 rounded bg-white/5 hover:bg-white/10"
-                                    >
-                                      Preview
-                                    </button>
-                                  );
-                                }
-                                return null;
-                              })()}
-                              <button
-                                onClick={() => removeFile(index)}
-                                className="text-white/40 hover:text-white/80 p-1 rounded-full hover:bg-white/5 transition-colors"
-                                title="Remove file"
-                              >
-                                <X size={14} />
-                              </button>
+
+                            {/* Category Section - Only show for audio files */}
+                            {!isMidiFile && !isPresetFile && (
+                              <div className="w-48 flex-shrink-0">
+                                <label className="block text-xs font-medium text-white/70 mb-1">
+                                  Category
+                                </label>
+                                <CustomSelect
+                                  placeholder="Choose category"
+                                  options={contentTypes.map((ct) => ({
+                                    value: ct,
+                                    label: ct,
+                                  }))}
+                                  value={data.category}
+                                  onChange={(value: string) =>
+                                    updateFileData(
+                                      index,
+                                      "category",
+                                      value,
+                                      setFileData
+                                    )
+                                  }
+                                />
+                              </div>
+                            )}
+
+                            {/* Type Section */}
+                            <div className="w-96 flex-shrink-0">
+                              <label className="block text-xs font-medium text-white/70 mb-1">
+                                {isMidiFile
+                                  ? "MIDI Type"
+                                  : isPresetFile
+                                  ? "Preset Type"
+                                  : "Type"}
+                              </label>
+
+                              {isMidiFile ? (
+                                // MIDI files: Simple single selection
+                                <CustomSelect
+                                  placeholder="Choose MIDI type"
+                                  options={midiTypeOptions}
+                                  value={data.type}
+                                  onChange={(value: string) =>
+                                    updateFileData(
+                                      index,
+                                      "type",
+                                      value,
+                                      setFileData
+                                    )
+                                  }
+                                />
+                              ) : (
+                                <SubcategorySelect
+                                  categories={categoryTypeOptions}
+                                  placeholder={
+                                    categorySelected
+                                      ? "Choose type"
+                                      : "Select category first"
+                                  }
+                                  disabled={!categorySelected}
+                                  selectedValue={data.type}
+                                  onSelect={(
+                                    _,
+                                    subcategoryId,
+                                    displayValue
+                                  ) => {
+                                    updateFileData(
+                                      index,
+                                      "type",
+                                      displayValue,
+                                      setFileData
+                                    );
+                                  }}
+                                  className="w-full"
+                                />
+                              )}
+                            </div>
+
+                            {/* Status and Actions */}
+                            <div className="flex flex-col justify-center items-center gap-3 flex-shrink-0">
+                              {!data.isExisting && (
+                                <button
+                                  onClick={() => removeFile(index)}
+                                  disabled={uploading}
+                                  className="text-white/40 hover:text-white transition-colors p-1 -m-1"
+                                  title="Remove file"
+                                >
+                                  <X size={16} />
+                                </button>
+                              )}
+                              {isComplete && !data.isExisting && (
+                                <div className="flex items-center text-green-400 text-xs font-medium">
+                                  <Check className="w-3.5 h-3.5 mr-1" />
+                                  Ready
+                                </div>
+                              )}
+                              {isComplete &&
+                                data.isExisting &&
+                                (category !== originalCategory ||
+                                  type !== originalType) && (
+                                  <div className="flex items-center text-yellow-400 text-xs font-medium">
+                                    <Check className="w-3.5 h-3.5 mr-1" />
+                                    Modified
+                                  </div>
+                                )}
+                              {isComplete &&
+                                data.isExisting &&
+                                category === originalCategory &&
+                                type === originalType && (
+                                  <div className="flex items-center text-blue-400 text-xs font-medium">
+                                    <Check className="w-3.5 h-3.5 mr-1" />
+                                    Imported
+                                  </div>
+                                )}
+
+                              <div className="flex flex-col items-center gap-2">
+                                {(() => {
+                                  const audioFileType = determineFileType(file);
+                                  if (
+                                    audioFileType === "wav" ||
+                                    audioFileType === "mp3" ||
+                                    audioFileType === "aiff"
+                                  ) {
+                                    return (
+                                      <button
+                                        onClick={() => {
+                                          setPreviewIndex(
+                                            index === previewIndex
+                                              ? null
+                                              : index
+                                          );
+                                        }}
+                                        className="text-white/60 hover:text-white transition-colors text-xs px-2 py-1 rounded bg-white/5 hover:bg-white/10"
+                                      >
+                                        Preview
+                                      </button>
+                                    );
+                                  }
+                                  return null;
+                                })()}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </div>
 
-                      <div className="space-y-4">
-                        {fileType === "MIDI" || fileType === "Preset" ? null : (
-                          <div>
-                            <label className="block text-xs font-medium text-white/70 mb-1.5">
-                              Category
-                            </label>
-                            <CustomSelect
-                              placeholder="Choose category"
-                              options={contentTypes.map((ct) => ({
-                                value: ct,
-                                label: ct,
-                              }))}
-                              value={data.category}
-                              onChange={(value: string) =>
-                                updateFileData(
-                                  index,
-                                  "category",
-                                  value,
-                                  setFileData
-                                )
-                              }
-                            />
-                          </div>
-                        )}
-                        <div>
-                          <label className="block text-xs font-medium text-white/70 mb-1.5">
-                            Type
-                          </label>
-                          {isMidiCategory ? (
-                            <CustomSelect
-                              placeholder={
-                                categorySelected
-                                  ? "Choose type"
-                                  : "Select category first"
-                              }
-                              options={midiTypeOptions}
-                              value={data.type}
-                              disabled={!categorySelected}
-                              onChange={(value: string) =>
-                                updateFileData(
-                                  index,
-                                  "type",
-                                  value,
-                                  setFileData
-                                )
-                              }
-                            />
-                          ) : (
-                            <SubcategorySelect
-                              categories={categoryTypeOptions}
-                              placeholder={
-                                categorySelected
-                                  ? "Choose type"
-                                  : "Select category first"
-                              }
-                              disabled={!categorySelected}
-                              selectedValue={data.type}
-                              onSelect={(_, subcategoryId, displayValue) => {
-                                updateFileData(
-                                  index,
-                                  "type",
-                                  displayValue,
-                                  setFileData
-                                );
-                              }}
-                              className="w-full"
-                            />
+                          {/* Progress bars for uploading files */}
+                          {uploading &&
+                            fileProgress > 0 &&
+                            fileProgress < 100 && (
+                              <div className="mt-3">
+                                <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
+                                  <div
+                                    className="h-full bg-blue-500 transition-all duration-300"
+                                    style={{ width: `${fileProgress}%` }}
+                                  ></div>
+                                </div>
+                                <div className="text-xs text-right text-white/50 mt-1">
+                                  {fileProgress}%
+                                </div>
+                              </div>
+                            )}
+
+                          {uploading && fileProgress === 100 && (
+                            <div className="flex items-center gap-1 text-green-400 text-xs mt-3">
+                              <Check size={14} />
+                              <span>Upload complete</span>
+                            </div>
                           )}
                         </div>
-                        {isComplete && (
-                          <div className="flex items-center mt-1 text-green-400 text-xs font-medium">
-                            <Check className="w-3.5 h-3.5 mr-1" />
-                            Ready to import
-                          </div>
-                        )}
-                      </div>
-
-                      {uploading && fileProgress > 0 && fileProgress < 100 && (
-                        <div className="mt-3">
-                          <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-blue-500 transition-all duration-300"
-                              style={{ width: `${fileProgress}%` }}
-                            ></div>
-                          </div>
-                          <div className="text-xs text-right text-white/50 mt-1">
-                            {fileProgress}%
-                          </div>
-                        </div>
-                      )}
-
-                      {uploading && fileProgress === 100 && (
-                        <div className="flex items-center gap-1 text-green-400 text-xs mt-3">
-                          <Check size={14} />
-                          <span>Upload complete</span>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      )}
-      {previewIndex !== null && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-6">
-          <div className="bg-black/90 border border-white/20 rounded-xl w-full max-w-3xl p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-medium text-white">
-                Preview: {files[previewIndex].name}
-              </h2>
-              <button
-                onClick={() => setPreviewIndex(null)}
-                className="text-white/40 hover:text-white/80 p-1 -m-1"
-              >
-                <X size={20} />
-              </button>
+          )}
+          {previewIndex !== null && previewAudioFile && (
+            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-6">
+              <div className="bg-black/90 border border-white/20 rounded-xl w-full max-w-3xl p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-medium text-white">
+                    Preview: {files[previewIndex].name}
+                  </h2>
+                  <button
+                    onClick={() => setPreviewIndex(null)}
+                    className="text-white/40 hover:text-white/80 p-1 -m-1"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+                <AudioFile file={previewAudioFile} onRemove={undefined} />
+              </div>
             </div>
-            <AudioFile
-              file={{
-                id: `preview-${previewIndex}`,
-                file: files[previewIndex] as unknown as File,
-                url: URL.createObjectURL(
-                  files[previewIndex] as unknown as File
-                ),
-                fileType: "Audio",
-                isPlaying: false,
-                duration: "0",
-                currentTime: "0",
-                audioRef: null,
-              }}
-              onRemove={undefined}
-            />
-          </div>
-        </div>
+          )}
+        </>
       )}
     </>
   );

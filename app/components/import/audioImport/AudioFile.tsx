@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Play, Pause, X } from "lucide-react";
 import { AudioFile as AudioFileType } from "./types";
 import Waveform, { generateWaveformData } from "./waveform";
@@ -65,7 +65,9 @@ export default function AudioFile({ file, onRemove }: AudioFileProps) {
       if (sourceNodeRef.current) {
         try {
           sourceNodeRef.current.stop();
-        } catch (e) {}
+        } catch (e) {
+          console.error("Error stopping audio source:", e);
+        }
         sourceNodeRef.current.disconnect();
         sourceNodeRef.current = null;
       }
@@ -139,7 +141,9 @@ export default function AudioFile({ file, onRemove }: AudioFileProps) {
     if (sourceNodeRef.current) {
       try {
         sourceNodeRef.current.stop();
-      } catch (e) {}
+      } catch (e) {
+        console.error("Error stopping audio source:", e);
+      }
       sourceNodeRef.current.disconnect();
     }
 
@@ -177,7 +181,9 @@ export default function AudioFile({ file, onRemove }: AudioFileProps) {
       if (sourceNodeRef.current) {
         try {
           sourceNodeRef.current.stop();
-        } catch (e) {}
+        } catch (e) {
+          console.error("Error stopping audio source:", e);
+        }
         sourceNodeRef.current.disconnect();
       }
       const elapsed =

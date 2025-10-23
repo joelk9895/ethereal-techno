@@ -33,9 +33,11 @@ model Content {
 }
 
 model Loopandmidi {
-  id        String   @id @default(uuid()) @map("_id")
-  name      String
-  createdAt DateTime @default(now())
+  id         String   @id @default(uuid()) @map("_id")
+  name       String
+  soundGroup String
+  subGroup   String?
+  createdAt  DateTime @default(now())
 
   loopContentId String?
   loopContent   Content? @relation("LoopContent", fields: [loopContentId], references: [id])
@@ -51,9 +53,11 @@ model Loopandmidi {
 }
 
 model Preset {
-  id        String   @id @default(uuid()) @map("_id")
-  name      String
-  createdAt DateTime @default(now())
+  id         String   @id @default(uuid()) @map("_id")
+  name       String
+  createdAt  DateTime @default(now())
+  soundGroup String
+  subGroup   String?
 
   loopContentId String?
   loopContent   Content? @relation("PresetLoop", fields: [loopContentId], references: [id])

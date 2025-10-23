@@ -88,6 +88,8 @@ export async function POST(req: Request) {
           result = await tx.loopandmidi.create({
             data: {
               name: contentName,
+              subGroup: loopContent.subGroup,
+              soundGroup: loopContent.soundGroup,
               loopContent: {
                 connect: {
                   id: loopContent.id,
@@ -194,6 +196,8 @@ export async function POST(req: Request) {
           result = await tx.preset.create({
             data: {
               name: contentName,
+              subGroup: loopContent.subGroup,
+              soundGroup: loopContent.soundGroup,
               loopContent: {
                 connect: {
                   id: loopContent.id,
@@ -287,6 +291,8 @@ export const GET = async () => {
           select: {
             id: true,
             name: true,
+            subGroup: true,
+            soundGroup: true,
             loopContent: {
               select: {
                 id: true,
@@ -312,6 +318,8 @@ export const GET = async () => {
           select: {
             id: true,
             name: true,
+            subGroup: true,
+            soundGroup: true,
             loopContent: {
               select: {
                 id: true,
@@ -370,6 +378,8 @@ export const GET = async () => {
         id: true,
         name: true,
         createdAt: true,
+        subGroup: true,
+        soundGroup: true,
         loopContentId: true,
         midiContentId: true,
         presetContentId: true,
@@ -419,6 +429,8 @@ export const GET = async () => {
         id: true,
         name: true,
         createdAt: true,
+        subGroup: true,
+        soundGroup: true,
         loopContentId: true,
         midiContentId: true,
         metadata: {
@@ -468,6 +480,8 @@ export const GET = async () => {
         id: true,
         contentName: true,
         contentType: true,
+        subGroup: true,
+        soundGroup: true,
         createdAt: true,
         metadata: {
           select: {
@@ -491,6 +505,8 @@ export const GET = async () => {
       id: content.id,
       name: content.contentName,
       contentType: content.contentType,
+      subGroup: content.subGroup,
+      soundGroup: content.soundGroup,
       createdAt: content.createdAt.toISOString(),
       metadata: {
         bpm: content.metadata?.bpm,
@@ -506,6 +522,8 @@ export const GET = async () => {
       id: preset.id,
       name: preset.name,
       contentType: "Preset Bundle",
+      subGroup: preset.subGroup,
+      soundGroup: preset.soundGroup,
       createdAt: preset.createdAt.toISOString(),
       metadata: {
         bpm: preset.metadata?.bpm,
@@ -537,6 +555,8 @@ export const GET = async () => {
       id: lm.id,
       name: lm.name,
       contentType: "Loop+MIDI Bundle",
+      subGroup: lm.subGroup,
+      soundGroup: lm.soundGroup,
       createdAt: lm.createdAt.toISOString(),
       metadata: {
         bpm: lm.metadata?.bpm,

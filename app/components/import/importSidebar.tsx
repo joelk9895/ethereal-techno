@@ -15,6 +15,7 @@ import {
   Volume2,
 } from "lucide-react";
 import Loading from "@/app/components/general/loading";
+import { getFileName } from "@/app/services/getFileName";
 
 let audioContext: AudioContext | null = null;
 
@@ -23,6 +24,8 @@ interface ImportedContentItem {
   name: string;
   contentType: string;
   createdAt: string;
+  soundGroup?: string;
+  subGroup?: string;
   metadata?: {
     bpm?: string;
     key?: string;
@@ -57,8 +60,9 @@ export default function ImportSidebar() {
 
   useEffect(() => {
     if (typeof window !== "undefined" && !audioContext) {
-      audioContext = new (window.AudioContext || 
-        (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext)();
+      audioContext = new (window.AudioContext ||
+        (window as Window & { webkitAudioContext?: typeof AudioContext })
+          .webkitAudioContext)();
 
       const gainNode = audioContext.createGain();
       gainNode.gain.value = 1;
@@ -127,8 +131,9 @@ export default function ImportSidebar() {
   const handlePlayAudio = useCallback(
     async (key: string, id: string) => {
       if (!audioContext) {
-        audioContext = new (window.AudioContext || 
-          (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext)();
+        audioContext = new (window.AudioContext ||
+          (window as Window & { webkitAudioContext?: typeof AudioContext })
+            .webkitAudioContext)();
         const gainNode = audioContext.createGain();
         gainNode.gain.value = isMuted ? 0 : 1;
         gainNode.connect(audioContext.destination);
@@ -250,11 +255,13 @@ export default function ImportSidebar() {
     ? sideData?.filter((item) => item.contentType === contentFilter)
     : sideData;
 
+  console.log("Filtered Data:", filteredData);
+
   return (
     <aside className="flex flex-col fixed right-0 top-0 h-screen w-1/4 bg-black border-l border-white/5 overflow-hidden pt-12">
       <div className="px-4 border-b border-white/10">
         <div className="flex justify-between items-center mb-12">
-          <h2 className="font-bold uppercase font-main text-4xl tracking-wide">
+          <h2 className=" uppercase font-main text-4xl tracking-wide">
             Imported Content
           </h2>
 
@@ -317,7 +324,18 @@ export default function ImportSidebar() {
                   <div className="flex items-center gap-1.5">
                     {getContentTypeIcon(item.contentType)}
                     <h3 className="text-sm font-medium leading-tight text-white truncate">
-                      {item.name || "Untitled"}
+                      {item.contentType !== "Construction Kit"
+                        ? getFileName({
+                            contentType: item.contentType,
+                            soundGroup: item.soundGroup || "Unknown",
+                            soundType: item.subGroup || "Unknown",
+                            tempo: item.metadata?.bpm
+                              ? Number(item.metadata.bpm)
+                              : undefined,
+                            key: item.metadata?.key,
+                            name: item.name,
+                          })
+                        : item.name}
                     </h3>
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
@@ -359,7 +377,17 @@ export default function ImportSidebar() {
               {item.file && (
                 <div className="px-3 pb-2 flex items-center justify-between gap-2 border-t border-white/5 pt-2">
                   <span className="text-[11px] text-white/40 truncate flex-1">
-                    {item.file.name}
+                    {getFileName({
+                      contentType: item.contentType,
+                      soundGroup: item.soundGroup || "Unknown",
+                      soundType: item.subGroup || "Unknown",
+                      tempo: item.metadata?.bpm
+                        ? Number(item.metadata.bpm)
+                        : undefined,
+                      key: item.metadata?.key,
+                      name: item.name,
+                      extension: item.file.name.split(".").pop() || undefined,
+                    })}
                   </span>
                   {isAudioFile(item.file.name) && (
                     <div className="flex items-center gap-1">
@@ -414,7 +442,18 @@ export default function ImportSidebar() {
                               {file.type}
                             </span>
                             <span className="text-white/40 truncate">
-                              {file.name}
+                              {getFileName({
+                                contentType: item.contentType,
+                                soundGroup: item.soundGroup || "Unknown",
+                                soundType: item.subGroup || "Unknown",
+                                tempo: item.metadata?.bpm
+                                  ? Number(item.metadata.bpm)
+                                  : undefined,
+                                key: item.metadata?.key,
+                                name: item.name,
+                                extension:
+                                  file.name.split(".").pop() || undefined,
+                              })}
                             </span>
                           </div>
                           {isAudioFile(file.name) && (

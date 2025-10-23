@@ -42,11 +42,14 @@ export interface FileType {
 }
 
 export interface FileObject {
+  id?: string;
   name: string;
-  size?: number;
-  type?: string;
-  [key: string]: string | number | boolean | undefined;
+  size: number;
+  type: string;
+  lastModified: number;
+  categories?: Category[];
 }
+
 export interface SubcategorySelectProps {
   categories?: Category[];
   onSelect?: (
@@ -63,6 +66,10 @@ export interface SubcategorySelectProps {
 export interface FileDataItem {
   category: string;
   type: string;
+  contentId?: string;
+  isExisting?: boolean;
+  originalCategory: string;
+  originalType: string;
 }
 
 export interface FileDataMap {

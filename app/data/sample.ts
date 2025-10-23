@@ -100,6 +100,7 @@ export const presetGroup = {
     "Stab",
     "Sub",
     "Synth",
+    "Arp",
   ],
   "Drum & Percussion": [
     "Clap",
@@ -294,14 +295,14 @@ export const midiGroups = [
 
 export const notes: { [key: string]: string } = {
   "One-Shot":
-    "Single audio files that can be used as individual sounds in your productions. Ideal for drums, percussion, and one-shot instruments.",
+    "Upload single .wav sounds such as kicks, snares, claps, percussions, bass hits, or any one-shot instrument used in Ethereal Techno productions.",
   "Sample Loop":
-    "Short audio loops that can be seamlessly repeated to create rhythmic or melodic patterns. Perfect for building grooves and textures.",
+    "Upload seamless audio loops (.wav) such as melodic, harmonic, or rhythmic patterns - ideal for building grooves, layers, and evolving textures.",
   "Sample Loop+MIDI":
-    "Includes both audio loops and corresponding MIDI files, allowing you to customize the performance and instrumentation of the loops.",
-  MIDI: "MIDI files that can be imported into your DAW to trigger virtual instruments. Great for melodies, chords, and basslines.",
+    "Upload one audio loop (.wav) together with its corresponding MIDI file. Both must represent the same musical idea to allow full editing and customization.",
+  MIDI: "Upload one MIDI file that represents a musical idea - such as a melody, chord progression, or bassline.",
   Preset:
-    "Currently we accept only Diva and Serum2. Please upload the preset file, a MIDI file, and a seamlessly looping audio preview. See the guidelines for details.",
+    "Upload the preset file together with its corresponding MIDI and a seamless audio loop that showcases the sound’s character. Currently, only Diva and Serum2 formats are supported.",
   "Construction Kit":
-    "A collection of related audio loops and samples that can be combined to create full tracks. Often includes multiple elements like drums, bass, and melodies.",
+    "Upload a kit containing loops, one-shots, MIDI files, and presets - all connected to the same musical idea.",
 };

@@ -1,5 +1,6 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
+import UploadProgressModal from "@/app/components/import/uploadProgressBar";
 import {
   keys,
   oneShotGroup,
@@ -39,6 +40,17 @@ export default function ImportPage() {
   type LoopGroupKey = keyof typeof loopGroups;
   type MidiGroupKey = keyof typeof midiGroups;
   type SoundGroupKey = OneShotGroupKey | LoopGroupKey | MidiGroupKey;
+  interface UploadedContent {
+    name: string;
+    contentType: string;
+    metadata: {
+      bpm?: number | undefined;
+      key?: string;
+      soundGroup?: SoundGroupKey | null;
+      subGroup?: string;
+    };
+    id?: string;
+  }
 
   const [selectedSoundGroup, setSelectedSoundGroup] =
     useState<SoundGroupKey | null>(null);
@@ -49,6 +61,11 @@ export default function ImportPage() {
   const [selectedSoundDesign, setSelectedSoundDesign] = useState<string[]>([]);
   const [enableUpload, setEnableUpload] = useState(false);
   const [conId, setConId] = useState<string>("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const [uploadedContent, setUploadedContent] =
+    useState<UploadedContent | null>(null);
+  const [sidebarKey, setSidebarKey] = useState(0); // Key to force sidebar refresh
 
   useEffect(() => {
     setSelectedFile(null);
@@ -74,6 +91,8 @@ export default function ImportPage() {
   }
   async function importContent() {
     setLoading(true);
+    setIsModalOpen(true); // Open the modal when upload starts
+    setUploadedContent(null);
 
     try {
       if (selectedContentType === "Construction Kit") {
@@ -104,7 +123,11 @@ export default function ImportPage() {
           );
         }
 
-        const data = await response.json();
+        setUploadedContent({
+          name: contentName,
+          contentType: "Construction Kit",
+          metadata: { bpm: bpm ? parseInt(bpm, 10) : undefined, key: selectedKey },
+        });
 
         resetForm();
         return;
@@ -120,7 +143,7 @@ export default function ImportPage() {
       const awsKeys = [];
 
       if (selectedContentType === "MIDI") {
-        if (uploadFiles.length < 2) {
+        if (uploadFiles.length < 1) {
           alert("Please select both MIDI file and audio preview.");
           setLoading(false);
           return;
@@ -220,23 +243,25 @@ export default function ImportPage() {
 
       const data = await response.json();
       setUploadProgress(100);
-      setContentName("");
-      setSelectedFile(null);
-      setBpm(null);
-      setSelectedKey("");
-      setSelectedSoundGroup(null);
-      setSelectedSubGroup("");
-      setSelectedStyles([]);
-      setSelectedMoods([]);
-      setSelectedProcessing([]);
-      setSelectedSoundDesign([]);
-      setSelectedContentType("");
+
+      setUploadedContent({
+        name: contentName,
+        contentType: selectedContentType,
+        metadata: {
+          bpm: bpm ? parseInt(bpm, 10) : undefined,
+          key: selectedKey,
+          soundGroup: selectedSoundGroup,
+          subGroup: selectedSubGroup,
+        },
+        id: data.id || "",
+      });
+
+      resetForm();
     } catch (error) {
       console.error("Error importing content:", error);
       alert("Failed to process your request. Please try again.");
     } finally {
       setLoading(false);
-      setUploadProgress(0);
     }
   }
 
@@ -264,7 +289,7 @@ export default function ImportPage() {
         return false;
       }
 
-      if (selectedContentType === "MIDI" && selectedFile.length < 2) {
+      if (selectedContentType === "MIDI" && selectedFile.length < 1) {
         return false;
       }
 
@@ -314,13 +339,26 @@ export default function ImportPage() {
     selectedContentType,
   ]);
 
+  const handleModalClose = useCallback(() => {
+    setIsModalOpen(false);
+    setSidebarKey((prev) => prev + 1);
+  }, []);
+
   return (
     <div className="min-h-screen bg-black text-white">
+      <UploadProgressModal
+        isOpen={isModalOpen}
+        onClose={handleModalClose}
+        progress={uploadProgress}
+        uploadedContent={uploadedContent}
+        loading={loading}
+      />
+
       <div className="max-w-screen px-8 py-12">
         <div className="flex max-w-2/3 gap-16">
           <div className="space-y-4">
             <div>
-              <h1 className="font-bold uppercase font-main text-4xl mb-12 tracking-wide">
+              <h1 className=" uppercase font-main text-4xl mb-12 tracking-wide">
                 Import Content
               </h1>
             </div>
@@ -328,7 +366,7 @@ export default function ImportPage() {
               selectedContentType={selectedContentType}
               setSelectedContentType={setSelectedContentType}
             />
-            <p className="text-lg font-regular text-white ">
+            <p className="text-md font-regular mt-8 text-white/80 ">
               {notes[selectedContentType] || ""}
             </p>
             {selectedContentType !== "Construction Kit" ? (
@@ -357,10 +395,32 @@ export default function ImportPage() {
                     BPM
                   </label>
                   <input
-                    type="text"
+                    type="number"
                     value={bpm || ""}
-                    onChange={(e) => setBpm(e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === "" || /^\d+$/.test(value)) {
+                        setBpm(value);
+                      }
+                    }}
+                    min="1"
                     className="w-full rounded-xl bg-white/5 border border-gray-700 px-4 py-3 text-white focus:outline-none focus:border-primary focus:bg-white/10 transition-all"
+                    onKeyDown={(e) => {
+                      if (
+                        e.key === "Backspace" ||
+                        e.key === "Delete" ||
+                        e.key === "Tab" ||
+                        e.key === "Escape" ||
+                        e.key === "Enter" ||
+                        e.key.includes("Arrow")
+                      ) {
+                        return;
+                      }
+
+                      if (!/\d/.test(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
                   />
                 </div>
               )}
@@ -429,45 +489,6 @@ export default function ImportPage() {
               By clicking Import, you confirm that the uploaded material is your
               original work and does not infringe on any third-party copyrights.
             </p>
-            {uploadProgress > 0 && (
-              <div className="mb-4">
-                <div className="w-full bg-white/10 rounded-full h-2.5 mb-1 relative overflow-hidden">
-                  <div
-                    className="bg-primary h-2.5 rounded-full transition-all duration-300 ease-out shadow-[0_0_10px_rgba(134,239,172,0.7),0_0_20px_rgba(134,239,172,0.5)]"
-                    style={{ width: `${uploadProgress}%` }}
-                  />
-                  {uploadProgress > 20 && (
-                    <div
-                      className="absolute top-0 h-full w-10 bg-white/20 blur-sm animate-pulse"
-                      style={{
-                        left: `${uploadProgress - 10}%`,
-                        animation: "shimmer 1.5s infinite",
-                      }}
-                    />
-                  )}
-                </div>
-                <div className="flex justify-between text-xs text-white/60">
-                  <span
-                    className={
-                      uploadProgress === 100
-                        ? "text-primary font-medium animate-pulse"
-                        : ""
-                    }
-                  >
-                    {uploadProgress < 100
-                      ? "Uploading file..."
-                      : "Upload complete!"}
-                  </span>
-                  <span
-                    className={
-                      uploadProgress === 100 ? "text-primary font-medium" : ""
-                    }
-                  >
-                    {uploadProgress}%
-                  </span>
-                </div>
-              </div>
-            )}
             <div className="pt-1">
               <button
                 onClick={importContent}
@@ -478,7 +499,8 @@ export default function ImportPage() {
               </button>
             </div>
           </div>
-          <ImportSidebar />
+
+          <ImportSidebar key={sidebarKey} />
         </div>
       </div>
     </div>

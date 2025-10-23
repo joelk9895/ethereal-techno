@@ -113,6 +113,8 @@ export async function POST(
             presetContentId: presetItem.id,
             metadataId: constructionKit.metadataId,
             constructionkitId: constructionKit.id,
+            soundGroup: presetItem.soundGroup,
+            subGroup: presetItem.subGroup,
           },
         });
         await tx.content.updateMany({
@@ -142,6 +144,8 @@ export async function POST(
             midiContentId: midiItem.id,
             metadataId: constructionKit.metadataId,
             constructionkitId: constructionKit.id,
+            soundGroup: audioItem.soundGroup,
+            subGroup: audioItem.subGroup,
           },
         });
 
