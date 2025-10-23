@@ -18,5 +18,6 @@ export interface AudioFile {
 
 export interface AudioDropZoneProps {
   onFileSelected: (file: File | File[]) => void;
+  onBPMCalculated?: (bpm: string) => void;
   type: string;
 }

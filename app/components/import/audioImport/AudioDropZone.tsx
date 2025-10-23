@@ -4,13 +4,16 @@ import { AudioFile, AudioDropZoneProps, FILE_TYPES } from "./types";
 import { determineFileType } from "./utils";
 import AudioFileComponent from "./AudioFile";
 import { RequiredFiles, StatusMessage } from "./StatusIndicators";
+import { calculateBPMFromFile } from "../../../services/getBpm";
 
 export default function AudioDropZone({
   onFileSelected,
+  onBPMCalculated,
   type,
 }: AudioDropZoneProps) {
   const [audioFiles, setAudioFiles] = useState<AudioFile[]>([]);
   const [prevType, setPrevType] = useState(type);
+  const [isCalculatingBPM, setIsCalculatingBPM] = useState(false);
 
   useEffect(() => {
     if (type !== prevType) {
@@ -58,6 +61,10 @@ export default function AudioDropZone({
   };
 
   const getFileTypePrompt = () => {
+    if (isCalculatingBPM) {
+      return "Calculating BPM...";
+    }
+
     const currentTypes = new Set(audioFiles.map((file) => file.fileType));
 
     if (isMidiMode) {
@@ -121,7 +128,7 @@ export default function AudioDropZone({
     return requiredTypes.filter((type) => !currentTypes.has(type));
   };
 
-  const addAudioFile = (file: File, fileType: string) => {
+  const addAudioFile = async (file: File, fileType: string) => {
     if (!isMidiMode && !isPreset) {
       audioFiles.forEach((existingFile) => {
         if (existingFile.audioRef) {
@@ -146,6 +153,25 @@ export default function AudioDropZone({
       fileType,
       contentType: type,
     };
+
+    // Calculate BPM for audio files if it's a loop type
+    if (
+      fileType === FILE_TYPES.AUDIO &&
+      (isSampleLoop || isMidiMode) &&
+      onBPMCalculated
+    ) {
+      setIsCalculatingBPM(true);
+      try {
+        const bpmResult = await calculateBPMFromFile(file);
+        if (bpmResult) {
+          onBPMCalculated(bpmResult.bpm.toString());
+        }
+      } catch (error) {
+        console.error("Error calculating BPM:", error);
+      } finally {
+        setIsCalculatingBPM(false);
+      }
+    }
 
     setAudioFiles((prev) => {
       const updatedFiles =
@@ -316,7 +342,7 @@ export default function AudioDropZone({
   return (
     <>
       {type !== "" && (
-        <div className="h-fit transition-all bg-black text-white p-6">
+        <div className="h-fit transition-all bg-black text-white p-6 mb-6">
           <div className="max-w-2xl mx-auto space-y-6">
             {(isMidiMode || isPreset) && (
               <RequiredFiles
@@ -330,26 +356,36 @@ export default function AudioDropZone({
               className={`border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-300 cursor-pointer ${
                 isDragging
                   ? "border-primary bg-primary/10"
+                  : isCalculatingBPM
+                  ? "border-yellow-400 bg-yellow-400/10"
                   : "border-white/20 hover:border-white/40"
               }`}
               onDrop={handleDrop}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
-              onClick={handleBrowse}
+              onClick={isCalculatingBPM ? undefined : handleBrowse}
             >
               <div className="space-y-4">
                 <div className="mx-auto w-16 h-16 bg-white/10 rounded-full flex items-center justify-center">
-                  <Upload className="w-8 h-8 text-white/60" />
+                  {isCalculatingBPM ? (
+                    <div className="w-8 h-8 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Upload className="w-8 h-8 text-white/60" />
+                  )}
                 </div>
                 <div>
                   <p className="text-lg font-medium text-white mb-2">
                     {getFileTypePrompt()}
                   </p>
                   <p className="text-sm text-white/60">
-                    or click to browse{" "}
-                    {audioFiles.length > 0 && getMissingFileTypes().length > 0
-                      ? "the missing files"
-                      : "files"}
+                    {isCalculatingBPM
+                      ? "Please wait while we analyze the audio file..."
+                      : `or click to browse${
+                          audioFiles.length > 0 &&
+                          getMissingFileTypes().length > 0
+                            ? " the missing files"
+                            : " files"
+                        }`}
                   </p>
                 </div>
               </div>
@@ -382,7 +418,7 @@ export default function AudioDropZone({
         </div>
       )}
       {type === "" && (
-        <div className="p-12 text-center border-2 border-dashed rounded-2xl border-white/10 max-w-2xl mx-auto opacity-50">
+        <div className="p-12 text-center border-2 border-dashed rounded-2xl border-white/10 max-w-2xl mx-auto opacity-50 mb-12">
           <div className="mx-auto w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4">
             <Upload className="w-8 h-8 text-white/30" />
           </div>

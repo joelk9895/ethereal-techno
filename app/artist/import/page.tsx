@@ -75,7 +75,7 @@ export default function ImportPage() {
     setSelectedMoods([]);
     setSelectedProcessing([]);
     setSelectedSoundDesign([]);
-    setBpm(null);
+    setBpm(null); // Reset BPM when content type changes
     setSelectedKey("");
     setContentName("");
     if (selectedContentType === "Construction Kit") {
@@ -126,7 +126,10 @@ export default function ImportPage() {
         setUploadedContent({
           name: contentName,
           contentType: "Construction Kit",
-          metadata: { bpm: bpm ? parseInt(bpm, 10) : undefined, key: selectedKey },
+          metadata: {
+            bpm: bpm ? parseInt(bpm, 10) : undefined,
+            key: selectedKey,
+          },
         });
 
         resetForm();
@@ -344,6 +347,10 @@ export default function ImportPage() {
     setSidebarKey((prev) => prev + 1);
   }, []);
 
+  const handleBPMCalculated = (calculatedBPM: string) => {
+    setBpm(calculatedBPM); // Always update BPM when recalculated
+  };
+
   return (
     <div className="min-h-screen bg-black text-white">
       <UploadProgressModal
@@ -372,6 +379,7 @@ export default function ImportPage() {
             {selectedContentType !== "Construction Kit" ? (
               <AudioDropZone
                 onFileSelected={handleFileSelected}
+                onBPMCalculated={handleBPMCalculated}
                 type={selectedContentType}
               />
             ) : (

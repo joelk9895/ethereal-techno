@@ -513,7 +513,7 @@ export default function FileDrop({
         </div>
       ) : (
         <>
-          <div className="h-fit w-full transition-all text-white">
+          <div className="h-fit w-full transition-all text-white mb-6">
             <div className="max-w-7xl mx-auto">
               {files.length === 0 && (
                 <div
