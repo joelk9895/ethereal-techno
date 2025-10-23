@@ -69,7 +69,10 @@ export default function StepNavigation({
           method: "DELETE",
         }
       );
-
+      if (response.status === 404) {
+        window.location.reload();
+        return;
+      }
       if (!response.ok) {
         throw new Error("Failed to discard changes");
       }
