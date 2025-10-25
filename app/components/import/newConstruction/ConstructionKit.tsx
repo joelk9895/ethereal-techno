@@ -10,8 +10,6 @@ export default function ConstructionKit({ id }: { id: string }) {
   const [currentStep, setCurrentStep] = useState<Step>("upload");
   const [fileCount, setFileCount] = useState(0);
 
-
-
   const handleFileUploaded = () => {
     setCurrentStep("pair");
   };
@@ -25,7 +23,7 @@ export default function ConstructionKit({ id }: { id: string }) {
   };
 
   return (
-    <div>
+    <div className="p-6">
       <div
         className={` ${
           fileCount > 0 && (currentStep === "pair" || currentStep === "upload")

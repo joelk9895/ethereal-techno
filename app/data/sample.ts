@@ -89,6 +89,7 @@ export const oneShotGroup = {
 };
 export const presetGroup = {
   "Melodic & Harmonic Element": [
+    "Arp",
     "Bass",
     "Bell",
     "Chord",
@@ -100,7 +101,6 @@ export const presetGroup = {
     "Stab",
     "Sub",
     "Synth",
-    "Arp",
   ],
   "Drum & Percussion": [
     "Clap",

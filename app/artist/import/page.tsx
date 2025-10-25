@@ -373,7 +373,7 @@ export default function ImportPage() {
               selectedContentType={selectedContentType}
               setSelectedContentType={setSelectedContentType}
             />
-            <p className="text-md font-regular mt-8 text-white/80 ">
+            <p className="text-sm font-medium tracking-wide mt-12 mb-4 text-white/80 ">
               {notes[selectedContentType] || ""}
             </p>
             {selectedContentType !== "Construction Kit" ? (

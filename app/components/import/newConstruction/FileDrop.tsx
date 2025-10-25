@@ -514,7 +514,7 @@ export default function FileDrop({
       ) : (
         <>
           <div className="h-fit w-full transition-all text-white mb-6">
-            <div className="max-w-7xl mx-auto">
+            <div className="max-w-2xl mx-auto">
               {files.length === 0 && (
                 <div
                   className={`border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-300 cursor-pointer ${
