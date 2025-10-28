@@ -906,6 +906,7 @@ export default function FileDrop({
                                     label: option.name,
                                   }))}
                                   value={data.group}
+                                  disabled={!data.category}
                                   onChange={(value: string) =>
                                     updateFileData(
                                       index,
@@ -948,7 +949,7 @@ export default function FileDrop({
                             )}
 
                             {/* Status and Actions */}
-                            <div className="flex flex-col justify-center items-center gap-3 flex-shrink-0">
+                            <div className="flex flex-col justify-center items-center gap-3 flex-shrink-0 w-24">
                               {/* Show "Set as Default" button for Full Loop files */}
                               {data.category === "Full Loop" && (
                                 <button

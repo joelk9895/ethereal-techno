@@ -276,13 +276,10 @@ export default function ImportSidebar() {
 
   return (
     <aside className="flex flex-col fixed right-0 top-0 h-screen w-1/4 bg-black border-l border-white/5 overflow-hidden pt-12">
-      {/* Header and global controls remain the same */}
       <div className="p-4 border-b border-white/10">
-        <h2 className="text-lg font-bold text-white">Imports</h2>
-        <p className="text-sm text-white/60">
-          Recently imported content and kits
-        </p>
-        <div className="mt-4 flex items-center gap-2">
+        <h2 className=" uppercase font-main text-4xl mb-8 tracking-wide">Imported Contents</h2>
+
+        <div className=" flex items-center gap-2">
           <button
             onClick={toggleMute}
             className="w-8 h-8 flex items-center justify-center bg-white/10 rounded-full text-white/70 hover:bg-white/20"
