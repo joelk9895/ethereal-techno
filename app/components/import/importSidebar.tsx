@@ -145,13 +145,11 @@ export default function ImportSidebar() {
         return;
       }
 
-      // Ensure AudioContext is initialized
       if (!audioContext) {
         audioContext = new (window.AudioContext ||
-          (window as any).webkitAudioContext)();
+          (window as Window & { webkitAudioContext?: typeof AudioContext })
+            .webkitAudioContext)();
       }
-
-      // Ensure GainNode is initialized and connected
       if (!gainNodeRef.current && audioContext) {
         const gainNode = audioContext.createGain();
         gainNode.gain.value = isMuted ? 0 : 1;

@@ -760,7 +760,7 @@ export default function FileDrop({
                   {!hasFullLoop && files.length > 0 && (
                     <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
                       <p className="text-sm text-yellow-400">
-                        ⚠️ At least one "Full Loop" file is required to continue
+                        ⚠️ At least one &apos;Full Loop&apos; file is required to continue
                       </p>
                     </div>
                   )}
