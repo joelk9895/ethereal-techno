@@ -13,6 +13,7 @@ import {
   FileCode,
   VolumeX,
   Volume2,
+  Loader2,
 } from "lucide-react";
 import Loading from "@/app/components/general/loading";
 import { getFileName } from "@/app/services/getFileName";
@@ -33,22 +34,31 @@ interface ImportedContentItem {
   file?: {
     name: string;
     key: string;
+    streamUrl?: string | null;
   };
   files?: Array<{
     type: string;
     name: string;
     key: string;
     contentId: string;
+    streamUrl?: string | null;
   }>;
   contents?: number;
   presets?: number;
   loopAndMidis?: number;
+  // Add defaultFullLoop to the interface
+  defaultFullLoop?: {
+    id: string;
+    name: string;
+    streamUrl: string;
+  } | null;
 }
 
 export default function ImportSidebar() {
   const [sideData, setSideData] = useState<ImportedContentItem[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [playingId, setPlayingId] = useState<string | null>(null);
+  const [loadingAudioId, setLoadingAudioId] = useState<string | null>(null);
   const [loopEnabled, setLoopEnabled] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
   const [contentFilter, setContentFilter] = useState<string | null>(null);
@@ -129,11 +139,20 @@ export default function ImportSidebar() {
   );
 
   const handlePlayAudio = useCallback(
-    async (key: string, id: string) => {
+    async (streamUrl: string, id: string) => {
+      if (!streamUrl) {
+        console.error("No stream URL provided for audio playback.");
+        return;
+      }
+
+      // Ensure AudioContext is initialized
       if (!audioContext) {
         audioContext = new (window.AudioContext ||
-          (window as Window & { webkitAudioContext?: typeof AudioContext })
-            .webkitAudioContext)();
+          (window as any).webkitAudioContext)();
+      }
+
+      // Ensure GainNode is initialized and connected
+      if (!gainNodeRef.current && audioContext) {
         const gainNode = audioContext.createGain();
         gainNode.gain.value = isMuted ? 0 : 1;
         gainNode.connect(audioContext.destination);
@@ -159,34 +178,34 @@ export default function ImportSidebar() {
       }
 
       try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/content/stream?key=${key}`
-        );
-        const data = await response.json();
+        setLoadingAudioId(id);
+        const audioBuffer = await loadAudioBuffer(streamUrl);
+        setLoadingAudioId(null);
 
-        if (data.url) {
-          const audioBuffer = await loadAudioBuffer(data.url);
+        const source = audioContext.createBufferSource();
+        source.buffer = audioBuffer;
 
-          const source = audioContext.createBufferSource();
-          source.buffer = audioBuffer;
-
-          source.connect(gainNodeRef.current!);
-
-          source.loop = loopEnabled;
-
-          source.start(0);
-          sourceRef.current = source;
-          setPlayingId(id);
-
-          source.onended = () => {
-            if (!loopEnabled) {
-              setPlayingId(null);
-              sourceRef.current = null;
-            }
-          };
+        if (gainNodeRef.current) {
+          source.connect(gainNodeRef.current);
+        } else {
+          source.connect(audioContext.destination);
+          console.error("GainNode was not available, connecting directly to destination.");
         }
+
+        source.loop = loopEnabled;
+        source.start(0);
+        sourceRef.current = source;
+        setPlayingId(id);
+
+        source.onended = () => {
+          if (!loopEnabled) {
+            setPlayingId(null);
+            sourceRef.current = null;
+          }
+        };
       } catch (error) {
         console.error("Error playing audio:", error);
+        setLoadingAudioId(null);
       }
     },
     [playingId, loopEnabled, isMuted, loadAudioBuffer]
@@ -243,8 +262,10 @@ export default function ImportSidebar() {
       case "Construction Kit":
         return <Package className="w-3 h-3 text-yellow-400" />;
       case "Preset Bundle":
+      case "Preset":
         return <FileCode className="w-3 h-3 text-purple-400" />;
       case "Loop+MIDI Bundle":
+      case "MIDI":
         return <Music className="w-3 h-3 text-blue-400" />;
       default:
         return <FileAudio className="w-3 h-3 text-green-400" />;
@@ -255,128 +276,135 @@ export default function ImportSidebar() {
     ? sideData?.filter((item) => item.contentType === contentFilter)
     : sideData;
 
-  console.log("Filtered Data:", filteredData);
-
   return (
     <aside className="flex flex-col fixed right-0 top-0 h-screen w-1/4 bg-black border-l border-white/5 overflow-hidden pt-12">
-      <div className="px-4 border-b border-white/10">
-        <div className="flex justify-between items-center mb-12">
-          <h2 className=" uppercase font-main text-4xl tracking-wide">
-            Imported Content
-          </h2>
-
+      {/* Header and global controls remain the same */}
+      <div className="p-4 border-b border-white/10">
+        <h2 className="text-lg font-bold text-white">Imports</h2>
+        <p className="text-sm text-white/60">
+          Recently imported content and kits
+        </p>
+        <div className="mt-4 flex items-center gap-2">
           <button
             onClick={toggleMute}
-            className={`p-1.5 rounded-full transition-all ${
-              isMuted
-                ? "bg-red-900/30 text-red-400"
-                : "bg-white/5 hover:bg-white/10 text-white/60"
-            }`}
-            title={isMuted ? "Unmute" : "Mute"}
+            className="w-8 h-8 flex items-center justify-center bg-white/10 rounded-full text-white/70 hover:bg-white/20"
           >
-            {isMuted ? (
-              <VolumeX className="h-4 w-4" />
-            ) : (
-              <Volume2 className="h-4 w-4" />
-            )}
+            {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
           </button>
+          <label className="flex items-center gap-2 cursor-pointer text-sm text-white/70">
+            <input
+              type="checkbox"
+              checked={loopEnabled}
+              onChange={(e) => setLoopEnabled(e.target.checked)}
+              className="w-4 h-4 rounded border-white/20 text-primary focus:ring-primary bg-white/10"
+            />
+            Loop Previews
+          </label>
         </div>
       </div>
 
+      {/* Filter buttons remain the same */}
       <div className="flex gap-1 p-2 border-b border-white/10 overflow-x-auto">
         <button
           onClick={() => setContentFilter(null)}
-          className={`px-2 py-1 text-xs rounded-full transition-all ${
-            contentFilter === null
-              ? "bg-white/20 text-white"
-              : "bg-white/5 text-white/60 hover:bg-white/10"
-          }`}
+          className={`px-2 py-1 text-xs rounded-full transition-all shrink-0 ${contentFilter === null
+            ? "bg-white/20 text-white"
+            : "bg-white/5 text-white/60 hover:bg-white/10"
+            }`}
         >
           All
         </button>
         <button
           onClick={() => setContentFilter("Construction Kit")}
-          className={`px-2 py-1 text-xs rounded-full transition-all flex items-center gap-1 ${
-            contentFilter === "Construction Kit"
-              ? "bg-yellow-900/30 text-yellow-300"
-              : "bg-white/5 text-white/60 hover:bg-white/10"
-          }`}
+          className={`px-2 py-1 text-xs rounded-full transition-all flex items-center gap-1 shrink-0 ${contentFilter === "Construction Kit"
+            ? "bg-yellow-900/30 text-yellow-300"
+            : "bg-white/5 text-white/60 hover:bg-white/10"
+            }`}
         >
-          <Package className="w-3 h-3" /> Kits
+          <Package className="w-3 h-3" /> Kit
+        </button>
+        <button
+          onClick={() => setContentFilter("Preset")}
+          className={`px-2 py-1 text-xs rounded-full transition-all flex items-center gap-1 shrink-0 ${contentFilter === "Preset"
+            ? "bg-purple-900/30 text-purple-300"
+            : "bg-white/5 text-white/60 hover:bg-white/10"
+            }`}
+        >
+          <FileCode className="w-3 h-3" /> Preset
+        </button>
+        <button
+          onClick={() => setContentFilter("Loop+MIDI Bundle")}
+          className={`px-2 py-1 text-xs rounded-full transition-all flex items-center gap-1 shrink-0 ${contentFilter === "Loop+MIDI Bundle"
+            ? "bg-blue-900/30 text-blue-300"
+            : "bg-white/5 text-white/60 hover:bg-white/10"
+            }`}
+        >
+          <Music className="w-3 h-3" /> Loop+MIDI
+        </button>
+        <button
+          onClick={() => setContentFilter("Sample Loop")}
+          className={`px-2 py-1 text-xs rounded-full transition-all flex items-center gap-1 shrink-0 ${contentFilter === "Sample Loop"
+            ? "bg-green-900/30 text-green-300"
+            : "bg-white/5 text-white/60 hover:bg-white/10"
+            }`}
+        >
+          <FileAudio className="w-3 h-3" /> Loop
+        </button>
+        <button
+          onClick={() => setContentFilter("One-Shot")}
+          className={`px-2 py-1 text-xs rounded-full transition-all flex items-center gap-1 shrink-0 ${contentFilter === "One-Shot"
+            ? "bg-green-900/30 text-green-300"
+            : "bg-white/5 text-white/60 hover:bg-white/10"
+            }`}
+        >
+          <FileAudio className="w-3 h-3" /> One-Shot
+        </button>
+        <button
+          onClick={() => setContentFilter("MIDI")}
+          className={`px-2 py-1 text-xs rounded-full transition-all flex items-center gap-1 shrink-0 ${contentFilter === "MIDI"
+            ? "bg-blue-900/30 text-blue-300"
+            : "bg-white/5 text-white/60 hover:bg-white/10"
+            }`}
+        >
+          <Music className="w-3 h-3" /> MIDI
         </button>
       </div>
 
+      {/* Simplified item list */}
       <div className="flex-1 overflow-y-scroll p-3 space-y-2">
         {loading ? (
           <Loading />
-        ) : filteredData && filteredData.length > 0 ? (
-          filteredData.map((item) => (
-            <div
-              key={item.id}
-              className={`bg-white/[0.02] border rounded-sm hover:border-primary/30 transition-all duration-200 overflow-hidden ${
-                item.contentType === "Construction Kit"
-                  ? "border-yellow-900/30"
-                  : "border-white/5"
-              }`}
-            >
-              <div className="px-3 py-2 flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    {getContentTypeIcon(item.contentType)}
-                    <h3 className="text-sm font-medium leading-tight text-white truncate">
-                      {item.contentType !== "Construction Kit"
-                        ? getFileName({
-                            contentType: item.contentType,
-                            soundGroup: item.soundGroup || "Unknown",
-                            soundType: item.subGroup || "Unknown",
-                            tempo: item.metadata?.bpm
-                              ? Number(item.metadata.bpm)
-                              : undefined,
-                            key: item.metadata?.key,
-                            name: item.name,
-                          })
-                        : item.name}
-                    </h3>
-                  </div>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-[10px] text-white/40 uppercase tracking-wide">
-                      {item.contentType || "Unknown"}
-                    </span>
-                    {item.metadata?.bpm && (
-                      <span className="text-[10px] text-primary/60">
-                        {item.metadata.bpm}
-                      </span>
-                    )}
-                    {item.metadata?.key && (
-                      <span className="text-[10px] text-primary/60">
-                        {item.metadata.key}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center gap-1">
-                  <button className="p-1 hover:bg-white/5 rounded transition-colors">
-                    <Edit3 className="h-3 w-3 text-white/40 hover:text-white/60" />
-                  </button>
-                  <button className="p-1 hover:bg-white/5 rounded transition-colors">
-                    <Trash2 className="h-3 w-3 text-white/40 hover:text-white/60" />
-                  </button>
-                </div>
-              </div>
+        ) : (
+          filteredData?.map((item) => {
+            // Consolidate audio info from different item types
+            let audioId: string | null = null;
+            let streamUrl: string | null = null;
 
-              {item.contentType === "Construction Kit" && (
-                <div className="px-3 pb-2 pt-2 border-t border-white/5">
-                  <div className="flex justify-between text-[11px] text-white/40">
-                    <div>Contents: {item.contents || 0}</div>
-                    <div>Presets: {item.presets || 0}</div>
-                    <div>Loop+MIDI: {item.loopAndMidis || 0}</div>
-                  </div>
-                </div>
-              )}
+            if (item.contentType === "Construction Kit" && item.defaultFullLoop) {
+              audioId = item.defaultFullLoop.id;
+              streamUrl = item.defaultFullLoop.streamUrl;
+            } else if (item.file?.streamUrl) {
+              audioId = item.id;
+              streamUrl = item.file.streamUrl;
+            } else if (item.files) {
+              const audioFile = item.files.find(
+                (f) => f.type === "AUDIO" && f.streamUrl
+              );
+              if (audioFile) {
+                audioId = audioFile.contentId;
+                streamUrl = audioFile.streamUrl ?? null;
+              }
+            }
 
-              {item.file && (
-                <div className="px-3 pb-2 flex items-center justify-between gap-2 border-t border-white/5 pt-2">
-                  <span className="text-[11px] text-white/40 truncate flex-1">
+            return (
+              <div
+                key={item.id}
+                className="bg-white/[.03] rounded-lg p-3 hover:bg-white/5 transition-colors duration-150"
+              >
+                {/* Main Content Area */}
+                <div className="flex-1 min-w-0 flex flex-col">
+                  {/* Top Row: Name */}
+                  <p className="text-base text-white truncate font-medium">
                     {getFileName({
                       contentType: item.contentType,
                       soundGroup: item.soundGroup || "Unknown",
@@ -386,121 +414,68 @@ export default function ImportSidebar() {
                         : undefined,
                       key: item.metadata?.key,
                       name: item.name,
-                      extension: item.file.name.split(".").pop() || undefined,
                     })}
-                  </span>
-                  {isAudioFile(item.file.name) && (
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={toggleLoop}
-                        className={`p-1 rounded-full transition-all ${
-                          loopEnabled &&
-                          (playingId === item.id || playingId === null)
-                            ? "bg-primary/30 text-primary"
-                            : "bg-white/5 text-white/40 hover:bg-white/10 hover:text-white/60"
-                        }`}
-                        title="Toggle loop"
-                      >
-                        <Repeat className="h-3 w-3" />
-                      </button>
-                      <button
-                        onClick={() => handlePlayAudio(item.file!.key, item.id)}
-                        className={`p-1 rounded-full transition-all ${
-                          playingId === item.id
-                            ? "bg-primary text-black"
-                            : "bg-white/5 text-white/60 hover:bg-primary/20 hover:text-primary"
-                        }`}
-                      >
-                        {playingId === item.id ? (
-                          <Pause className="h-3 w-3" />
-                        ) : (
-                          <Play className="h-3 w-3 ml-0.5" />
-                        )}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
+                  </p>
 
-              {item.files && item.files.length > 0 && (
-                <div className="border-t border-white/5">
-                  <details className="group">
-                    <summary className="px-3 py-2 cursor-pointer flex items-center justify-between hover:bg-white/[0.02] transition-colors">
-                      <span className="text-[11px] text-white/40 uppercase tracking-wide">
-                        Files ({item.files.length})
+                  {/* Bottom Row: Metadata and Actions */}
+                  <div className="flex items-center justify-between mt-2">
+                    {/* Metadata Tags */}
+                    <div className="flex items-center gap-2 shrink-0 text-xs text-white/40">
+                      <span className="bg-white/5 px-2 py-0.5 rounded-full font-mono">
+                        {item.contentType.replace(" Bundle", "").replace("Sample ", "")}
                       </span>
-                      <ChevronDown className="w-3 h-3 text-white/30 group-open:rotate-180 transition-transform" />
-                    </summary>
-                    <div className="px-3 pb-2 pt-1 space-y-1.5 bg-black/40">
-                      {item.files.map((file) => (
-                        <div
-                          key={file.contentId}
-                          className="flex items-center justify-between gap-2 text-[11px]"
-                        >
-                          <div className="flex items-center gap-2 truncate flex-1 min-w-0">
-                            <span className="uppercase text-primary/40 font-mono text-[9px] bg-primary/5 px-1.5 py-0.5 rounded shrink-0">
-                              {file.type}
-                            </span>
-                            <span className="text-white/40 truncate">
-                              {getFileName({
-                                contentType: item.contentType,
-                                soundGroup: item.soundGroup || "Unknown",
-                                soundType: item.subGroup || "Unknown",
-                                tempo: item.metadata?.bpm
-                                  ? Number(item.metadata.bpm)
-                                  : undefined,
-                                key: item.metadata?.key,
-                                name: item.name,
-                                extension:
-                                  file.name.split(".").pop() || undefined,
-                              })}
-                            </span>
-                          </div>
-                          {isAudioFile(file.name) && (
-                            <div className="flex items-center gap-1">
-                              <button
-                                onClick={toggleLoop}
-                                className={`p-1 rounded-full transition-all ${
-                                  loopEnabled &&
-                                  (playingId === file.contentId ||
-                                    playingId === null)
-                                    ? "bg-primary/30 text-primary"
-                                    : "bg-white/5 text-white/40 hover:bg-white/10 hover:text-white/60"
-                                }`}
-                                title="Toggle loop"
-                              >
-                                <Repeat className="h-3 w-3" />
-                              </button>
-                              <button
-                                onClick={() =>
-                                  handlePlayAudio(file.key, file.contentId)
-                                }
-                                className={`p-1 rounded-full transition-all shrink-0 ${
-                                  playingId === file.contentId
-                                    ? "bg-primary text-black"
-                                    : "bg-white/5 text-white/60 hover:bg-primary/20 hover:text-primary"
-                                }`}
-                              >
-                                {playingId === file.contentId ? (
-                                  <Pause className="h-3 w-3" />
-                                ) : (
-                                  <Play className="h-3 w-3 ml-0.5" />
-                                )}
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                      {item.metadata?.key && (
+                        <span className="font-mono">{item.metadata.key}</span>
+                      )}
+                      {item.metadata?.bpm && (
+                        <span className="font-mono">{item.metadata.bpm} BPM</span>
+                      )}
                     </div>
-                  </details>
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {streamUrl && audioId && (
+                        <>
+                          <button
+                            onClick={toggleLoop}
+                            className={`p-1.5 rounded-full transition-all ${loopEnabled && (playingId === audioId || playingId === null)
+                              ? "bg-primary/20 text-primary"
+                              : "bg-white/5 text-white/40 hover:bg-white/10"
+                              }`}
+                            title="Toggle loop"
+                          >
+                            <Repeat className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handlePlayAudio(streamUrl, audioId!)}
+                            disabled={loadingAudioId === audioId}
+                            className={`p-1.5 rounded-full transition-all ${playingId === audioId
+                              ? "bg-primary text-black"
+                              : "bg-white/5 text-white/60 hover:bg-primary/20 hover:text-primary"
+                              } disabled:opacity-50 disabled:cursor-not-allowed`}
+                          >
+                            {loadingAudioId === audioId ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : playingId === audioId ? (
+                              <Pause className="h-3.5 w-3.5" />
+                            ) : (
+                              <Play className="h-3.5 w-3.5" />
+                            )}
+                          </button>
+                        </>
+                      )}
+                      <button className="p-1.5 hover:bg-white/10 rounded-full transition-colors">
+                        <Edit3 className="h-3.5 w-3.5 text-white/40 hover:text-white/60" />
+                      </button>
+                      <button className="p-1.5 hover:bg-white/10 rounded-full transition-colors">
+                        <Trash2 className="h-3.5 w-3.5 text-white/40 hover:text-white/60" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              )}
-            </div>
-          ))
-        ) : (
-          <div className="text-center py-8 text-white/30 text-sm">
-            No content imported yet
-          </div>
+              </div>
+            );
+          })
         )}
       </div>
     </aside>

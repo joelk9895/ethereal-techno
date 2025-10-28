@@ -117,7 +117,7 @@ export default function Waveform({
   );
 }
 
-export const generateWaveformData = async (file: File) => {
+export const generateWaveformData = async (file: Blob) => {
   try {
     const arrayBuffer = await file.arrayBuffer();
     const audioContext = new AudioContext();

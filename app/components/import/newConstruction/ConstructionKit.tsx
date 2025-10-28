@@ -6,7 +6,7 @@ import StepNavigation from "./StepNavigation";
 
 type Step = "upload" | "pair" | "metadata";
 
-export default function ConstructionKit({ id }: { id: string }) {
+export default function ConstructionKit({ id, onBPMDetected }: { id: string; onBPMDetected: (bpm: string) => void; }) {
   const [currentStep, setCurrentStep] = useState<Step>("upload");
   const [fileCount, setFileCount] = useState(0);
 
@@ -25,11 +25,10 @@ export default function ConstructionKit({ id }: { id: string }) {
   return (
     <div className="p-6">
       <div
-        className={` ${
-          fileCount > 0 && (currentStep === "pair" || currentStep === "upload")
-            ? "justify-center items-center px-6 border-b border-white/10 fixed top-0 left-0 h-screen w-screen bg-black/80 backdrop-blur-sm z-50 flex flex-col"
-            : "justify-center items-center flex flex-col"
-        }`}
+        className={` ${fileCount > 0 && (currentStep === "pair" || currentStep === "upload")
+          ? "justify-center items-center px-6 border-b border-white/10 fixed top-0 left-0 h-screen w-screen bg-black/80 backdrop-blur-sm z-50 flex flex-col"
+          : "justify-center items-center flex flex-col"
+          }`}
       >
         {(fileCount > 0 || currentStep === "pair") && (
           <StepNavigation currentStep={currentStep} constructionKitId={id} />
@@ -41,6 +40,7 @@ export default function ConstructionKit({ id }: { id: string }) {
             onFileCountChange={(count) => {
               setFileCount(count);
             }}
+            onBPMDetected={onBPMDetected}
           />
         )}
 

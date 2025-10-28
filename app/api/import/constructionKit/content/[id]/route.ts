@@ -3,10 +3,13 @@ import prisma from "@/app/lib/database";
 
 export async function PUT(
   req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const paramsResolved = await params;
+    const { id: contentId } = paramsResolved;
     const body = await req.json();
-    const { contentId, category, type } = body;
+    const { category, type } = body;
 
     if (!contentId || !category || !type) {
       return NextResponse.json(
@@ -16,8 +19,9 @@ export async function PUT(
     }
 
     const typeParts = type.split(" > ");
-    const soundGroup = typeParts[0] || "Default";
-    const subGroup = typeParts[1] || "Default";
+    const isMidi = category === "MIDI";
+    const soundGroup = isMidi ? type : typeParts[0] || "Default";
+    const subGroup = isMidi ? "" : typeParts[1] || "Default";
 
     const result = await prisma.content.update({
       where: { id: contentId },

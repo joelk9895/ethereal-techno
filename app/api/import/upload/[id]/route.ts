@@ -34,15 +34,15 @@ export async function POST(
 
     if (!result.success) {
       return NextResponse.json(
-        { error: "Invalid request", details: result.error.format() },
-        { status: 400, headers: corsHeaders }
+        { error: "Invalid request body", details: result.error.issues },
+        { status: 400 }
       );
     }
 
     const { files } = result.data;
     const presignedData = await Promise.all(
       files.map(async ({ filename, contentType }) => {
-        const key = `${id}/${filename}`;
+        const key = `construction-kits/${id}/${Date.now()}-${filename}`;
         const command = new PutObjectCommand({
           Bucket: bucket,
           Key: key,
@@ -53,11 +53,13 @@ export async function POST(
           expiresIn: 3600,
         });
 
+        const fileUrl = `https://${bucket}.s3.${region}.amazonaws.com/${key}`;
+
         return {
           presignedUrl,
           key,
-          url: `https://${bucket}.s3.${region}.amazonaws.com/${key}`,
-          filename,
+          url: fileUrl,
+          filename, // Add filename to response so frontend can match it
         };
       })
     );
@@ -67,7 +69,7 @@ export async function POST(
     console.error("Error generating presigned URLs:", error);
     return NextResponse.json(
       { error: "Failed to generate upload URLs" },
-      { status: 500, headers: corsHeaders }
+      { status: 500 }
     );
   }
 }

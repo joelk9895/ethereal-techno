@@ -48,6 +48,8 @@ export interface FileObject {
   type: string;
   lastModified: number;
   categories?: Category[];
+  streamUrl?: string;
+  isExisting?: boolean;
 }
 
 export interface SubcategorySelectProps {
@@ -64,12 +66,18 @@ export interface SubcategorySelectProps {
 }
 
 export interface FileDataItem {
+  originalDefaultLoopId: string | undefined;
   category: string;
+  soundGroup?: string;
   type: string;
-  contentId?: string;
   isExisting?: boolean;
-  originalCategory: string;
-  originalType: string;
+  originalCategory?: string;
+  originalSoundGroup?: string;
+  originalType?: string;
+  contentId?: string;
+  group?: string;
+  originalGroup?: string;
+  isDefaultFullLoop?: boolean;
 }
 
 export interface FileDataMap {

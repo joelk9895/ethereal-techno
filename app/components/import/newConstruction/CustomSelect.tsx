@@ -1,4 +1,4 @@
-import { useState, useRef} from "react";
+import { useState, useRef, useEffect } from "react";
 import { CustomSelectProps, SelectOption } from "./types";
 import { ChevronDown } from "lucide-react";
 
@@ -11,8 +11,25 @@ export const CustomSelect = ({
   className = "",
 }: CustomSelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [openUpward, setOpenUpward] = useState(false);
   const selectRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isOpen && selectRef.current) {
+      const selectRect = selectRef.current.getBoundingClientRect();
+      const dropdownHeight = 240; // max-h-60 = 240px
+      const spaceBelow = window.innerHeight - selectRect.bottom;
+      const spaceAbove = selectRect.top;
+
+      // Open upward if there's not enough space below but enough space above
+      if (spaceBelow < dropdownHeight && spaceAbove > spaceBelow) {
+        setOpenUpward(true);
+      } else {
+        setOpenUpward(false);
+      }
+    }
+  }, [isOpen]);
 
   const handleClick = () => {
     if (!disabled) {
@@ -32,20 +49,18 @@ export const CustomSelect = ({
       <button
         onClick={handleClick}
         disabled={disabled}
-        className={`w-full border rounded-md px-3 py-2 text-left text-sm transition-all focus:outline-none flex items-center justify-between ${
-          disabled
+        className={`w-full border rounded-md px-3 py-2 text-left text-sm transition-all focus:outline-none flex items-center justify-between ${disabled
             ? "bg-white/[0.02] border-white/5 text-white/30 cursor-not-allowed"
             : "bg-white/5 border-white/10 text-white hover:bg-white/10 focus:border-white/30"
-        }`}
+          }`}
       >
         <span>
           {(value && options.find((opt) => opt.value === value)?.label) ||
             placeholder}
         </span>
         <ChevronDown
-          className={`w-4 h-4 transition-transform ${
-            disabled ? "text-white/20" : "text-white/50"
-          } ${isOpen ? "rotate-180" : ""}`}
+          className={`w-4 h-4 transition-transform ${disabled ? "text-white/20" : "text-white/50"
+            } ${isOpen ? "rotate-180" : ""}`}
         />
       </button>
 
@@ -57,7 +72,8 @@ export const CustomSelect = ({
           />
           <div
             ref={dropdownRef}
-            className={`absolute z-[9999] w-full max-h-60 overflow-y-auto bg-black/95 border border-white/20 rounded-md shadow-xl backdrop-blur-sm`}
+            className={`absolute z-[9999] w-full max-h-60 overflow-y-auto bg-black/95 border border-white/20 rounded-md shadow-xl backdrop-blur-sm ${openUpward ? "bottom-full mb-1" : "top-full mt-1"
+              }`}
           >
             {options.map((option) => (
               <button

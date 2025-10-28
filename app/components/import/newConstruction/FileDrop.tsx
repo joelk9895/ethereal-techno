@@ -18,11 +18,10 @@ import {
   determineMimeType,
 } from "./utils";
 import { FileObject, FileDataMap, FileDataItem } from "./types";
-
-type ExtendedFile = File & FileObject;
-import { SubcategorySelect } from "./SubCategorySelect";
 import AudioFile from "../audioImport/AudioFile";
 import Loading from "../../general/loading";
+import Alert, { AlertModal } from "../../general/alert";
+import { calculateBPMFromFile, formatBPMResult } from "@/app/services/getBpm";
 
 const contentTypes = ["One-Shot", "Sample Loop", "Full Loop"];
 
@@ -35,16 +34,19 @@ interface ContentItem {
   contentName: string;
   soundGroup: string;
   subGroup: string;
+  streamUrl?: string; // Add optional streamUrl
 }
 
 interface ConstructionKitData {
   contents: ContentItem[];
+  defaultFullLoopId: string | null;
 }
 
 interface UploadData {
   presignedUrl: string;
   key: string;
   url: string;
+  filename: string;
 }
 
 interface UploadResponse {
@@ -61,6 +63,13 @@ interface AudioFileType {
   currentTime: string;
   audioRef: HTMLAudioElement | null;
   contentType: string;
+}
+
+interface AlertState {
+  show: boolean;
+  variant: "info" | "success" | "warning" | "error";
+  title: string;
+  description?: string;
 }
 
 const getFileIcon = (fileType: FileIconType): JSX.Element => {
@@ -80,10 +89,12 @@ export default function FileDrop({
   id,
   onFileUploaded,
   onFileCountChange,
+  onBPMDetected,
 }: {
   id: string;
   onFileUploaded: () => void;
   onFileCountChange: (count: number) => void;
+  onBPMDetected: (bpm: string) => void;
 }) {
   const [isDragging, setIsDragging] = useState(false);
   const [files, setFiles] = useState<FileObject[]>([]);
@@ -97,14 +108,38 @@ export default function FileDrop({
   const [previewAudioFile, setPreviewAudioFile] =
     useState<AudioFileType | null>(null);
   const [loadingExisting, setLoadingExisting] = useState(false);
+  const [defaultFullLoopIndex, setDefaultFullLoopIndex] = useState<number | null>(null);
+  const [alertState, setAlertState] = useState<AlertState>({
+    show: false,
+    variant: "info",
+    title: "",
+    description: "",
+  });
+
+  const showAlert = (
+    variant: AlertState["variant"],
+    title: string,
+    description?: string
+  ) => {
+    setAlertState({ show: true, variant, title, description });
+  };
+
+  const closeAlert = () => {
+    setAlertState({ ...alertState, show: false });
+  };
 
   useEffect(() => {
     if (previewIndex !== null && files[previewIndex]) {
       const file = files[previewIndex];
+      const isExistingAudio = file.isExisting && file.streamUrl;
+
       const audioFile: AudioFileType = {
         id: `preview-${previewIndex}`,
         file: file as File,
-        url: URL.createObjectURL(file as File),
+        // Use the streamUrl for existing files, otherwise create an object URL for new files
+        url: isExistingAudio
+          ? file.streamUrl!
+          : URL.createObjectURL(file as File),
         fileType: "Audio",
         isPlaying: false,
         duration: "0:00",
@@ -120,7 +155,8 @@ export default function FileDrop({
 
   useEffect(() => {
     return () => {
-      if (previewAudioFile?.url) {
+      // Only revoke URLs that were created with createObjectURL
+      if (previewAudioFile?.url && !previewAudioFile.url.startsWith("https")) {
         URL.revokeObjectURL(previewAudioFile.url);
       }
     };
@@ -151,31 +187,48 @@ export default function FileDrop({
                 isExisting: true,
                 contentId: content.id,
                 lastModified: Date.now(),
+                streamUrl: content.streamUrl,
               })
             );
 
             setFiles(existingFiles);
 
             const newData: Record<number, FileDataItem> = {};
+            let initialDefaultIndex: number | null = null;
+
             data.contents.forEach((content: ContentItem, index: number) => {
-              const soundGroup = content.soundGroup || "Default";
-              const subGroup = content.subGroup || "Default";
+              const category = content.contentType || "";
+              const soundGroup = content.soundGroup || "";
+              const subGroup = content.subGroup || "";
+
               const typeValue =
-                content.contentType === "MIDI"
-                  ? soundGroup
-                  : `${soundGroup} > ${subGroup}`;
+                category === "MIDI" ? soundGroup : subGroup;
+
+              const isDefault = content.id === data.defaultFullLoopId;
+              if (isDefault) {
+                initialDefaultIndex = index;
+              }
 
               newData[index] = {
-                category: content.contentType || "",
+                category: category,
+                group: soundGroup,
                 type: typeValue,
                 isExisting: true,
-                originalCategory: content.contentType || "",
+                originalCategory: category,
                 originalType: typeValue,
+                originalGroup: soundGroup,
                 contentId: content.id,
+                isDefaultFullLoop: isDefault,
+                originalDefaultLoopId: data.defaultFullLoopId || undefined,
               };
             });
 
             setFileData(newData);
+
+            // Set the default loop index state
+            if (initialDefaultIndex !== null) {
+              setDefaultFullLoopIndex(initialDefaultIndex);
+            }
           }
         }
       } catch (error) {
@@ -191,7 +244,7 @@ export default function FileDrop({
   const handleDrop = (e: React.DragEvent<HTMLDivElement>): void => {
     e.preventDefault();
     setIsDragging(false);
-    const droppedFiles = Array.from(e.dataTransfer.files) as ExtendedFile[];
+    const droppedFiles = Array.from(e.dataTransfer.files) as File[];
     addFiles(droppedFiles);
   };
 
@@ -216,7 +269,9 @@ export default function FileDrop({
     );
 
     if (duplicateFiles.length > 0) {
-      alert(
+      showAlert(
+        "warning",
+        "Duplicate Files Detected",
         `${duplicateFiles.length} file(s) already added: ${duplicateFiles
           .map((f) => f.name)
           .join(", ")}`
@@ -249,6 +304,8 @@ export default function FileDrop({
         type: "",
         originalCategory: category,
         originalType: "",
+        group: "",
+        originalDefaultLoopId: "",
       };
     });
     setFileData(newData);
@@ -289,18 +346,102 @@ export default function FileDrop({
 
   const allFilesOrganized =
     files.length > 0 &&
-    files.every(
-      (_, index) => fileData[index]?.category && fileData[index]?.type
-    );
+    files.every((_, index) => {
+      const data = fileData[index];
+      const fileType = determineFileType(files[index]);
+
+      if (fileType === "MIDI" || fileType === "Preset") {
+        return data?.category && data?.type;
+      }
+      return data?.category && data?.group && data?.type;
+    });
+
+  const hasFullLoop = files.some((_, index) => {
+    const data = fileData[index];
+    return data?.category === "Full Loop";
+  });
+
+  const canContinue = allFilesOrganized && hasFullLoop;
+
+  const setAsDefaultFullLoop = (index: number) => {
+    setDefaultFullLoopIndex(index);
+
+    setFileData(prev => {
+      const updated = { ...prev };
+      Object.keys(updated).forEach(key => {
+        const idx = parseInt(key);
+        if (updated[idx].category === "Full Loop") {
+          updated[idx].isDefaultFullLoop = idx === index;
+        }
+      });
+      return updated;
+    });
+  };
+
+  useEffect(() => {
+    const fullLoopIndices = files
+      .map((_, index) => index)
+      .filter(index => fileData[index]?.category === "Full Loop");
+
+    if (fullLoopIndices.length > 0 && defaultFullLoopIndex === null) {
+      setAsDefaultFullLoop(fullLoopIndices[0]);
+    }
+  }, [files, fileData]);
+
+  useEffect(() => {
+    if (defaultFullLoopIndex !== null) {
+      const file = files[defaultFullLoopIndex];
+      // Only calculate BPM for new, local files that have a size.
+      if (file && !file.isExisting && file.size > 0) {
+        calculateBPMFromFile(file as File).then((result) => {
+          if (result) {
+            const formattedBpm = formatBPMResult(result);
+            onBPMDetected(formattedBpm);
+          }
+        });
+      }
+    }
+  }, [defaultFullLoopIndex, files, onBPMDetected]);
 
   const handleUploadAllFiles = async (e?: React.MouseEvent): Promise<void> => {
-    const allFilesOrganized = files.every(
-      (_, index) => fileData[index]?.category && fileData[index]?.type
-    );
+    const allFilesOrganized = files.every((_, index) => {
+      const data = fileData[index];
+      const fileType = determineFileType(files[index]);
+
+      if (fileType === "MIDI" || fileType === "Preset") {
+        return data?.category && data?.type;
+      }
+      return data?.category && data?.group && data?.type;
+    });
 
     if (!allFilesOrganized) {
-      alert(
+      showAlert(
+        "warning",
+        "Incomplete File Organization",
         "Please assign a category and type to all files before continuing."
+      );
+      return;
+    }
+
+    const hasFullLoop = files.some((_, index) => {
+      const data = fileData[index];
+      return data?.category === "Full Loop";
+    });
+
+    if (!hasFullLoop) {
+      showAlert(
+        "warning",
+        "Full Loop Required",
+        "At least one 'Full Loop' file is required before continuing."
+      );
+      return;
+    }
+
+    if (defaultFullLoopIndex === null) {
+      showAlert(
+        "warning",
+        "Default Full Loop Required",
+        "Please select a default Full Loop."
       );
       return;
     }
@@ -310,121 +451,104 @@ export default function FileDrop({
       setUploadProgress({});
       setOverallProgress(0);
 
-      const newFilesToUpload = files.filter(
-        (_, index) => !fileData[index]?.isExisting
+      // This flag will track if we need to make a separate PUT request
+      // to update the default loop.
+      let defaultLoopUpdateNeeded = false;
+      const originalDefaultLoopIndex = files.findIndex(
+        (f, i) => fileData[i]?.contentId === fileData[i]?.originalDefaultLoopId
       );
-      const newFilesIndices = files
-        .map((_, index) => index)
-        .filter((index) => !fileData[index]?.isExisting);
 
+      if (
+        defaultFullLoopIndex !== null &&
+        defaultFullLoopIndex !== originalDefaultLoopIndex
+      ) {
+        defaultLoopUpdateNeeded = true;
+      }
+
+      // Step 1: Handle existing file updates
       const modifiedExistingFiles = files.filter((_, index) => {
         const data = fileData[index];
         if (!data?.isExisting) return false;
-
-        const currentCategory = data.category || "";
-        const currentType = data.type || "";
-        const originalCategory = data.originalCategory || "";
-        const originalType = data.originalType || "";
-
         return (
-          currentCategory !== originalCategory || currentType !== originalType
+          data.category !== data.originalCategory ||
+          data.group !== data.originalGroup ||
+          data.type !== data.originalType
         );
       });
 
       const updatePromises = modifiedExistingFiles.map(async (file) => {
         const fileIndex = files.findIndex((f) => f === file);
         const data = fileData[fileIndex];
+        if (!data?.contentId) return;
 
-        if (!data?.contentId || !data.category || !data.type) {
-          throw new Error(`Invalid data for file ${file.name}`);
-        }
+        const fileType = determineFileType(file);
+        const isMidi = fileType === "MIDI";
+        const typeToSend = isMidi ? data.type : `${data.group} > ${data.type}`;
 
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/import/constructionKit/${id}`,
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/import/constructionKit/content/${data.contentId}`,
           {
             method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
+            headers: { "Content-Type": "application/json" },
             mode: "cors",
             credentials: "same-origin",
             body: JSON.stringify({
-              contentId: data.contentId,
               category: data.category,
-              type: data.type,
+              type: typeToSend,
             }),
           }
         );
 
         if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Failed to update ${file.name}: ${errorText}`);
+          throw new Error(`Failed to update ${file.name}`);
         }
-
-        return file.name;
+        return response;
       });
 
-      await Promise.all(updatePromises);
-
-      if (newFilesToUpload.length === 0) {
-        if (modifiedExistingFiles.length > 0) {
-          alert(`Successfully updated ${modifiedExistingFiles.length} file(s)`);
-        }
-        onFileUploaded();
-        return;
-      }
-
-      const response = await fetch(
-        process.env.NEXT_PUBLIC_API_BASE_URL + "/import/upload/" + id,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          mode: "cors",
-          credentials: "same-origin",
-          body: JSON.stringify({
-            files: newFilesToUpload.map((file) => ({
-              filename: file.name,
-              contentType: file.type || "application/octet-stream",
-            })),
-          }),
-        }
+      // Step 2: Handle new file uploads
+      const newFilesToUpload = files.filter(
+        (_, index) => !fileData[index]?.isExisting
       );
 
-      if (!response.ok) {
-        throw new Error("Failed to get upload URLs");
-      }
+      if (newFilesToUpload.length > 0) {
+        const presignResponse = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/import/upload/${id}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            mode: "cors",
+            credentials: "same-origin",
+            body: JSON.stringify({
+              files: newFilesToUpload.map((file) => ({
+                filename: file.name,
+                contentType: file.type || "application/octet-stream",
+              })),
+            }),
+          }
+        );
 
-      const data: UploadResponse = await response.json();
+        if (!presignResponse.ok) {
+          throw new Error("Failed to get upload URLs");
+        }
 
-      const uploadPromises = data.uploads.map(
-        async (uploadData: UploadData, uploadIndex: number) => {
-          const fileIndex = newFilesIndices[uploadIndex];
+        const presignData: UploadResponse = await presignResponse.json();
+
+        const s3UploadPromises = presignData.uploads.map((uploadData: UploadData) => {
+          const fileIndex = files.findIndex((f) => f.name === uploadData.filename);
           const file = files[fileIndex];
 
-          await new Promise<void>((resolve, reject) => {
+          return new Promise<void>((resolve, reject) => {
             const xhr = new XMLHttpRequest();
 
             xhr.upload.addEventListener("progress", (event) => {
               if (event.lengthComputable) {
-                const percentComplete = Math.round(
-                  (event.loaded / event.total) * 100
-                );
+                const percentComplete = Math.round((event.loaded / event.total) * 100);
                 setUploadProgress((prev) => {
-                  const newProgress = {
-                    ...prev,
-                    [fileIndex]: percentComplete,
-                  };
-
+                  const newProgress = { ...prev, [fileIndex]: percentComplete };
                   const totalProgress = Object.values(newProgress);
-                  let averageProgress = 0;
-
-                  if (totalProgress.length > 0) {
-                    const sum = totalProgress.reduce((a, b) => a + b, 0);
-                    averageProgress = sum / newFilesToUpload.length;
-                  }
-
+                  const averageProgress = totalProgress.length > 0
+                    ? totalProgress.reduce((a, b) => a + b, 0) / newFilesToUpload.length
+                    : 0;
                   setOverallProgress(Math.round(averageProgress));
                   return newProgress;
                 });
@@ -440,73 +564,118 @@ export default function FileDrop({
             });
 
             xhr.addEventListener("error", () => {
-              reject(
-                new Error(`Network error occurred while uploading ${file.name}`)
-              );
+              reject(new Error(`Network error uploading ${file.name}`));
             });
 
             xhr.open("PUT", uploadData.presignedUrl);
-            xhr.setRequestHeader(
-              "Content-Type",
-              file.type || "application/octet-stream"
-            );
+            xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
             xhr.send(file instanceof File ? file : (file as unknown as File));
           });
+        });
 
-          await fetch(
-            process.env.NEXT_PUBLIC_API_BASE_URL +
-              "/import/constructionKit/" +
-              id,
+        await Promise.all(s3UploadPromises);
+
+        const filesMetadata = presignData.uploads.map((uploadData: UploadData) => {
+          const fileIndex = files.findIndex((f) => f.name === uploadData.filename);
+          const data = fileData[fileIndex];
+          const fileType = determineFileType(files[fileIndex]);
+          const isMidi = fileType === "MIDI";
+          const typeToSend = isMidi ? data.type : `${data.group} > ${data.type}`;
+
+          return {
+            fileName: uploadData.filename,
+            category: data.category,
+            type: typeToSend,
+            key: uploadData.key,
+            url: uploadData.url,
+          };
+        });
+
+        const dbResponse = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/import/constructionKit/${id}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            mode: "cors",
+            credentials: "same-origin",
+            body: JSON.stringify({
+              files: filesMetadata,
+              defaultFullLoopFileName: defaultFullLoopIndex !== null
+                ? files[defaultFullLoopIndex].name
+                : null
+            }),
+          }
+        );
+
+        if (!dbResponse.ok) {
+          const errorText = await dbResponse.text();
+          throw new Error(`Failed to save file metadata: ${errorText}`);
+        }
+        // Since the POST handles the default loop, we don't need a separate PUT
+        defaultLoopUpdateNeeded = false;
+      }
+
+      // Wait for individual content updates to finish
+      await Promise.all(updatePromises);
+
+      // If there were no new files, but the default loop changed, send a PUT request
+      if (defaultLoopUpdateNeeded && newFilesToUpload.length === 0) {
+        const defaultLoopContentId =
+          defaultFullLoopIndex !== null
+            ? fileData[defaultFullLoopIndex]?.contentId
+            : null;
+
+        if (defaultLoopContentId) {
+          const putResponse = await fetch(
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}/import/constructionKit/${id}`,
             {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              mode: "cors",
-              credentials: "same-origin",
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                id,
-                fileName: file.name,
-                category: fileData[fileIndex]?.category,
-                type: fileData[fileIndex]?.type,
-                key: uploadData.key,
-                url: uploadData.url,
+                defaultFullLoopIdentifier: defaultLoopContentId,
               }),
             }
           );
-
-          return file.name;
+          if (!putResponse.ok) {
+            throw new Error("Failed to update the default full loop.");
+          }
         }
+      }
+
+      showAlert(
+        "success",
+        "Upload Complete",
+        "All files processed successfully!"
       );
 
-      const uploadedFiles = await Promise.all(uploadPromises);
+      onFileUploaded();
 
-      const remainingFiles = files.filter(
-        (_, index) => fileData[index]?.isExisting
-      );
-      setFiles(remainingFiles);
-
-      const remainingData: Record<number, FileDataItem> = {};
-      remainingFiles.forEach((_, newIndex) => {
-        const originalIndex = files.findIndex(
-          (f) => f === remainingFiles[newIndex]
-        );
-        remainingData[newIndex] = fileData[originalIndex];
-      });
-      setFileData(remainingData);
     } catch (error) {
       console.error("Upload failed:", error);
-      alert("Failed to upload files. Please try again.");
+      showAlert(
+        "error",
+        "Upload Failed",
+        error instanceof Error ? error.message : "Unknown error occurred"
+      );
     } finally {
       setUploading(false);
       setUploadProgress({});
       setOverallProgress(0);
-      onFileUploaded();
     }
   };
 
   return (
     <>
+      {/* Alert Modal */}
+      <AlertModal isOpen={alertState.show} onClose={closeAlert}>
+        <Alert
+          variant={alertState.variant}
+          title={alertState.title}
+          description={alertState.description}
+          onClose={closeAlert}
+        />
+      </AlertModal>
+
       {loadingExisting ? (
         <div className="h-screen w-full fixed inset-0 transition-all bg-black/90 backdrop-blur-md text-white z-50">
           <Loading />
@@ -517,11 +686,10 @@ export default function FileDrop({
             <div className="max-w-2xl mx-auto">
               {files.length === 0 && (
                 <div
-                  className={`border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-300 cursor-pointer ${
-                    isDragging
-                      ? "border-blue-400 bg-blue-400/10"
-                      : "border-white/20 hover:border-white/40"
-                  }`}
+                  className={`border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-300 cursor-pointer ${isDragging
+                    ? "border-blue-400 bg-blue-400/10"
+                    : "border-white/20 hover:border-white/40"
+                    }`}
                   onDrop={handleDrop}
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
@@ -567,13 +735,13 @@ export default function FileDrop({
                         Add More
                       </button>
                       <button
-                        disabled={!allFilesOrganized || uploading}
-                        className={`px-6 py-2 rounded-lg flex items-center gap-2 transition-all ${
-                          allFilesOrganized && !uploading
-                            ? "bg-white text-black hover:bg-white/90"
-                            : "bg-white/10 text-white/50 cursor-not-allowed"
-                        }`}
+                        disabled={!canContinue || uploading}
+                        className={`px-6 py-2 rounded-lg flex items-center gap-2 transition-all ${canContinue && !uploading
+                          ? "bg-white text-black hover:bg-white/90"
+                          : "bg-white/10 text-white/50 cursor-not-allowed"
+                          }`}
                         onClick={handleUploadAllFiles}
+                        title={!hasFullLoop ? "At least one Full Loop is required" : ""}
                       >
                         {uploading ? (
                           <>
@@ -588,6 +756,14 @@ export default function FileDrop({
                       </button>
                     </div>
                   </div>
+
+                  {!hasFullLoop && files.length > 0 && (
+                    <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                      <p className="text-sm text-yellow-400">
+                        ⚠️ At least one "Full Loop" file is required to continue
+                      </p>
+                    </div>
+                  )}
 
                   {uploading && (
                     <div className="mt-4">
@@ -646,25 +822,22 @@ export default function FileDrop({
                       return (
                         <div
                           key={`${file.name}-${index}`}
-                          className={`bg-white/[0.03] rounded-lg p-4 border transition-all ${
-                            isComplete
-                              ? "border-green-500/30 shadow-[0_0_10px_rgba(34,197,94,0.1)]"
-                              : "border-white/10"
-                          }`}
+                          className={`bg-white/[0.03] rounded-lg p-4 border transition-all ${isComplete
+                            ? "border-green-500/30 shadow-[0_0_10px_rgba(34,197,94,0.1)]"
+                            : "border-white/10"
+                            }`}
                         >
                           <div className="flex items-center gap-4">
                             {/* File Icon */}
                             <div
-                              className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all flex-shrink-0 ${
-                                isComplete
-                                  ? "bg-green-500/10 border border-green-500/30"
-                                  : "bg-white/5 border border-white/10"
-                              }`}
+                              className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all flex-shrink-0 ${isComplete
+                                ? "bg-green-500/10 border border-green-500/30"
+                                : "bg-white/5 border border-white/10"
+                                }`}
                             >
                               {getFileIcon(fileType as string)}
                             </div>
 
-                            {/* File Info */}
                             <div className="flex-1 min-w-0">
                               <p
                                 className="font-medium truncate text-sm text-white leading-tight"
@@ -703,18 +876,15 @@ export default function FileDrop({
                               </div>
                             )}
 
-                            {/* Type Section */}
+                            {/* MIDI Type or Sound Group */}
                             <div className="w-96 flex-shrink-0">
                               <label className="block text-xs font-medium text-white/70 mb-1">
                                 {isMidiFile
                                   ? "MIDI Type"
-                                  : isPresetFile
-                                  ? "Preset Type"
-                                  : "Type"}
+                                  : "Sound Group"}
                               </label>
 
                               {isMidiFile ? (
-                                // MIDI files: Simple single selection
                                 <CustomSelect
                                   placeholder="Choose MIDI type"
                                   options={midiTypeOptions}
@@ -729,34 +899,71 @@ export default function FileDrop({
                                   }
                                 />
                               ) : (
-                                <SubcategorySelect
-                                  categories={categoryTypeOptions}
-                                  placeholder={
-                                    categorySelected
-                                      ? "Choose type"
-                                      : "Select category first"
-                                  }
-                                  disabled={!categorySelected}
-                                  selectedValue={data.type}
-                                  onSelect={(
-                                    _,
-                                    subcategoryId,
-                                    displayValue
-                                  ) => {
+                                <CustomSelect
+                                  placeholder="Choose sound group"
+                                  options={categoryTypeOptions.map((option) => ({
+                                    value: option.name,
+                                    label: option.name,
+                                  }))}
+                                  value={data.group}
+                                  onChange={(value: string) =>
                                     updateFileData(
                                       index,
-                                      "type",
-                                      displayValue,
+                                      "group",
+                                      value,
                                       setFileData
-                                    );
-                                  }}
-                                  className="w-full"
+                                    )
+                                  }
                                 />
                               )}
                             </div>
 
+                            {!isMidiFile && (
+                              <div className="w-96 flex-shrink-0">
+                                <label className="block text-xs font-medium text-white/70 mb-1">
+                                  Content Type
+                                </label>
+                                <CustomSelect
+                                  placeholder="Choose content type"
+                                  options={
+                                    categoryTypeOptions
+                                      .find((option) => option.name === data.group)
+                                      ?.subcategories?.map((sub) => ({
+                                        value: sub.name,
+                                        label: sub.name,
+                                      })) || []
+                                  }
+                                  value={data.type.split(" > ").pop() || ""}
+                                  disabled={!data.group}
+                                  onChange={(value: string) =>
+                                    updateFileData(
+                                      index,
+                                      "type",
+                                      value,
+                                      setFileData
+                                    )
+                                  }
+                                />
+                              </div>
+                            )}
+
                             {/* Status and Actions */}
                             <div className="flex flex-col justify-center items-center gap-3 flex-shrink-0">
+                              {/* Show "Set as Default" button for Full Loop files */}
+                              {data.category === "Full Loop" && (
+                                <button
+                                  onClick={() => setAsDefaultFullLoop(index)}
+                                  disabled={uploading}
+                                  className={`text-xs px-3 py-1 rounded transition-all ${data.isDefaultFullLoop
+                                    ? "bg-blue-500 text-white"
+                                    : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
+                                    }`}
+                                  title={data.isDefaultFullLoop ? "Default Full Loop" : "Set as default"}
+                                >
+                                  {data.isDefaultFullLoop ? "★ Default" : "Set Default"}
+                                </button>
+                              )}
+
                               {!data.isExisting && (
                                 <button
                                   onClick={() => removeFile(index)}
@@ -776,6 +983,7 @@ export default function FileDrop({
                               {isComplete &&
                                 data.isExisting &&
                                 (category !== originalCategory ||
+                                  data.group !== data.originalGroup ||
                                   type !== originalType) && (
                                   <div className="flex items-center text-yellow-400 text-xs font-medium">
                                     <Check className="w-3.5 h-3.5 mr-1" />
@@ -785,6 +993,7 @@ export default function FileDrop({
                               {isComplete &&
                                 data.isExisting &&
                                 category === originalCategory &&
+                                data.group === data.originalGroup &&
                                 type === originalType && (
                                   <div className="flex items-center text-blue-400 text-xs font-medium">
                                     <Check className="w-3.5 h-3.5 mr-1" />
@@ -822,7 +1031,8 @@ export default function FileDrop({
                           </div>
 
                           {/* Progress bars for uploading files */}
-                          {uploading &&
+                          {
+                            uploading &&
                             fileProgress > 0 &&
                             fileProgress < 100 && (
                               <div className="mt-3">
@@ -836,14 +1046,17 @@ export default function FileDrop({
                                   {fileProgress}%
                                 </div>
                               </div>
-                            )}
+                            )
+                          }
 
-                          {uploading && fileProgress === 100 && (
-                            <div className="flex items-center gap-1 text-green-400 text-xs mt-3">
-                              <Check size={14} />
-                              <span>Upload complete</span>
-                            </div>
-                          )}
+                          {
+                            uploading && fileProgress === 100 && (
+                              <div className="flex items-center gap-1 text-green-400 text-xs mt-3">
+                                <Check size={14} />
+                                <span>Upload complete</span>
+                              </div>
+                            )
+                          }
                         </div>
                       );
                     })}
@@ -871,7 +1084,8 @@ export default function FileDrop({
             </div>
           )}
         </>
-      )}
+      )
+      }
     </>
   );
 }

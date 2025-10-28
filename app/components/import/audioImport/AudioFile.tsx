@@ -41,12 +41,30 @@ export default function AudioFile({ file, onRemove }: AudioFileProps) {
           audioContextRef.current = new window.AudioContext();
         }
 
-        const arrayBuffer = await file.file.arrayBuffer();
+        setIsLoadingWaveform(true);
+
+        // Get the ArrayBuffer. For local files, read directly from the File object.
+        // For remote files, fetch from the URL.
+        const isLocalFile = file.url.startsWith("blob:");
+        const arrayBuffer = isLocalFile
+          ? await file.file.arrayBuffer()
+          : await (await fetch(file.url)).arrayBuffer();
+
+        if (!arrayBuffer || arrayBuffer.byteLength === 0) {
+          throw new Error("Audio ArrayBuffer is empty.");
+        }
+
         const audioBuffer = await audioContextRef.current.decodeAudioData(
-          arrayBuffer
+          arrayBuffer.slice(0) // Use a slice to create a copy, which can prevent some decoding issues
         );
         audioBufferRef.current = audioBuffer;
         setDuration(formatTime(audioBuffer.duration));
+
+        // Generate waveform from the original file for local files, or a new blob for remote
+        const waveformSource = isLocalFile ? file.file : new Blob([arrayBuffer]);
+        const waveform = await generateWaveformData(waveformSource);
+        setWaveformData(waveform);
+        setIsLoadingWaveform(false);
 
         if (!gainNodeRef.current) {
           gainNodeRef.current = audioContextRef.current.createGain();
@@ -54,6 +72,7 @@ export default function AudioFile({ file, onRemove }: AudioFileProps) {
         }
       } catch (error) {
         console.error("Error loading audio:", error);
+        setIsLoadingWaveform(false);
       }
     };
 
@@ -247,24 +266,6 @@ export default function AudioFile({ file, onRemove }: AudioFileProps) {
       updateProgressRef.current!();
     }
   };
-
-  useEffect(() => {
-    const fetchWaveform = async () => {
-      setIsLoadingWaveform(true);
-      try {
-        const waveform = await generateWaveformData(file.file);
-        setWaveformData(waveform);
-      } catch (error) {
-        console.error("Error generating waveform:", error);
-      } finally {
-        setIsLoadingWaveform(false);
-      }
-    };
-
-    if (file.fileType === "Audio") {
-      fetchWaveform();
-    }
-  }, [file]);
 
   useEffect(() => {
     if (file.contentType === "One-Shot") {

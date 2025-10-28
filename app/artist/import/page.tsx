@@ -304,11 +304,11 @@ export default function ImportPage() {
         return false;
       }
 
-      if (selectedContentType !== "One-Shot" && !bpm) {
+      if (!(selectedContentType === "One-Shot" || selectedContentType === "MIDI" || selectedContentType === "Preset") && !bpm) {
         return false;
       }
 
-      if (!selectedKey) {
+      if (selectedContentType !== "Preset" && !selectedKey) {
         return false;
       }
 
@@ -383,7 +383,7 @@ export default function ImportPage() {
                 type={selectedContentType}
               />
             ) : (
-              <ConstructionKit id={conId} />
+              <ConstructionKit id={conId} onBPMDetected={setBpm} />
             )}
             <div className="grid grid-cols-3 gap-6">
               <div>
@@ -397,7 +397,7 @@ export default function ImportPage() {
                   className="w-full rounded-xl bg-white/5 border border-gray-700 px-4 py-3 text-white focus:outline-none focus:border-primary focus:bg-white/10 transition-all"
                 />
               </div>
-              {selectedContentType !== "One-Shot" && (
+              {!(selectedContentType === "One-Shot" || selectedContentType === "MIDI" || selectedContentType === "Preset") && (
                 <div>
                   <label className="block text-sm font-medium text-white/60 mb-3 uppercase tracking-wider">
                     BPM
@@ -432,28 +432,33 @@ export default function ImportPage() {
                   />
                 </div>
               )}
-              <div>
-                <label className="block text-sm font-medium text-white/60 mb-3 uppercase tracking-wider">
-                  Key
-                </label>
-                <Select
-                  value={selectedKey}
-                  onValueChange={(value) => setSelectedKey(value)}
-                >
-                  <SelectTrigger className="w-full py-3 text-md bg-white/5 border rounded-xl border-gray-700 px-4 text-white focus:outline-none focus:border-primary focus:bg-white/10 transition-all">
-                    <SelectValue placeholder="Select key" />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-2xl border border-gray-700 bg-black/95 text-white shadow-lg backdrop-blur-md">
-                    <SelectGroup>
-                      {keys.map((key) => (
-                        <SelectItem key={key} value={key} className="bg-black">
-                          {key}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </div>
+              {
+                selectedContentType !== "Preset" && (
+                  <div>
+                    <label className="block text-sm font-medium text-white/60 mb-3 uppercase tracking-wider">
+                      Key
+                    </label>
+                    <Select
+                      value={selectedKey}
+                      onValueChange={(value) => setSelectedKey(value)}
+                    >
+                      <SelectTrigger className="w-full py-3 text-md bg-white/5 border rounded-xl border-gray-700 px-4 text-white focus:outline-none focus:border-primary focus:bg-white/10 transition-all">
+                        <SelectValue placeholder="Select key" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-2xl border border-gray-700 bg-black/95 text-white shadow-lg backdrop-blur-md">
+                        <SelectGroup>
+                          {keys.map((key) => (
+                            <SelectItem key={key} value={key} className="bg-black">
+                              {key}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                )
+              }
             </div>
             {selectedContentType !== "Construction Kit" && (
               <>
@@ -483,15 +488,19 @@ export default function ImportPage() {
               selectedMoods={selectedMoods}
               setSelectedMoods={setSelectedMoods}
             />
-            <Processing
-              selectedProcessing={selectedProcessing}
-              setSelectedProcessing={setSelectedProcessing}
-            />
+            {selectedContentType !== "MIDI" && (
+              <>
+                <Processing
+                  selectedProcessing={selectedProcessing}
+                  setSelectedProcessing={setSelectedProcessing}
+                />
 
-            <SoundDesign
-              selectedSoundDesign={selectedSoundDesign}
-              setSelectedSoundDesign={setSelectedSoundDesign}
-            />
+                <SoundDesign
+                  selectedSoundDesign={selectedSoundDesign}
+                  setSelectedSoundDesign={setSelectedSoundDesign}
+                />
+              </>
+            )}
 
             <p className="text-sm text-white/60 mt-4">
               By clicking Import, you confirm that the uploaded material is your
@@ -511,6 +520,6 @@ export default function ImportPage() {
           <ImportSidebar key={sidebarKey} />
         </div>
       </div>
-    </div>
+    </div >
   );
 }

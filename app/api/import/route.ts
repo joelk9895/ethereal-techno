@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/app/lib/database";
 import { v4 as uuidv4 } from "uuid";
+import { getStreamUrl } from "@/app/services/getStreamUrl";
 
 export async function POST(req: Request) {
   try {
@@ -263,6 +264,17 @@ export async function POST(req: Request) {
   }
 }
 
+const isAudioFile = (fileName: string | undefined): boolean => {
+  if (!fileName) return false;
+  const lowerName = fileName.toLowerCase();
+  return (
+    lowerName.endsWith(".wav") ||
+    lowerName.endsWith(".mp3") ||
+    lowerName.endsWith(".aiff") ||
+    lowerName.endsWith(".aif")
+  );
+};
+
 export const GET = async () => {
   try {
     const constructionKits = await prisma.constructionkit.findMany({
@@ -279,74 +291,44 @@ export const GET = async () => {
             moods: true,
           },
         },
-        contents: {
+        // Include the defaultFullLoop with its file information
+        defaultFullLoop: {
           select: {
             id: true,
             contentName: true,
-            contentType: true,
-            file: { select: { fileName: true, awsKey: true } },
+            file: {
+              select: {
+                fileName: true,
+                awsKey: true,
+              },
+            },
           },
         },
-        loopAndMidis: {
+        contents: {
           select: {
             id: true,
-            name: true,
-            subGroup: true,
-            soundGroup: true,
-            loopContent: {
-              select: {
-                id: true,
-                contentName: true,
-                contentType: true,
-                file: { select: { fileName: true, awsKey: true } },
-              },
-            },
-            midiContent: {
-              select: {
-                id: true,
-                contentName: true,
-                contentType: true,
-                file: { select: { fileName: true, awsKey: true } },
-              },
-            },
-          },
-          orderBy: {
-            createdAt: "desc",
           },
         },
         presets: {
           select: {
             id: true,
-            name: true,
-            subGroup: true,
-            soundGroup: true,
-            loopContent: {
-              select: {
-                id: true,
-                contentName: true,
-                contentType: true,
-                file: { select: { fileName: true, awsKey: true } },
-              },
-            },
-            midiContent: {
-              select: {
-                id: true,
-                contentName: true,
-                contentType: true,
-                file: { select: { fileName: true, awsKey: true } },
-              },
-            },
-            presetContent: {
-              select: {
-                id: true,
-                contentName: true,
-                contentType: true,
-                file: { select: { fileName: true, awsKey: true } },
-              },
-            },
+            loopContentId: true,
+            midiContentId: true,
+            presetContentId: true,
           },
-          orderBy: {
-            createdAt: "desc",
+        },
+        loopAndMidis: {
+          select: {
+            id: true,
+            loopContentId: true,
+            midiContentId: true,
+          },
+        },
+        _count: {
+          select: {
+            contents: true,
+            presets: true,
+            loopAndMidis: true,
           },
         },
       },
@@ -357,13 +339,13 @@ export const GET = async () => {
         ...kit.presets.map((preset) => preset.id),
         ...kit.loopAndMidis.map((loopAndMidi) => loopAndMidi.id),
         ...kit.presets.flatMap((preset) => [
-          preset.loopContent?.id,
-          preset.midiContent?.id,
-          preset.presetContent?.id,
+          preset.loopContentId,
+          preset.midiContentId,
+          preset.presetContentId,
         ]),
         ...kit.loopAndMidis.flatMap((lm) => [
-          lm.loopContent?.id,
-          lm.midiContent?.id,
+          lm.loopContentId,
+          lm.midiContentId,
         ]),
       ])
       .filter((id): id is string => id !== null);
@@ -501,97 +483,180 @@ export const GET = async () => {
       },
     });
 
-    const mappedContents = contents.map((content) => ({
-      id: content.id,
-      name: content.contentName,
-      contentType: content.contentType,
-      subGroup: content.subGroup,
-      soundGroup: content.soundGroup,
-      createdAt: content.createdAt.toISOString(),
-      metadata: {
-        bpm: content.metadata?.bpm,
-        key: content.metadata?.key,
-      },
-      file: {
-        name: content.file.fileName,
-        key: content.file.awsKey,
-      },
-    }));
+    const mappedContents = await Promise.all(
+      contents.map(async (content) => {
+        let streamUrl = null;
+        if (isAudioFile(content.file.fileName)) {
+          try {
+            streamUrl = await getStreamUrl(content.file.awsKey);
+          } catch (e) {
+            console.error(
+              `Failed to get stream URL for ${content.file.awsKey}`,
+              e
+            );
+          }
+        }
+        return {
+          id: content.id,
+          name: content.contentName,
+          contentType: content.contentType,
+          subGroup: content.subGroup,
+          soundGroup: content.soundGroup,
+          createdAt: content.createdAt.toISOString(),
+          metadata: {
+            bpm: content.metadata?.bpm,
+            key: content.metadata?.key,
+          },
+          file: {
+            name: content.file.fileName,
+            key: content.file.awsKey,
+            streamUrl,
+          },
+        };
+      })
+    );
 
-    const mappedPresets = presets.map((preset) => ({
-      id: preset.id,
-      name: preset.name,
-      contentType: "Preset Bundle",
-      subGroup: preset.subGroup,
-      soundGroup: preset.soundGroup,
-      createdAt: preset.createdAt.toISOString(),
-      metadata: {
-        bpm: preset.metadata?.bpm,
-        key: preset.metadata?.key,
-      },
-      files: [
-        preset.loopContent && {
-          type: "AUDIO",
-          name: preset.loopContent.file.fileName,
-          key: preset.loopContent.file.awsKey,
-          contentId: preset.loopContent.id,
-        },
-        preset.midiContent && {
-          type: "MIDI",
-          name: preset.midiContent.file.fileName,
-          key: preset.midiContent.file.awsKey,
-          contentId: preset.midiContent.id,
-        },
-        preset.presetContent && {
-          type: "PRESET",
-          name: preset.presetContent.file.fileName,
-          key: preset.presetContent.file.awsKey,
-          contentId: preset.presetContent.id,
-        },
-      ].filter(Boolean),
-    }));
+    const mappedPresets = await Promise.all(
+      presets.map(async (preset) => {
+        const filesWithUrls = await Promise.all(
+          [
+            preset.loopContent && {
+              type: "AUDIO",
+              name: preset.loopContent.file.fileName,
+              key: preset.loopContent.file.awsKey,
+              contentId: preset.loopContent.id,
+            },
+            preset.midiContent && {
+              type: "MIDI",
+              name: preset.midiContent.file.fileName,
+              key: preset.midiContent.file.awsKey,
+              contentId: preset.midiContent.id,
+            },
+            preset.presetContent && {
+              type: "PRESET",
+              name: preset.presetContent.file.fileName,
+              key: preset.presetContent.file.awsKey,
+              contentId: preset.presetContent.id,
+            },
+          ]
+            .filter(Boolean)
+            .map(async (file) => {
+              let streamUrl = null;
+              if (!file) return null;
+              if (isAudioFile(file.name)) {
+                try {
+                  streamUrl = await getStreamUrl(file.key);
+                } catch (e) {
+                  console.error(`Failed to get stream URL for ${file.key}`, e);
+                }
+              }
+              return { ...file, streamUrl };
+            })
+        );
 
-    const mappedLoopAndMidi = loopandmidis.map((lm) => ({
-      id: lm.id,
-      name: lm.name,
-      contentType: "Loop+MIDI Bundle",
-      subGroup: lm.subGroup,
-      soundGroup: lm.soundGroup,
-      createdAt: lm.createdAt.toISOString(),
-      metadata: {
-        bpm: lm.metadata?.bpm,
-        key: lm.metadata?.key,
-      },
-      files: [
-        lm.loopContent && {
-          type: "AUDIO",
-          name: lm.loopContent.file.fileName,
-          key: lm.loopContent.file.awsKey,
-          contentId: lm.loopContent.id,
-        },
-        lm.midiContent && {
-          type: "MIDI",
-          name: lm.midiContent.file.fileName,
-          key: lm.midiContent.file.awsKey,
-          contentId: lm.midiContent.id,
-        },
-      ].filter(Boolean),
-    }));
-    const mappedConstructionKits = constructionKits.map((kit) => ({
-      id: kit.id,
-      name: kit.kitName,
-      contentType: "Construction Kit",
-      createdAt: kit.createdAt.toISOString(),
-      contents: kit.contents.length,
-      presets: kit.presets.length,
-      loopAndMidis: kit.loopAndMidis.length,
-      metadata: {
-        bpm: kit.metadata?.bpm || "",
-        key: kit.metadata?.key || "",
-        styles: kit.metadata?.styles || [],
-        moods: kit.metadata?.moods || [],
-      },
-    }));
+        return {
+          id: preset.id,
+          name: preset.name,
+          contentType: "Preset Bundle",
+          subGroup: preset.subGroup,
+          soundGroup: preset.soundGroup,
+          createdAt: preset.createdAt.toISOString(),
+          metadata: {
+            bpm: preset.metadata?.bpm,
+            key: preset.metadata?.key,
+          },
+          files: filesWithUrls,
+        };
+      })
+    );
+
+    const mappedLoopAndMidi = await Promise.all(
+      loopandmidis.map(async (lm) => {
+        const filesWithUrls = await Promise.all(
+          [
+            lm.loopContent && {
+              type: "AUDIO",
+              name: lm.loopContent.file.fileName,
+              key: lm.loopContent.file.awsKey,
+              contentId: lm.loopContent.id,
+            },
+            lm.midiContent && {
+              type: "MIDI",
+              name: lm.midiContent.file.fileName,
+              key: lm.midiContent.file.awsKey,
+              contentId: lm.midiContent.id,
+            },
+          ]
+            .filter(Boolean)
+            .map(async (file) => {
+              let streamUrl = null;
+              if (!file) return null;
+              if (isAudioFile(file.name)) {
+                try {
+                  streamUrl = await getStreamUrl(file.key);
+                } catch (e) {
+                  console.error(`Failed to get stream URL for ${file.key}`, e);
+                }
+              }
+              return { ...file, streamUrl };
+            })
+        );
+
+        return {
+          id: lm.id,
+          name: lm.name,
+          contentType: "Loop+MIDI Bundle",
+          subGroup: lm.subGroup,
+          soundGroup: lm.soundGroup,
+          createdAt: lm.createdAt.toISOString(),
+          metadata: {
+            bpm: lm.metadata?.bpm,
+            key: lm.metadata?.key,
+          },
+          files: filesWithUrls,
+        };
+      })
+    );
+
+    const mappedConstructionKits = await Promise.all(
+      constructionKits.map(async (kit) => {
+        let defaultFullLoop = null;
+        if (kit.defaultFullLoop && kit.defaultFullLoop.file) {
+          try {
+            const streamUrl = await getStreamUrl(
+              kit.defaultFullLoop.file.awsKey
+            );
+            defaultFullLoop = {
+              id: kit.defaultFullLoop.id,
+              name: kit.defaultFullLoop.file.fileName,
+              streamUrl,
+            };
+          } catch (e) {
+            console.error(
+              `Failed to get stream URL for default loop ${kit.defaultFullLoop.file.awsKey}`,
+              e
+            );
+          }
+        }
+
+        return {
+          id: kit.id,
+          name: kit.kitName,
+          contentType: "Construction Kit",
+          createdAt: kit.createdAt.toISOString(),
+          contents: kit._count.contents,
+          presets: kit._count.presets,
+          loopAndMidis: kit._count.loopAndMidis,
+          metadata: {
+            bpm: kit.metadata?.bpm || "",
+            key: kit.metadata?.key || "",
+            styles: kit.metadata?.styles || [],
+            moods: kit.metadata?.moods || [],
+          },
+          defaultFullLoop, // Add the default loop object to the response
+        };
+      })
+    );
 
     const combinedData = [
       ...mappedContents,

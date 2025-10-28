@@ -9,7 +9,6 @@ interface FileMetadata {
 }
 
 export function getFileName(fileMetadata: FileMetadata): string {
-  console.log("Generating file name with metadata:", fileMetadata);
   const isLoop =
     fileMetadata.contentType === "Sample Loop" ||
     fileMetadata.contentType === "Loop+MIDI Bundle";
@@ -31,7 +30,6 @@ export function getFileName(fileMetadata: FileMetadata): string {
     .split("_")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join("_");
-  console.log("Capitalized Sound Type:", capitalizedSoundType);
 
   fileName += `_${capitalizedSoundType}`;
 
