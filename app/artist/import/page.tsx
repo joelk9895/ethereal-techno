@@ -1,5 +1,9 @@
 "use client";
 import React, { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
+import { getAuthUser } from "@/lib/auth";
+import Layout from "@/components/Layout";
 import UploadProgressModal from "@/app/components/import/uploadProgressBar";
 import {
   keys,
@@ -28,7 +32,28 @@ import ContentType from "@/app/components/import/contentType";
 import { ConstructionKit } from "@/app/components/import/newConstruction";
 import { v4 as uuid } from "uuid";
 
+type OneShotGroupKey = keyof typeof oneShotGroup;
+type LoopGroupKey = keyof typeof loopGroups;
+type MidiGroupKey = keyof typeof midiGroups;
+type SoundGroupKey = OneShotGroupKey | LoopGroupKey | MidiGroupKey;
+
+interface UploadedContent {
+  name: string;
+  contentType: string;
+  metadata: {
+    bpm?: number | undefined;
+    key?: string;
+    soundGroup?: SoundGroupKey | null;
+    subGroup?: string;
+  };
+  id?: string;
+}
+
 export default function ImportPage() {
+  const router = useRouter();
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
   const [selectedContentType, setSelectedContentType] = useState("");
   const [selectedFile, setSelectedFile] = useState<File[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -36,22 +61,6 @@ export default function ImportPage() {
   const [bpm, setBpm] = useState<string | null>(null);
   const [selectedKey, setSelectedKey] = useState("");
   const [uploadProgress, setUploadProgress] = useState(0);
-  type OneShotGroupKey = keyof typeof oneShotGroup;
-  type LoopGroupKey = keyof typeof loopGroups;
-  type MidiGroupKey = keyof typeof midiGroups;
-  type SoundGroupKey = OneShotGroupKey | LoopGroupKey | MidiGroupKey;
-  interface UploadedContent {
-    name: string;
-    contentType: string;
-    metadata: {
-      bpm?: number | undefined;
-      key?: string;
-      soundGroup?: SoundGroupKey | null;
-      subGroup?: string;
-    };
-    id?: string;
-  }
-
   const [selectedSoundGroup, setSelectedSoundGroup] =
     useState<SoundGroupKey | null>(null);
   const [selectedSubGroup, setSelectedSubGroup] = useState("");
@@ -62,11 +71,34 @@ export default function ImportPage() {
   const [enableUpload, setEnableUpload] = useState(false);
   const [conId, setConId] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-
   const [uploadedContent, setUploadedContent] =
     useState<UploadedContent | null>(null);
-  const [sidebarKey, setSidebarKey] = useState(0); // Key to force sidebar refresh
+  const [sidebarKey, setSidebarKey] = useState(0);
 
+  // Authentication check - MUST be before any conditional returns
+  useEffect(() => {
+    const checkAuth = () => {
+      const user = getAuthUser();
+
+      if (!user) {
+        router.push("/signin");
+        return;
+      }
+
+      // Only allow ARTIST and ADMIN users
+      if (user.type !== "ARTIST" && user.type !== "ADMIN") {
+        router.push("/profile");
+        return;
+      }
+
+      setIsAuthorized(true);
+      setIsLoading(false);
+    };
+
+    checkAuth();
+  }, [router]);
+
+  // Reset form when content type changes - MUST be before any conditional returns
   useEffect(() => {
     setSelectedFile(null);
     setSelectedSoundGroup(null);
@@ -75,7 +107,7 @@ export default function ImportPage() {
     setSelectedMoods([]);
     setSelectedProcessing([]);
     setSelectedSoundDesign([]);
-    setBpm(null); // Reset BPM when content type changes
+    setBpm(null);
     setSelectedKey("");
     setContentName("");
     if (selectedContentType === "Construction Kit") {
@@ -86,12 +118,109 @@ export default function ImportPage() {
     }
   }, [selectedContentType]);
 
+  // Check if form is complete - MUST be before any conditional returns
+  useEffect(() => {
+    const isFormComplete = () => {
+      if (selectedContentType === "Construction Kit") {
+        return true;
+      }
+
+      if (!selectedFile || selectedFile.length === 0) {
+        return false;
+      }
+
+      if (selectedContentType === "MIDI" && selectedFile.length < 1) {
+        return false;
+      }
+
+      if (selectedContentType === "Preset" && selectedFile.length < 3) {
+        return false;
+      }
+
+      if (!contentName.trim()) {
+        return false;
+      }
+
+      if (
+        !(selectedContentType === "One-Shot" || selectedContentType === "MIDI" || selectedContentType === "Preset") &&
+        !bpm
+      ) {
+        return false;
+      }
+
+      if (selectedContentType !== "Preset" && !selectedKey) {
+        return false;
+      }
+
+      if (
+        selectedContentType !== "MIDI" &&
+        selectedContentType !== "Preset" &&
+        !selectedSoundGroup
+      ) {
+        return false;
+      }
+
+      if (
+        selectedSoundGroup &&
+        !selectedSubGroup &&
+        selectedContentType !== "MIDI"
+      ) {
+        return false;
+      }
+
+      return true;
+    };
+
+    setEnableUpload(isFormComplete());
+  }, [
+    selectedFile,
+    contentName,
+    bpm,
+    selectedKey,
+    selectedSoundGroup,
+    selectedSubGroup,
+    selectedContentType,
+  ]);
+
+  // Modal close handler - MUST be before any conditional returns
+  const handleModalClose = useCallback(() => {
+    setIsModalOpen(false);
+    setSidebarKey((prev) => prev + 1);
+  }, []);
+
+  // BPM calculation handler - MUST be before any conditional returns
+  const handleBPMCalculated = useCallback((calculatedBPM: string) => {
+    setBpm(calculatedBPM);
+  }, []);
+
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="min-h-screen bg-black flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="w-8 h-8 text-primary animate-spin" />
+            <span className="text-xs font-mono tracking-widest text-white/50">
+              VERIFYING ACCESS...
+            </span>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  // Don't render the page if not authorized
+  if (!isAuthorized) {
+    return null;
+  }
+
   function handleFileSelected(file: File | File[]) {
     setSelectedFile(Array.isArray(file) ? file : [file]);
   }
+
   async function importContent() {
     setLoading(true);
-    setIsModalOpen(true); // Open the modal when upload starts
+    setIsModalOpen(true);
     setUploadedContent(null);
 
     try {
@@ -112,6 +241,7 @@ export default function ImportPage() {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
             },
             body: JSON.stringify(constructionKitData),
           }
@@ -143,7 +273,7 @@ export default function ImportPage() {
       }
 
       const uploadFiles = selectedFile || [];
-      const awsKeys = [];
+      const awsKeys: string[] = [];
 
       if (selectedContentType === "MIDI") {
         if (uploadFiles.length < 1) {
@@ -179,7 +309,10 @@ export default function ImportPage() {
           {
             method: "POST",
             body: JSON.stringify({ fileName: file.name, fileType }),
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+            },
           }
         );
 
@@ -190,7 +323,7 @@ export default function ImportPage() {
         const { uploadUrl, key } = await uploadUrlResponse.json();
         awsKeys.push(key);
 
-        await new Promise((resolve, reject) => {
+        await new Promise<void>((resolve, reject) => {
           const xhr = new XMLHttpRequest();
 
           xhr.upload.onprogress = (event) => {
@@ -205,7 +338,7 @@ export default function ImportPage() {
 
           xhr.onload = () => {
             if (xhr.status >= 200 && xhr.status < 300) {
-              resolve(xhr.response);
+              resolve();
             } else {
               reject(new Error(`Upload failed with status: ${xhr.status}`));
             }
@@ -241,6 +374,9 @@ export default function ImportPage() {
         {
           method: "POST",
           body: formData,
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
         }
       );
 
@@ -282,158 +418,93 @@ export default function ImportPage() {
     setSelectedContentType("");
   }
 
-  useEffect(() => {
-    const isFormComplete = () => {
-      if (selectedContentType === "Construction Kit") {
-        return true;
-      }
-
-      if (!selectedFile || selectedFile.length === 0) {
-        return false;
-      }
-
-      if (selectedContentType === "MIDI" && selectedFile.length < 1) {
-        return false;
-      }
-
-      if (selectedContentType === "Preset" && selectedFile.length < 3) {
-        return false;
-      }
-
-      if (!contentName.trim()) {
-        return false;
-      }
-
-      if (!(selectedContentType === "One-Shot" || selectedContentType === "MIDI" || selectedContentType === "Preset") && !bpm) {
-        return false;
-      }
-
-      if (selectedContentType !== "Preset" && !selectedKey) {
-        return false;
-      }
-
-      if (
-        selectedContentType !== "MIDI" &&
-        selectedContentType !== "Preset" &&
-        !selectedSoundGroup
-      ) {
-        return false;
-      }
-
-      if (
-        selectedSoundGroup &&
-        !selectedSubGroup &&
-        selectedContentType !== "MIDI"
-      ) {
-        return false;
-      }
-
-      return true;
-    };
-
-    setEnableUpload(isFormComplete());
-  }, [
-    selectedFile,
-    contentName,
-    bpm,
-    selectedKey,
-    selectedSoundGroup,
-    selectedSubGroup,
-    selectedContentType,
-  ]);
-
-  const handleModalClose = useCallback(() => {
-    setIsModalOpen(false);
-    setSidebarKey((prev) => prev + 1);
-  }, []);
-
-  const handleBPMCalculated = (calculatedBPM: string) => {
-    setBpm(calculatedBPM); // Always update BPM when recalculated
-  };
-
   return (
-    <div className="min-h-screen bg-black text-white">
-      <UploadProgressModal
-        isOpen={isModalOpen}
-        onClose={handleModalClose}
-        progress={uploadProgress}
-        uploadedContent={uploadedContent}
-        loading={loading}
-      />
+    <Layout>
+      <div className="min-h-screen bg-black text-white">
+        <UploadProgressModal
+          isOpen={isModalOpen}
+          onClose={handleModalClose}
+          progress={uploadProgress}
+          uploadedContent={uploadedContent}
+          loading={loading}
+        />
 
-      <div className="max-w-screen px-8 py-12">
-        <div className="flex max-w-2/3 gap-16">
-          <div className="space-y-4">
-            <div>
-              <h1 className=" uppercase font-main text-4xl mb-12 tracking-wide">
-                Import Content
-              </h1>
-            </div>
-            <ContentType
-              selectedContentType={selectedContentType}
-              setSelectedContentType={setSelectedContentType}
-            />
-            <p className="text-sm font-medium tracking-wide mt-12 mb-4 text-white/80 ">
-              {notes[selectedContentType] || ""}
-            </p>
-            {selectedContentType !== "Construction Kit" ? (
-              <AudioDropZone
-                onFileSelected={handleFileSelected}
-                onBPMCalculated={handleBPMCalculated}
-                type={selectedContentType}
-              />
-            ) : (
-              <ConstructionKit id={conId} onBPMDetected={setBpm} />
-            )}
-            <div className="grid grid-cols-3 gap-6">
+        <div className="max-w-screen px-8 py-12">
+          <div className="flex max-w-2/3 gap-16">
+            <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-white/60 mb-3 uppercase tracking-wider">
-                  Content Name
-                </label>
-                <input
-                  type="text"
-                  value={contentName}
-                  onChange={(e) => setContentName(e.target.value)}
-                  className="w-full rounded-xl bg-white/5 border border-gray-700 px-4 py-3 text-white focus:outline-none focus:border-primary focus:bg-white/10 transition-all"
-                />
+                <h1 className="uppercase font-main text-4xl mb-12 tracking-wide">
+                  Import Content
+                </h1>
               </div>
-              {!(selectedContentType === "One-Shot" || selectedContentType === "MIDI" || selectedContentType === "Preset") && (
+
+              <ContentType
+                selectedContentType={selectedContentType}
+                setSelectedContentType={setSelectedContentType}
+              />
+
+              <p className="text-sm font-medium tracking-wide mt-12 mb-4 text-white/80 ">
+                {notes[selectedContentType] || ""}
+              </p>
+
+              {selectedContentType !== "Construction Kit" ? (
+                <AudioDropZone
+                  onFileSelected={handleFileSelected}
+                  onBPMCalculated={handleBPMCalculated}
+                  type={selectedContentType}
+                />
+              ) : (
+                <ConstructionKit id={conId} onBPMDetected={setBpm} />
+              )}
+
+              <div className="grid grid-cols-3 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-white/60 mb-3 uppercase tracking-wider">
-                    BPM
+                    Content Name
                   </label>
                   <input
-                    type="number"
-                    value={bpm || ""}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      if (value === "" || /^\d+$/.test(value)) {
-                        setBpm(value);
-                      }
-                    }}
-                    min="1"
+                    type="text"
+                    value={contentName}
+                    onChange={(e) => setContentName(e.target.value)}
                     className="w-full rounded-xl bg-white/5 border border-gray-700 px-4 py-3 text-white focus:outline-none focus:border-primary focus:bg-white/10 transition-all"
-                    onKeyDown={(e) => {
-                      if (
-                        e.key === "Backspace" ||
-                        e.key === "Delete" ||
-                        e.key === "Tab" ||
-                        e.key === "Escape" ||
-                        e.key === "Enter" ||
-                        e.key.includes("Arrow")
-                      ) {
-                        return;
-                      }
-
-                      if (!/\d/.test(e.key)) {
-                        e.preventDefault();
-                      }
-                    }}
                   />
                 </div>
-              )}
-              {
-                selectedContentType !== "Preset" && (
+                {!(selectedContentType === "One-Shot" || selectedContentType === "MIDI" || selectedContentType === "Preset") && (
+                  <div>
+                    <label className="block text-sm font-medium text-white/60 mb-3 uppercase tracking-wider">
+                      BPM
+                    </label>
+                    <input
+                      type="number"
+                      value={bpm || ""}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === "" || /^\d+$/.test(value)) {
+                          setBpm(value);
+                        }
+                      }}
+                      min="1"
+                      className="w-full rounded-xl bg-white/5 border border-gray-700 px-4 py-3 text-white focus:outline-none focus:border-primary focus:bg-white/10 transition-all"
+                      onKeyDown={(e) => {
+                        if (
+                          e.key === "Backspace" ||
+                          e.key === "Delete" ||
+                          e.key === "Tab" ||
+                          e.key === "Escape" ||
+                          e.key === "Enter" ||
+                          e.key.includes("Arrow")
+                        ) {
+                          return;
+                        }
+
+                        if (!/\d/.test(e.key)) {
+                          e.preventDefault();
+                        }
+                      }}
+                    />
+                  </div>
+                )}
+                {selectedContentType !== "Preset" && (
                   <div>
                     <label className="block text-sm font-medium text-white/60 mb-3 uppercase tracking-wider">
                       Key
@@ -456,70 +527,71 @@ export default function ImportPage() {
                       </SelectContent>
                     </Select>
                   </div>
-
-                )
-              }
-            </div>
-            {selectedContentType !== "Construction Kit" && (
-              <>
-                {selectedContentType === "" ||
-                  (selectedContentType !== "MIDI" && (
-                    <SoundGroup
-                      selectedSoundGroup={selectedSoundGroup ?? null}
-                      selectedContentType={selectedContentType}
-                      setSelectedSoundGroup={setSelectedSoundGroup}
-                    />
-                  ))}
-                {(selectedSoundGroup || selectedContentType === "MIDI") && (
-                  <SubGroup
-                    selectedContentType={selectedContentType}
-                    selectedSoundGroup={selectedSoundGroup ?? null}
-                    selectedSubGroup={selectedSubGroup}
-                    setSelectedSubGroup={setSelectedSubGroup}
-                  />
                 )}
-              </>
-            )}
-            <Styles
-              selectedStyles={selectedStyles}
-              setSelectedStyles={setSelectedStyles}
-            />
-            <Mood
-              selectedMoods={selectedMoods}
-              setSelectedMoods={setSelectedMoods}
-            />
-            {selectedContentType !== "MIDI" && (
-              <>
-                <Processing
-                  selectedProcessing={selectedProcessing}
-                  setSelectedProcessing={setSelectedProcessing}
-                />
+              </div>
 
-                <SoundDesign
-                  selectedSoundDesign={selectedSoundDesign}
-                  setSelectedSoundDesign={setSelectedSoundDesign}
-                />
-              </>
-            )}
+              {selectedContentType !== "Construction Kit" && (
+                <>
+                  {selectedContentType === "" ||
+                    (selectedContentType !== "MIDI" && (
+                      <SoundGroup
+                        selectedSoundGroup={selectedSoundGroup ?? null}
+                        selectedContentType={selectedContentType}
+                        setSelectedSoundGroup={setSelectedSoundGroup}
+                      />
+                    ))}
+                  {(selectedSoundGroup || selectedContentType === "MIDI") && (
+                    <SubGroup
+                      selectedContentType={selectedContentType}
+                      selectedSoundGroup={selectedSoundGroup ?? null}
+                      selectedSubGroup={selectedSubGroup}
+                      setSelectedSubGroup={setSelectedSubGroup}
+                    />
+                  )}
+                </>
+              )}
+              <Styles
+                selectedStyles={selectedStyles}
+                setSelectedStyles={setSelectedStyles}
+              />
+              <Mood
+                selectedMoods={selectedMoods}
+                setSelectedMoods={setSelectedMoods}
+              />
+              {selectedContentType !== "MIDI" && (
+                <>
+                  <Processing
+                    selectedProcessing={selectedProcessing}
+                    setSelectedProcessing={setSelectedProcessing}
+                  />
 
-            <p className="text-sm text-white/60 mt-4">
-              By clicking Import, you confirm that the uploaded material is your
-              original work and does not infringe on any third-party copyrights.
-            </p>
-            <div className="pt-1">
-              <button
-                onClick={importContent}
-                disabled={!enableUpload || loading}
-                className="disabled:opacity-50 disabled:cursor-not-allowed w-full bg-primary hover:bg-primary/90 text-black font-medium py-4 text-lg tracking-wide transition-colors duration-200"
-              >
-                {loading ? "Importing..." : "Import Content"}
-              </button>
+                  <SoundDesign
+                    selectedSoundDesign={selectedSoundDesign}
+                    setSelectedSoundDesign={setSelectedSoundDesign}
+                  />
+                </>
+              )}
+
+              <p className="text-sm text-white/60 mt-4">
+                By clicking Import, you confirm that the uploaded material is your
+                original work and does not infringe on any third-party copyrights.
+              </p>
+
+              <div className="pt-1">
+                <button
+                  onClick={importContent}
+                  disabled={!enableUpload || loading}
+                  className="disabled:opacity-50 disabled:cursor-not-allowed w-full bg-primary hover:bg-primary/90 text-black font-medium py-4 text-lg tracking-wide transition-colors duration-200"
+                >
+                  {loading ? "Importing..." : "Import Content"}
+                </button>
+              </div>
             </div>
-          </div>
 
-          <ImportSidebar key={sidebarKey} />
+            <ImportSidebar key={sidebarKey} />
+          </div>
         </div>
       </div>
-    </div >
+    </Layout>
   );
 }

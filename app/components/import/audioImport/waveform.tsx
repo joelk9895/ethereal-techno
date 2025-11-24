@@ -1,30 +1,80 @@
-import { useRef, useEffect, useState } from "react";
+"use client";
+
+import { useEffect, useRef, useState } from "react";
 
 interface WaveformProps {
-  data: number[];
+  waveformData: number[];
   progress: number;
   isLoading: boolean;
   onPositionChange: (position: number) => void;
 }
 
 export default function Waveform({
-  data,
+  waveformData,
   progress,
   isLoading,
   onPositionChange,
 }: WaveformProps) {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
 
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const container = containerRef.current;
+    if (!canvas || !container || waveformData.length === 0) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    const rect = container.getBoundingClientRect();
+
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    canvas.style.width = `${rect.width}px`;
+    canvas.style.height = `${rect.height}px`;
+
+    ctx.scale(dpr, dpr);
+
+    const width = rect.width;
+    const height = rect.height;
+    const barWidth = width / waveformData.length;
+    const barGap = 1;
+
+    // Clear canvas
+    ctx.clearRect(0, 0, width, height);
+
+    // Draw waveform bars
+    waveformData.forEach((value, index) => {
+      const barHeight = value * height * 0.8;
+      const x = index * barWidth;
+      const y = (height - barHeight) / 2;
+
+      // Determine color based on progress
+      const isPlayed = index / waveformData.length <= progress;
+      ctx.fillStyle = isPlayed ? "#22c55e" : "rgba(255, 255, 255, 0.2)";
+      ctx.fillRect(x, y, barWidth - barGap, barHeight);
+    });
+
+    // Draw progress line
+    const progressX = progress * width;
+    ctx.strokeStyle = "#22c55e";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(progressX, 0);
+    ctx.lineTo(progressX, height);
+    ctx.stroke();
+  }, [waveformData, progress]);
+
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!containerRef.current) return;
+    const container = containerRef.current;
+    if (!container) return;
 
-    const rect = containerRef.current.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const position = Math.max(0, Math.min(1, clickX / rect.width));
-
-    onPositionChange(position);
+    const rect = container.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const position = x / rect.width;
+    onPositionChange(Math.max(0, Math.min(1, position)));
   };
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -41,59 +91,10 @@ export default function Waveform({
     setIsDragging(false);
   };
 
-  const drawWaveform = () => {
-    if (!canvasRef.current || data.length === 0) return;
-
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d")!;
-    const { width, height } = canvas;
-
-    ctx.clearRect(0, 0, width, height);
-
-    const barWidth = width / data.length;
-    const centerY = height / 2;
-
-    data.forEach((amplitude, index) => {
-      const barHeight = amplitude * height * 0.8;
-      const x = index * barWidth;
-
-      const barProgress = index / data.length;
-      const isPlayed = barProgress <= progress;
-
-      ctx.fillStyle = isPlayed ? "rgb(59, 130, 246)" : "rgb(75, 85, 99)";
-
-      ctx.fillRect(x + 1, centerY - barHeight / 2, barWidth - 2, barHeight / 2);
-      ctx.fillRect(x + 1, centerY, barWidth - 2, barHeight / 2);
-    });
-
-    const progressX = progress * width;
-    ctx.strokeStyle = "rgb(59, 130, 246)";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(progressX, 0);
-    ctx.lineTo(progressX, height);
-    ctx.stroke();
-  };
-
-  useEffect(() => {
-    drawWaveform();
-  }, [data, progress]);
-
-  useEffect(() => {
-    const handleGlobalMouseUp = () => {
-      setIsDragging(false);
-    };
-
-    if (isDragging) {
-      document.addEventListener("mouseup", handleGlobalMouseUp);
-      return () => document.removeEventListener("mouseup", handleGlobalMouseUp);
-    }
-  }, [isDragging]);
-
   if (isLoading) {
     return (
-      <div className="w-full h-20 rounded-lg bg-black/20 flex items-center justify-center">
-        <div className="text-white/60 text-sm">Generating waveform...</div>
+      <div className="w-full h-24 flex items-center justify-center">
+        <div className="animate-pulse text-white/40 text-sm">Loading waveform...</div>
       </div>
     );
   }
@@ -101,50 +102,14 @@ export default function Waveform({
   return (
     <div
       ref={containerRef}
-      className="w-full h-20 rounded-lg bg-black/20 cursor-pointer select-none relative overflow-hidden"
+      className="w-full h-24 cursor-pointer relative"
+      onClick={handleClick}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
     >
-      <canvas
-        ref={canvasRef}
-        className="w-full h-full"
-        width={800}
-        height={80}
-      />
+      <canvas ref={canvasRef} className="w-full h-full" />
     </div>
   );
 }
-
-export const generateWaveformData = async (file: Blob) => {
-  try {
-    const arrayBuffer = await file.arrayBuffer();
-    const audioContext = new AudioContext();
-    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-
-    const rawData = audioBuffer.getChannelData(0);
-    const samples = 500;
-    const blockSize = Math.floor(rawData.length / samples);
-    const filteredData = [];
-
-    for (let i = 0; i < samples; i++) {
-      const blockStart = blockSize * i;
-      let sum = 0;
-      for (let j = 0; j < blockSize; j++) {
-        sum += Math.abs(rawData[blockStart + j]);
-      }
-      filteredData.push(sum / blockSize);
-    }
-
-    const multiplier = Math.pow(Math.max(...filteredData), -1);
-    const normalizedData = filteredData.map((n) => n * multiplier);
-
-    audioContext.close();
-
-    return normalizedData;
-  } catch (error) {
-    console.error("Error generating waveform:", error);
-    return [];
-  }
-};

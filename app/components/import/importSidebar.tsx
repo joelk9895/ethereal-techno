@@ -6,7 +6,6 @@ import {
   Play,
   Pause,
   Repeat,
-  ChevronDown,
   Package,
   FileAudio,
   Music,
@@ -463,6 +462,7 @@ export default function ImportSidebar() {
                         <Edit3 className="h-3.5 w-3.5 text-white/40 hover:text-white/60" />
                       </button>
                       <button className="p-1.5 hover:bg-white/10 rounded-full transition-colors">
+                        <Trash2 className="h-3.5 w-3.5 text-white/40 hover:text-white/60" />
                         <Trash2 className="h-3.5 w-3.5 text-white/40 hover:text-white/60" />
                       </button>
                     </div>

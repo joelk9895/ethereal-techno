@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/app/lib/database";
-import { getStreamUrl } from "@/app/services/getStreamUrl";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 export async function POST(
   req: NextRequest,
@@ -201,86 +202,32 @@ export async function POST(
 }
 
 export async function GET(
-  req: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
-
   try {
+    const { id } = await params;
+
     const constructionKit = await prisma.constructionkit.findUnique({
       where: { id },
-      include: {
-        contents: {
-          include: {
-            file: true, // Ensure the related file with awsKey is included
-          },
-        },
-        metadata: true,
-        presets: {
-          include: {
-            loopContent: {
-              include: { file: true },
-            },
-            midiContent: {
-              include: { file: true },
-            },
-            presetContent: {
-              include: { file: true },
-            },
-          },
-        },
-        loopAndMidis: {
-          include: {
-            loopContent: {
-              include: { file: true },
-            },
-            midiContent: {
-              include: { file: true },
-            },
-          },
-        },
-      },
+      include: { contents: true },
     });
 
     if (!constructionKit) {
       return NextResponse.json(
-        { error: "No construction kit found for the given ID" },
+        { error: "Construction kit not found" },
         { status: 404 }
       );
     }
 
-    const contentsWithStreamUrls = await Promise.all(
-      constructionKit.contents.map(async (content) => {
-        const isAudio =
-          content.contentType === "Sample Loop" ||
-          content.contentType === "One-Shot" ||
-          content.contentType === "Full Loop";
-
-        if (isAudio && content.file?.awsKey) {
-          try {
-            const streamUrl = await getStreamUrl(content.file.awsKey);
-            return { ...content, streamUrl };
-          } catch (error) {
-            console.error(
-              `Failed to get stream URL for key ${content.file.awsKey}:`,
-              error
-            );
-            return { ...content, streamUrl: null };
-          }
-        }
-        return { ...content, streamUrl: null };
-      })
+    return NextResponse.json({ constructionKit });
+  } catch {
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
     );
-
-    const kitWithUrls = {
-      ...constructionKit,
-      contents: contentsWithStreamUrls,
-    };
-
-    return NextResponse.json(kitWithUrls, { status: 200 });
-  } catch (error) {
-    console.error("Error fetching construction kit:", error);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  } finally {
+    await prisma.$disconnect();
   }
 }
 

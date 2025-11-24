@@ -349,10 +349,18 @@ export default function FileDrop({
     files.every((_, index) => {
       const data = fileData[index];
       const fileType = determineFileType(files[index]);
+      
+      // Full Loop only needs category
+      if (data?.category === "Full Loop") {
+        return Boolean(data.category);
+      }
 
+      // MIDI and Preset files need category and type
       if (fileType === "MIDI" || fileType === "Preset") {
         return data?.category && data?.type;
       }
+      
+      // Other audio files need category, group, and type
       return data?.category && data?.group && data?.type;
     });
 
@@ -408,9 +416,17 @@ export default function FileDrop({
       const data = fileData[index];
       const fileType = determineFileType(files[index]);
 
+      // Full Loop only needs category
+      if (data?.category === "Full Loop") {
+        return Boolean(data.category);
+      }
+
+      // MIDI and Preset files need category and type  
       if (fileType === "MIDI" || fileType === "Preset") {
         return data?.category && data?.type;
       }
+      
+      // Other files need category, group, and type
       return data?.category && data?.group && data?.type;
     });
 
@@ -418,7 +434,7 @@ export default function FileDrop({
       showAlert(
         "warning",
         "Incomplete File Organization",
-        "Please assign a category and type to all files before continuing."
+        "Please assign the required fields for all files before continuing."
       );
       return;
     }
@@ -800,7 +816,9 @@ export default function FileDrop({
                       const originalCategory = data.originalCategory || "";
                       const originalType = data.originalType || "";
 
-                      const isComplete = category && type;
+                      // Update completion logic for Full Loop
+                      const isFullLoop = category === "Full Loop";
+                      const isComplete = isFullLoop ? Boolean(category) : Boolean(category && type);
                       const categorySelected = Boolean(category);
                       const fileProgress = uploadProgress[index] || 0;
 
@@ -876,50 +894,53 @@ export default function FileDrop({
                               </div>
                             )}
 
-                            {/* MIDI Type or Sound Group */}
-                            <div className="w-96 flex-shrink-0">
-                              <label className="block text-xs font-medium text-white/70 mb-1">
-                                {isMidiFile
-                                  ? "MIDI Type"
-                                  : "Sound Group"}
-                              </label>
+                            {/* MIDI Type or Sound Group - Hide for Full Loop */}
+                            {!isFullLoop && (
+                              <div className="w-96 flex-shrink-0">
+                                <label className="block text-xs font-medium text-white/70 mb-1">
+                                  {isMidiFile
+                                    ? "MIDI Type"
+                                    : "Sound Group"}
+                                </label>
 
-                              {isMidiFile ? (
-                                <CustomSelect
-                                  placeholder="Choose MIDI type"
-                                  options={midiTypeOptions}
-                                  value={data.type}
-                                  onChange={(value: string) =>
-                                    updateFileData(
-                                      index,
-                                      "type",
-                                      value,
-                                      setFileData
-                                    )
-                                  }
-                                />
-                              ) : (
-                                <CustomSelect
-                                  placeholder="Choose sound group"
-                                  options={categoryTypeOptions.map((option) => ({
-                                    value: option.name,
-                                    label: option.name,
-                                  }))}
-                                  value={data.group}
-                                  disabled={!data.category}
-                                  onChange={(value: string) =>
-                                    updateFileData(
-                                      index,
-                                      "group",
-                                      value,
-                                      setFileData
-                                    )
-                                  }
-                                />
-                              )}
-                            </div>
+                                {isMidiFile ? (
+                                  <CustomSelect
+                                    placeholder="Choose MIDI type"
+                                    options={midiTypeOptions}
+                                    value={data.type}
+                                    onChange={(value: string) =>
+                                      updateFileData(
+                                        index,
+                                        "type",
+                                        value,
+                                        setFileData
+                                      )
+                                    }
+                                  />
+                                ) : (
+                                  <CustomSelect
+                                    placeholder="Choose sound group"
+                                    options={categoryTypeOptions.map((option) => ({
+                                      value: option.name,
+                                      label: option.name,
+                                    }))}
+                                    value={data.group}
+                                    disabled={!data.category}
+                                    onChange={(value: string) =>
+                                      updateFileData(
+                                        index,
+                                        "group",
+                                        value,
+                                        setFileData
+                                      )
+                                    }
+                                  />
+                                )}
+                              </div>
+                            )}
 
-                            {!isMidiFile && (
+                            {/* Content Type - Hide for MIDI and Full Loop */}
+                            {!isMidiFile && !isFullLoop && (
                               <div className="w-96 flex-shrink-0">
                                 <label className="block text-xs font-medium text-white/70 mb-1">
                                   Content Type

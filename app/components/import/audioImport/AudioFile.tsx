@@ -2,8 +2,8 @@
 import { useState, useEffect, useRef } from "react";
 import { Play, Pause, X } from "lucide-react";
 import { AudioFile as AudioFileType } from "./types";
-import Waveform, { generateWaveformData } from "./waveform";
-import { getFileTypeColor, formatTime } from "./utils";
+import Waveform from "./waveform";
+import { getFileTypeColor, formatTime,  generateWaveformData } from "./utils";
 
 interface AudioFileProps {
   file: AudioFileType;
@@ -60,9 +60,8 @@ export default function AudioFile({ file, onRemove }: AudioFileProps) {
         audioBufferRef.current = audioBuffer;
         setDuration(formatTime(audioBuffer.duration));
 
-        // Generate waveform from the original file for local files, or a new blob for remote
-        const waveformSource = isLocalFile ? file.file : new Blob([arrayBuffer]);
-        const waveform = await generateWaveformData(waveformSource);
+        // Generate waveform from the decoded audio buffer
+        const waveform = await generateWaveformData(audioBuffer);
         setWaveformData(waveform);
         setIsLoadingWaveform(false);
 
@@ -309,7 +308,7 @@ export default function AudioFile({ file, onRemove }: AudioFileProps) {
         <>
           <div className="px-6 py-4 bg-white/5">
             <Waveform
-              data={waveformData}
+              waveformData={waveformData}
               progress={progress}
               isLoading={isLoadingWaveform}
               onPositionChange={handlePositionChange}

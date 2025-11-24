@@ -24,17 +24,16 @@ model Content {
   metadataId String
   metadata   Metadata @relation("ContentMetadata", fields: [metadataId], references: [id])
 
-  // Relations for loops and midis
   loopandmidiLoop Loopandmidi[] @relation("LoopContent")
   loopandmidiMidi Loopandmidi[] @relation("MidiContent")
 
-  // Relations for presets
   presetLoop    Preset[] @relation("PresetLoop")
   presetMidi    Preset[] @relation("PresetMidi")
   presetContent Preset[] @relation("PresetMain")
 
-  // Relation back to default loop
   usedAsDefaultIn Constructionkit[] @relation("DefaultFullLoop")
+
+  orderItems OrderItem[]
 }
 
 model Loopandmidi {
@@ -85,6 +84,7 @@ model Constructionkit {
   kitName     String
   description String?
   createdAt   DateTime @default(now())
+  price       Float    @default(0)
 
   userId String
   user   User   @relation(fields: [userId], references: [id])
@@ -98,6 +98,8 @@ model Constructionkit {
 
   defaultFullLoopId String
   defaultFullLoop   Content @relation("DefaultFullLoop", fields: [defaultFullLoopId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  orderItems OrderItem[]
 }
 
 model Metadata {
@@ -124,19 +126,108 @@ model File {
 }
 
 model User {
-  id        String   @id @default(uuid()) @map("_id")
-  username  String   @unique
-  email     String   @unique
-  name      String?
-  password  String
-  createdAt DateTime @default(now())
-  type      UserType @default(USER)
+  id                 String              @id @default(auto()) @map("_id") @db.ObjectId
+  username           String              @unique
+  email              String              @unique
+  password           String
+  name               String
+  surname            String?
+  type               UserType            @default(USER)
+  country            String?
+  approvedAt         DateTime?
+  canCreateSamples   Boolean             @default(false)
+  canCreateSerum     Boolean             @default(false)
+  canCreateDiva      Boolean             @default(false)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  artistApplications ArtistApplication[]
+  constructionkits   Constructionkit[]
+}
 
-  constructionkits Constructionkit[]
+model ArtistApplication {
+  id                   String            @id @default(auto()) @map("_id") @db.ObjectId
+  userId               String            @db.ObjectId
+  user                 User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  artistName           String
+  email                String
+  photoUrl             String?
+  photoKey             String?
+  instagram            String?
+  tiktok               String?
+  facebook             String?
+  youtube              String?
+  x                    String?
+  linktree             String?
+  spotify              String?
+  soundcloud           String?
+  beatport             String?
+  bandcamp             String?
+  appleMusic           String?
+  track1               String?
+  track2               String?
+  track3               String?
+  quote                String
+  canCreateLoops       Boolean
+  canCreateSerum       Boolean
+  canCreateDiva        Boolean
+  status               ApplicationStatus @default(PENDING)
+  reviewNotes          String?
+  reviewedAt           DateTime?
+  reviewedBy           String?
+  criteriaStyle        CriteriaStatus?
+  criteriaQuality      CriteriaStatus?
+  criteriaPresentation CriteriaStatus?
+  criteriaStatement    CriteriaStatus?
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+}
+
+model News {
+  id        String   @id @default(cuid()) @map("_id")
+  title     String
+  content   String
+  isActive  Boolean  @default(true)
+  priority  Int      @default(0) // Higher number = higher priority
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String // User ID who created it
+
+  @@map("news")
+}
+
+enum ApplicationStatus {
+  PENDING
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+}
+
+enum CriteriaStatus {
+  APPROVED
+  REFUSED
+  NOT_REVIEWED
 }
 
 enum UserType {
-  ADMIN
-  ARTIST
   USER
+  ARTIST
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+model OrderItem {
+  id        String           @id @default(uuid()) @map("_id")
+  orderId   String
+  contentId String?
+  content   Content?         @relation(fields: [contentId], references: [id])
+  kitId     String?
+  kit       Constructionkit? @relation(fields: [kitId], references: [id])
+  price     Float
+  createdAt DateTime         @default(now())
 }
