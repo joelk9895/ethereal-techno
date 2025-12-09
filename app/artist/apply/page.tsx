@@ -85,12 +85,28 @@ export default function ApplyPage() {
             const response = await fetch("/api/artist/apply", {
                 headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` },
             });
-            if (!response.ok) {
-                router.push("/dashboard");
+
+            if (response.status === 401) {
+                // Unauthorized - clear auth and redirect to login/home
+                localStorage.removeItem("accessToken");
+                localStorage.removeItem("user");
+                router.push("/signin"); // or wherever your login pages is
+                return;
+            }
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.exists) {
+                    router.push("/dashboard");
+                }
+                // If it doesn't exist, we stay on the page (do nothing)
+            } else {
+                console.error("Failed to check application status:", response.statusText);
+                // Optional: Show error to user, but don't redirect to dashboard yet
             }
         } catch (error) {
             console.error("Error checking application:", error);
-            router.push("/dashboard");
+            // Don't redirect on network error, let them try or see the page
         }
     }, [router]);
 
@@ -205,19 +221,19 @@ export default function ApplyPage() {
                                     <CapabilityCheckbox
                                         label="Audio Loops"
                                         active={false}
-                                        onClick={() => {}}
+                                        onClick={() => { }}
                                         icon={Disc}
                                     />
                                     <CapabilityCheckbox
                                         label="Serum Presets"
                                         active={false}
-                                        onClick={() => {}}
+                                        onClick={() => { }}
                                         icon={Mic2}
                                     />
                                     <CapabilityCheckbox
                                         label="DIVA Presets"
                                         active={false}
-                                        onClick={() => {}}
+                                        onClick={() => { }}
                                         icon={Music}
                                     />
                                 </div>
