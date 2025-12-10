@@ -82,13 +82,13 @@ export async function GET(request: NextRequest) {
     ]);
 
     const pendingApplications = applications.filter(
-      (app) => app.status === "PENDING"
+      (app: { status: string }) => app.status === "PENDING"
     ).length;
     const approvedApplications = applications.filter(
-      (app) => app.status === "APPROVED"
+      (app: { status: string }) => app.status === "APPROVED"
     ).length;
     const rejectedApplications = applications.filter(
-      (app) => app.status === "REJECTED"
+      (app: { status: string }) => app.status === "REJECTED"
     ).length;
 
 
