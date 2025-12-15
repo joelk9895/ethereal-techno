@@ -4,7 +4,6 @@ generator client {
 
 datasource db {
   provider = "mongodb"
-  url      = env("DATABASE_URL")
 }
 
 model Content {
@@ -142,6 +141,41 @@ model User {
   updatedAt          DateTime            @updatedAt
   artistApplications ArtistApplication[]
   constructionkits   Constructionkit[]
+  sessions           Session[]
+  riskLogs           RiskLog[]
+}
+
+model Session {
+  id                String   @id @default(uuid()) @map("_id")
+  userId            String   @db.ObjectId
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshTokenHash  String // Storing hash for security
+  deviceFingerprint String
+  userAgent         String?
+  ipAddress         String?
+  riskScore         Int      @default(0)
+  expiresAt         DateTime
+  lastActive        DateTime @default(now())
+  createdAt         DateTime @default(now())
+
+  riskLogs RiskLog[]
+
+  @@index([userId])
+}
+
+model RiskLog {
+  id        String   @id @default(uuid()) @map("_id")
+  sessionId String
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event     String // "LOGIN", "REFRESH", "SUSPICIOUS"
+  score     Int
+  details   Json?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([sessionId])
 }
 
 model ArtistApplication {

@@ -265,10 +265,10 @@ export default function ProducerDashboardPage() {
                 <div className="absolute top-[-20%] left-[-20%] w-[50vw] h-[50vw] bg-primary/5 blur-[150px] rounded-full opacity-50" />
             </div>
 
-            <div className="relative z-10 flex flex-col lg:flex-row min-h-screen">
+            <div className="relative z-10 flex flex-col lg:flex-row-reverse lg:h-screen lg:overflow-hidden">
 
-                {/* --- LEFT SIDEBAR (Navigation) --- */}
-                <aside className="w-full lg:w-80 lg:fixed lg:h-screen border-r border-white/10 bg-black/50 backdrop-blur-xl z-20 pt-24 pb-12 px-8 flex flex-col justify-between">
+                {/* --- LEFT SIDEBAR (Navigation) - Now Right via flex-row-reverse --- */}
+                <aside className="w-full lg:w-80 lg:h-full border-l border-white/10 bg-black/50 backdrop-blur-xl z-20 pt-24 pb-12 px-8 flex flex-col justify-between overflow-y-auto no-scrollbar">
                     <div>
                         <div className="mb-12">
                             <div className="text-[10px] font-mono text-white/40 uppercase tracking-widest mb-2">Artist Dashboard</div>
@@ -336,8 +336,8 @@ export default function ProducerDashboardPage() {
                     </div>
                 </aside>
 
-                {/* --- RIGHT CONTENT AREA --- */}
-                <main className="flex-1 lg:ml-80 pt-24 px-6 lg:px-20 pb-24 min-h-screen">
+                {/* --- RIGHT CONTENT AREA - Now Left via flex-row-reverse --- */}
+                <main className="flex-1 lg:overflow-y-auto pt-24 px-6 lg:px-20 pb-24 relative no-scrollbar">
                     <AnimatePresence mode="wait">
 
                         {/* 1. OVERVIEW TAB */}

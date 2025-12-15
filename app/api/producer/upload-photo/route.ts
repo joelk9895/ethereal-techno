@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
 import jwt from "jsonwebtoken";
 
-const prisma = new PrismaClient();
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
+
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
 interface JWTPayload {
   userId: string;
@@ -39,13 +38,13 @@ export async function POST(request: NextRequest) {
     //   data: { artistPhoto: photoUrl },
     // });
 
-    return NextResponse.json({  photoUrl });
+    return NextResponse.json({ photoUrl });
   } catch {
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
     );
   } finally {
-    await prisma.$disconnect();
+
   }
 }

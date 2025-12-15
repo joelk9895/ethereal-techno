@@ -43,33 +43,6 @@ type Pair = {
   items: string[];
 };
 
-type ConstructionKitData = {
-  id: string;
-  kitName: string;
-  description?: string;
-  createdAt?: string;
-  metadata?: {
-    id: string;
-    bpm: string;
-    key: string;
-    styles: string[];
-    moods: string[];
-  };
-  contents?: Array<{
-    id: string;
-    contentType: string;
-    contentName: string;
-    soundGroup: string;
-    subGroup: string;
-    bpm: string;
-    key: string;
-    fileId: string;
-    file: {
-      awsKey: string;
-      fileName: string;
-    };
-  }>;
-};
 
 export default function MakePair({
   id = "308f8718-884c-4d9b-88dc-2c57d430d761",
@@ -85,7 +58,7 @@ export default function MakePair({
       requiredTypes: ["Sample Loop", "MIDI", "Preset"],
     },
   ],
-  handlePairDone = () => {},
+  handlePairDone = () => { },
   onBack,
 }: {
   id: string;
@@ -383,15 +356,14 @@ export default function MakePair({
                         return (
                           <div
                             key={item.id}
-                            className={`flex items-center p-3 rounded-lg border transition-all ${
-                              isSelected
+                            className={`flex items-center p-3 rounded-lg border transition-all ${isSelected
                                 ? "bg-blue-900/30 border-blue-500/50 cursor-pointer"
                                 : isPaired
-                                ? "bg-green-900/30 border-green-500/50 opacity-70"
-                                : canSelect
-                                ? "border-white/10 hover:border-white/30 bg-white/5 cursor-pointer"
-                                : "border-white/10 bg-white/5 opacity-40 cursor-not-allowed"
-                            }`}
+                                  ? "bg-green-900/30 border-green-500/50 opacity-70"
+                                  : canSelect
+                                    ? "border-white/10 hover:border-white/30 bg-white/5 cursor-pointer"
+                                    : "border-white/10 bg-white/5 opacity-40 cursor-not-allowed"
+                              }`}
                             onClick={() => {
                               if (isSelected || canSelect) {
                                 toggleItemSelection(item.id);
@@ -408,13 +380,12 @@ export default function MakePair({
                           >
                             <div className="flex-1 flex items-center gap-3">
                               <div
-                                className={`rounded-lg p-2 ${
-                                  isSelected
+                                className={`rounded-lg p-2 ${isSelected
                                     ? "bg-blue-900/50"
                                     : isPaired
-                                    ? "bg-green-900/50"
-                                    : "bg-white/10"
-                                }`}
+                                      ? "bg-green-900/50"
+                                      : "bg-white/10"
+                                  }`}
                               >
                                 {getFileIcon(item.contentType)}
                               </div>
@@ -470,11 +441,10 @@ export default function MakePair({
                         {pairTypes.map((type) => (
                           <div
                             key={type.name}
-                            className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                              selectedPairType === type.name
+                            className={`p-3 rounded-lg border cursor-pointer transition-all ${selectedPairType === type.name
                                 ? "bg-blue-900/30 border-blue-500/50"
                                 : "bg-black/70 border-white/20 hover:border-white/40"
-                            }`}
+                              }`}
                             onClick={() => setSelectedPairType(type.name)}
                           >
                             <div className="flex items-center justify-between mb-1">
@@ -494,11 +464,10 @@ export default function MakePair({
                                 <Badge
                                   key={reqType}
                                   variant="outline"
-                                  className={`text-xs ${
-                                    selectedTypeCounts[reqType]
+                                  className={`text-xs ${selectedTypeCounts[reqType]
                                       ? "bg-green-900/30 border-green-500/50 text-green-300"
                                       : "border-white/20 text-white/70 bg-white/5"
-                                  }`}
+                                    }`}
                                 >
                                   {selectedTypeCounts[reqType] ? "✓ " : ""}
                                   {reqType}

@@ -221,7 +221,7 @@ export default function ApplicationReviewPage() {
                 </div>
             </nav>
 
-            <main className="relative z-10 pt-24 pb-32 max-w-5xl mx-auto px-6">
+            <main className="relative z-10 pt-24 pb-32 w-full mx-auto px-6 md:px-12">
 
                 {/* --- SECTION 1: ARTIST IDENTITY (Evidence) --- */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 mb-24">

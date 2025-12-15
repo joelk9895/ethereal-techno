@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient, ApplicationStatus } from "@prisma/client";
+import { ApplicationStatus } from "@prisma/client";
+import prisma from "@/app/lib/database";
 import { verifyAdminAccess } from "@/lib/admin-auth";
 
-const prisma = new PrismaClient();
+
 
 // Get all applications
 export async function GET(request: NextRequest) {
@@ -48,6 +49,6 @@ export async function GET(request: NextRequest) {
     console.error("Get applications error:", error);
     return NextResponse.json({ error: "An error occurred" }, { status: 500 });
   } finally {
-    await prisma.$disconnect();
+
   }
 }

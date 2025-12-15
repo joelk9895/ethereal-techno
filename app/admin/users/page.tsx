@@ -3,10 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Users,
   Search,
-  Filter,
-  MoreVertical,
   Shield,
   User,
   Clock,
@@ -65,11 +62,11 @@ export default function AdminUsersPage() {
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         user.name.toLowerCase().includes(searchQuery.toLowerCase());
-    
+      user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.name.toLowerCase().includes(searchQuery.toLowerCase());
+
     const matchesFilter = filterType === "ALL" || user.type === filterType;
-    
+
     return matchesSearch && matchesFilter;
   });
 
@@ -86,8 +83,8 @@ export default function AdminUsersPage() {
   return (
     <Layout>
       <div className="min-h-screen bg-black text-white font-sans">
-        <main className="max-w-7xl mx-auto px-6 md:px-12 py-12">
-          
+        <main className="w-full mx-auto px-6 md:px-12 py-12">
+
           {/* Header */}
           <div className="mb-12">
             <h1 className="font-main text-6xl uppercase mb-4">User Management</h1>
@@ -202,14 +199,14 @@ const UserRow = ({ user }: { user: UserData }) => {
           <div className="text-xs text-white/40">@{user.username}</div>
         </div>
       </div>
-      
+
       <div className="col-span-3 flex items-center">
         <div className="flex items-center gap-2">
           <Mail className="w-3 h-3 text-white/40" />
           <span className="text-sm text-white/70">{user.email}</span>
         </div>
       </div>
-      
+
       <div className="col-span-2 flex items-center">
         <div className="flex items-center gap-2">
           <TypeIcon className={`w-4 h-4 ${getTypeColor(user.type)}`} />
@@ -218,11 +215,11 @@ const UserRow = ({ user }: { user: UserData }) => {
           </span>
         </div>
       </div>
-      
+
       <div className="col-span-2 flex items-center text-sm text-white/60">
         {user.country || '—'}
       </div>
-      
+
       <div className="col-span-2 flex items-center">
         <div className="flex items-center gap-2">
           <Calendar className="w-3 h-3 text-white/40" />

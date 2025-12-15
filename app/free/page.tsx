@@ -7,7 +7,7 @@ import {
     ArrowUpRight
 } from "lucide-react";
 import { getAuthUser, AuthUser } from "@/lib/auth";
-import { motion, useInView } from "framer-motion";
+import { motion } from "framer-motion";
 
 // --- Animation Variants ---
 const textRevealVar = {
@@ -27,13 +27,15 @@ export default function FreePage() {
     useEffect(() => {
         const authUser = getAuthUser();
         setUser(authUser);
-        setIsVerifiedProducer(
-            authUser?.type === "ARTIST" || authUser?.type === "ADMIN"
-        );
-    }, []);
+        const verified = authUser?.type === "ARTIST" || authUser?.type === "ADMIN";
+        setIsVerifiedProducer(verified);
+
+        if (verified) {
+            router.push("/free/content");
+        }
+    }, [router]);
 
     if (isVerifiedProducer) {
-        router.push("/free/content");
         return null;
     }
 

@@ -159,7 +159,7 @@ export default function FreeContentPage() {
             </div>
 
             {/* --- Main Content --- */}
-            <div className="relative z-10 max-w-[1400px] mx-auto px-6 md:px-12 pt-32 pb-20">
+            <div className="relative z-10 w-full px-6 md:px-12 pt-32 pb-20">
 
                 {/* Header Section */}
                 <header className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-8">

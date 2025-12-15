@@ -142,7 +142,7 @@ export default function ProducersPage() {
         try {
             // Optimistic update
             setProducers(prev => prev.map(p => p.id === userId ? { ...p, [field]: !currentValue } : p));
-            
+
             const response = await fetch(`/api/admin/producers/${userId}/abilities`, {
                 method: "PATCH",
                 headers: {
@@ -171,101 +171,101 @@ export default function ProducersPage() {
 
     return (
         <Layout>
-        <div className="min-h-screen bg-black text-white font-sans selection:bg-primary selection:text-black">
-          
-            <main className="relative z-10 pt-32 pb-20 px-6 md:px-12 max-w-7xl mx-auto">
-                
-                {/* Header & Stats */}
-                <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
-                    <div>
-                        <h1 className="font-main text-6xl md:text-7xl uppercase leading-[0.85] mb-2">
-                            User Database
-                        </h1>
-                        <p className="text-white/40 font-light text-lg">Manage permissions and access.</p>
-                    </div>
-                    <div className="flex gap-8 border-l border-white/10 pl-8">
-                        <StatBlock label="Total Users" value={stats.total} />
-                        <StatBlock label="Producers" value={stats.verifiedProducers} active />
-                        <StatBlock label="Contributors" value={stats.verifiedContributors} />
-                        <StatBlock label="Pending" value={stats.pending} color="text-yellow-400" />
-                    </div>
-                </div>
+            <div className="min-h-screen bg-black text-white font-sans selection:bg-primary selection:text-black">
 
-                {/* Controls */}
-                <div className="flex flex-col lg:flex-row items-center justify-between gap-6 mb-8 border-b border-white/10 pb-8">
-                    
-                    {/* Filters */}
-                    <div className="flex items-center gap-2 overflow-x-auto w-full lg:w-auto no-scrollbar">
-                        <FilterPill label="All" active={statusFilter === 'all'} onClick={() => setStatusFilter('all')} />
-                        <FilterPill label="Verified Producers" active={statusFilter === 'verified_producer'} onClick={() => setStatusFilter('verified_producer')} />
-                        <FilterPill label="Contributors" active={statusFilter === 'verified_contributor'} onClick={() => setStatusFilter('verified_contributor')} />
-                        <FilterPill label="Pending" active={statusFilter === 'pending'} onClick={() => setStatusFilter('pending')} count={stats.pending} />
-                    </div>
+                <main className="relative z-10 pt-32 pb-20 px-6 md:px-12 w-full mx-auto">
 
-                    {/* Secondary Controls */}
-                    <div className="flex items-center gap-4 w-full lg:w-auto">
-                        <div className="relative flex-1 lg:w-64 group">
-                            <Search className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 group-focus-within:text-primary transition-colors" />
-                            <input 
-                                type="text" 
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="Find user..."
-                                className="bg-transparent border-b border-white/10 pl-8 pr-4 py-2 w-full font-mono text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-primary transition-all"
-                            />
+                    {/* Header & Stats */}
+                    <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
+                        <div>
+                            <h1 className="font-main text-6xl md:text-7xl uppercase leading-[0.85] mb-2">
+                                User Database
+                            </h1>
+                            <p className="text-white/40 font-light text-lg">Manage permissions and access.</p>
                         </div>
-                        <div className="relative group">
-                            <Globe className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-                            <select 
-                                value={countryFilter}
-                                onChange={(e) => setCountryFilter(e.target.value)}
-                                className="bg-transparent border-b border-white/10 pl-8 pr-8 py-2 font-mono text-sm text-white focus:outline-none focus:border-primary transition-all appearance-none cursor-pointer min-w-[140px]"
-                            >
-                                <option value="all" className="bg-black">Global</option>
-                                {uniqueCountries.map((c) => <option key={c} value={c!} className="bg-black">{c}</option>)}
-                            </select>
+                        <div className="flex gap-8 border-l border-white/10 pl-8">
+                            <StatBlock label="Total Users" value={stats.total} />
+                            <StatBlock label="Producers" value={stats.verifiedProducers} active />
+                            <StatBlock label="Contributors" value={stats.verifiedContributors} />
+                            <StatBlock label="Pending" value={stats.pending} color="text-yellow-400" />
                         </div>
                     </div>
-                </div>
 
-                {/* List Header */}
-                <div className="hidden md:grid grid-cols-12 gap-4 px-6 pb-4 text-[10px] font-mono text-white/30 uppercase tracking-widest">
-                    <div className="col-span-3">User Identity</div>
-                    <div className="col-span-2">Location</div>
-                    <div className="col-span-2">Role & Status</div>
-                    <div className="col-span-2">Verified Date</div>
-                    <div className="col-span-2">Permissions</div>
-                    <div className="col-span-1 text-right"></div>
-                </div>
+                    {/* Controls */}
+                    <div className="flex flex-col lg:flex-row items-center justify-between gap-6 mb-8 border-b border-white/10 pb-8">
 
-                {/* Producer List */}
-                <AnimatePresence mode="wait">
-                    <motion.div 
-                        key={statusFilter + searchQuery + countryFilter}
-                        variants={containerVar}
-                        initial="hidden"
-                        animate="show"
-                        className="space-y-2"
-                    >
-                        {filteredProducers.length === 0 ? (
-                            <div className="py-24 text-center border border-dashed border-white/10 rounded-xl bg-white/[0.02]">
-                                <p className="font-mono text-white/30 uppercase tracking-widest text-sm">No Users Found</p>
-                            </div>
-                        ) : (
-                            filteredProducers.map((producer) => (
-                                <ProducerRow 
-                                    key={producer.id} 
-                                    producer={producer} 
-                                    onToggle={toggleAbility}
-                                    router={router}
+                        {/* Filters */}
+                        <div className="flex items-center gap-2 overflow-x-auto w-full lg:w-auto no-scrollbar">
+                            <FilterPill label="All" active={statusFilter === 'all'} onClick={() => setStatusFilter('all')} />
+                            <FilterPill label="Verified Producers" active={statusFilter === 'verified_producer'} onClick={() => setStatusFilter('verified_producer')} />
+                            <FilterPill label="Contributors" active={statusFilter === 'verified_contributor'} onClick={() => setStatusFilter('verified_contributor')} />
+                            <FilterPill label="Pending" active={statusFilter === 'pending'} onClick={() => setStatusFilter('pending')} count={stats.pending} />
+                        </div>
+
+                        {/* Secondary Controls */}
+                        <div className="flex items-center gap-4 w-full lg:w-auto">
+                            <div className="relative flex-1 lg:w-64 group">
+                                <Search className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 group-focus-within:text-primary transition-colors" />
+                                <input
+                                    type="text"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    placeholder="Find user..."
+                                    className="bg-transparent border-b border-white/10 pl-8 pr-4 py-2 w-full font-mono text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-primary transition-all"
                                 />
-                            ))
-                        )}
-                    </motion.div>
-                </AnimatePresence>
+                            </div>
+                            <div className="relative group">
+                                <Globe className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                                <select
+                                    value={countryFilter}
+                                    onChange={(e) => setCountryFilter(e.target.value)}
+                                    className="bg-transparent border-b border-white/10 pl-8 pr-8 py-2 font-mono text-sm text-white focus:outline-none focus:border-primary transition-all appearance-none cursor-pointer min-w-[140px]"
+                                >
+                                    <option value="all" className="bg-black">Global</option>
+                                    {uniqueCountries.map((c) => <option key={c} value={c!} className="bg-black">{c}</option>)}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
 
-            </main>
-        </div>
+                    {/* List Header */}
+                    <div className="hidden md:grid grid-cols-12 gap-4 px-6 pb-4 text-[10px] font-mono text-white/30 uppercase tracking-widest">
+                        <div className="col-span-3">User Identity</div>
+                        <div className="col-span-2">Location</div>
+                        <div className="col-span-2">Role & Status</div>
+                        <div className="col-span-2">Verified Date</div>
+                        <div className="col-span-2">Permissions</div>
+                        <div className="col-span-1 text-right"></div>
+                    </div>
+
+                    {/* Producer List */}
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={statusFilter + searchQuery + countryFilter}
+                            variants={containerVar}
+                            initial="hidden"
+                            animate="show"
+                            className="space-y-2"
+                        >
+                            {filteredProducers.length === 0 ? (
+                                <div className="py-24 text-center border border-dashed border-white/10 rounded-xl bg-white/[0.02]">
+                                    <p className="font-mono text-white/30 uppercase tracking-widest text-sm">No Users Found</p>
+                                </div>
+                            ) : (
+                                filteredProducers.map((producer) => (
+                                    <ProducerRow
+                                        key={producer.id}
+                                        producer={producer}
+                                        onToggle={toggleAbility}
+                                        router={router}
+                                    />
+                                ))
+                            )}
+                        </motion.div>
+                    </AnimatePresence>
+
+                </main>
+            </div>
         </Layout>
     );
 }
@@ -282,12 +282,12 @@ const StatBlock: React.FC<StatBlockProps> = ({ label, value, active, color }) =>
 );
 
 const FilterPill: React.FC<FilterPillProps> = ({ label, active, count, onClick }) => (
-    <button 
+    <button
         onClick={onClick}
         className={`
             px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap
-            ${active 
-                ? "bg-white text-black" 
+            ${active
+                ? "bg-white text-black"
                 : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
             }
         `}
@@ -305,7 +305,7 @@ const ProducerRow: React.FC<ProducerRowProps> = ({ producer, onToggle, router })
     const status = getStatusBadge(producer);
 
     return (
-        <motion.div 
+        <motion.div
             variants={itemVar}
             className="group grid grid-cols-1 md:grid-cols-12 gap-4 px-6 py-5 bg-white/[0.02] border border-transparent hover:border-primary/20 hover:bg-white/[0.04] transition-all items-center rounded-lg"
         >
@@ -345,27 +345,27 @@ const ProducerRow: React.FC<ProducerRowProps> = ({ producer, onToggle, router })
 
             {/* Permissions */}
             <div className="col-span-12 md:col-span-2 flex gap-1">
-                <PermissionToggle 
-                    active={producer.canCreateSamples} 
-                    label="SPL" 
-                    onClick={() => onToggle(producer.id, "canCreateSamples", producer.canCreateSamples)} 
+                <PermissionToggle
+                    active={producer.canCreateSamples}
+                    label="SPL"
+                    onClick={() => onToggle(producer.id, "canCreateSamples", producer.canCreateSamples)}
                 />
-                <PermissionToggle 
-                    active={producer.canCreateSerum} 
-                    label="SRM" 
-                    onClick={() => onToggle(producer.id, "canCreateSerum", producer.canCreateSerum)} 
+                <PermissionToggle
+                    active={producer.canCreateSerum}
+                    label="SRM"
+                    onClick={() => onToggle(producer.id, "canCreateSerum", producer.canCreateSerum)}
                 />
-                <PermissionToggle 
-                    active={producer.canCreateDiva} 
-                    label="DVA" 
-                    onClick={() => onToggle(producer.id, "canCreateDiva", producer.canCreateDiva)} 
+                <PermissionToggle
+                    active={producer.canCreateDiva}
+                    label="DVA"
+                    onClick={() => onToggle(producer.id, "canCreateDiva", producer.canCreateDiva)}
                 />
             </div>
 
             {/* Action */}
             <div className="col-span-12 md:col-span-1 flex justify-end">
                 {producer.latestApplication?.status === "PENDING" ? (
-                    <button 
+                    <button
                         onClick={() => router.push(`/admin/applications/${producer.latestApplication?.id}`)}
                         className="text-[10px] font-bold uppercase tracking-widest text-primary hover:text-white transition-colors border-b border-primary/50 hover:border-white pb-0.5"
                     >
@@ -386,8 +386,8 @@ const PermissionToggle: React.FC<PermissionToggleProps> = ({ active, label, onCl
         onClick={onClick}
         className={`
             w-8 h-6 flex items-center justify-center rounded text-[9px] font-bold transition-all border
-            ${active 
-                ? "bg-primary text-black border-primary" 
+            ${active
+                ? "bg-primary text-black border-primary"
                 : "bg-transparent text-white/20 border-white/10 hover:border-white/30 hover:text-white/50"
             }
         `}

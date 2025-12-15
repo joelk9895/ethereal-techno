@@ -3,18 +3,18 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
-    Users,
-    FileText,
-    Radio,
-    TrendingUp,
-    Shield,
-    Clock,
-    CheckCircle,
-    XCircle,
-    Activity,
-    ArrowUpRight,
-    Loader2,
-    Settings
+  Users,
+  FileText,
+  Radio,
+  TrendingUp,
+  Shield,
+  Clock,
+  CheckCircle,
+  XCircle,
+  Activity,
+  ArrowUpRight,
+  Loader2,
+  Settings
 } from "lucide-react";
 import { getAuthUser } from "@/lib/auth";
 import { motion, Variants } from "framer-motion";
@@ -72,23 +72,23 @@ interface HealthMetricProps {
 
 const fadeInUp: Variants = {
   hidden: { opacity: 0, y: 20 },
-  visible: { 
-    opacity: 1, 
-    y: 0, 
-    transition: { 
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
       duration: 0.6,
       ease: [0.6, 0.05, 0.01, 0.9]
-    } 
+    }
   }
 };
 
 const staggerContainer: Variants = {
   hidden: { opacity: 0 },
-  visible: { 
-    opacity: 1, 
-    transition: { 
-      staggerChildren: 0.1 
-    } 
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
   }
 };
 
@@ -102,7 +102,7 @@ export default function AdminDashboardPage() {
       const response = await fetch("/api/admin/dashboard", {
         headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` }
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setStats(data);
@@ -139,7 +139,7 @@ export default function AdminDashboardPage() {
   return (
     <Layout>
       <div className="min-h-screen bg-black text-white font-sans selection:bg-primary selection:text-black relative overflow-hidden">
-        
+
         {/* Background Effects */}
         <div className="fixed inset-0 pointer-events-none z-0">
           <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03]"></div>
@@ -147,217 +147,227 @@ export default function AdminDashboardPage() {
           <div className="absolute bottom-[-20%] right-[-20%] w-[40vw] h-[40vw] bg-white/2 rounded-full blur-[150px]" />
         </div>
 
-        <main className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 py-12">
+        <main className="relative z-10 w-full mx-auto px-6 md:px-12">
 
-          {/* Header */}
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={fadeInUp}
-            className="mb-16"
-          >
-            <div className="flex items-center gap-4 mb-6">
-              <Shield className="w-12 h-12 text-primary" />
-              <div>
-                <h1 className="font-main text-6xl md:text-8xl uppercase leading-[0.9] mb-2">
-                  Admin <span className="text-primary">Control</span>
-                </h1>
-                <p className="text-xl text-white/50 font-light">
-                  Platform management and oversight
-                </p>
-              </div>
-            </div>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16">
 
-            {/* Current Time */}
-            <div className="flex items-center gap-2 text-xs font-mono text-white/40 uppercase tracking-widest">
-              <Clock className="w-3 h-3" />
-              Last Updated: {new Date().toLocaleString()}
-            </div>
-          </motion.div>
+            {/* LEFT COLUMN: Main Content (70%) */}
+            <div className="lg:col-span-8 space-y-12">
 
-          {/* Stats Grid */}
-          <motion.div
-            variants={staggerContainer}
-            initial="hidden"
-            animate="visible"
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16"
-          >
-            <StatCard
-              title="Total Users"
-              value={stats?.totalUsers?.toString() || "0"}
-              icon={Users}
-              trend="+12% this month"
-              color="primary"
-            />
-            <StatCard
-              title="Applications"
-              value={stats?.totalApplications?.toString() || "0"}
-              icon={FileText}
-              trend={`${stats?.pendingApplications || 0} pending`}
-              color="yellow"
-            />
-            <StatCard
-              title="Active News"
-              value={stats?.activeNews?.toString() || "0"}
-              icon={Radio}
-              trend={`${stats?.totalNews || 0} total`}
-              color="green"
-            />
-            <StatCard
-              title="Approval Rate"
-              value={stats?.totalApplications ? 
-                Math.round((stats.approvedApplications / stats.totalApplications) * 100) + "%" : "0%"}
-              icon={TrendingUp}
-              trend="Based on all time"
-              color="blue"
-            />
-          </motion.div>
+              {/* Header */}
+              <motion.div
+                initial="hidden"
+                animate="visible"
+                variants={fadeInUp}
+                className="mb-12"
+              >
+                <div className="flex items-center gap-4 mb-6">
+                  <Shield className="w-12 h-12 text-primary" />
+                  <div>
+                    <h1 className="font-main text-6xl md:text-8xl uppercase leading-[0.9] mb-2">
+                      Admin <span className="text-primary">Control</span>
+                    </h1>
+                    <p className="text-xl text-white/50 font-light">
+                      Platform management and oversight
+                    </p>
+                  </div>
+                </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                {/* Current Time */}
+                <div className="flex items-center gap-2 text-xs font-mono text-white/40 uppercase tracking-widest">
+                  <Clock className="w-3 h-3" />
+                  Last Updated: {new Date().toLocaleString()}
+                </div>
+              </motion.div>
 
-            {/* Quick Actions */}
-            <motion.div
-              variants={fadeInUp}
-              className="lg:col-span-1"
-            >
-              <h2 className="font-main text-3xl uppercase mb-8">Quick Actions</h2>
-              <div className="space-y-4">
-                <ActionCard
-                  title="Review Applications"
-                  description="Pending artist applications"
-                  href="/admin/applications"
-                  icon={FileText}
-                  badge={stats?.pendingApplications?.toString()}
-                  urgent={(stats?.pendingApplications ?? 0) > 0}
-                />
-                <ActionCard
-                  title="Manage News"
-                  description="Community updates & announcements"
-                  href="/admin/news"
-                  icon={Radio}
-                />
-                <ActionCard
-                  title="User Management"
-                  description="View and manage all users"
-                  href="/admin/users"
+              {/* Stats Grid */}
+              <motion.div
+                variants={staggerContainer}
+                initial="hidden"
+                animate="visible"
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+              >
+                <StatCard
+                  title="Total Users"
+                  value={stats?.totalUsers?.toString() || "0"}
                   icon={Users}
+                  trend="+12% this month"
+                  color="primary"
                 />
-                <ActionCard
-                  title="Producer Hub"
-                  description="Verified artist management"
-                  href="/admin/producers"
-                  icon={Shield}
+                <StatCard
+                  title="Applications"
+                  value={stats?.totalApplications?.toString() || "0"}
+                  icon={FileText}
+                  trend={`${stats?.pendingApplications || 0} pending`}
+                  color="yellow"
                 />
-                <ActionCard
-                  title="System Settings"
-                  description="Platform configuration"
-                  href="/admin/settings"
-                  icon={Settings}
+                <StatCard
+                  title="Active News"
+                  value={stats?.activeNews?.toString() || "0"}
+                  icon={Radio}
+                  trend={`${stats?.totalNews || 0} total`}
+                  color="green"
                 />
-              </div>
-            </motion.div>
+                <StatCard
+                  title="Approval Rate"
+                  value={stats?.totalApplications ?
+                    Math.round((stats.approvedApplications / stats.totalApplications) * 100) + "%" : "0%"}
+                  icon={TrendingUp}
+                  trend="Based on all time"
+                  color="blue"
+                />
+              </motion.div>
 
-            {/* Application Overview */}
-            <motion.div
-              variants={fadeInUp}
-              className="lg:col-span-1"
-            >
-              <h2 className="font-main text-3xl uppercase mb-8">Applications</h2>
-              <div className="bg-white/[0.02] border border-white/10 p-8">
-                <div className="space-y-6">
-                  <ApplicationStatusItem
-                    label="Pending Review"
-                    count={stats?.pendingApplications || 0}
-                    icon={Clock}
-                    color="yellow"
-                  />
-                  <ApplicationStatusItem
-                    label="Approved"
-                    count={stats?.approvedApplications || 0}
-                    icon={CheckCircle}
-                    color="green"
-                  />
-                  <ApplicationStatusItem
-                    label="Rejected"
-                    count={stats?.rejectedApplications || 0}
-                    icon={XCircle}
-                    color="red"
-                  />
+              {/* Application Overview */}
+              <motion.div
+                variants={fadeInUp}
+                initial="hidden"
+                animate="visible"
+              >
+                <div className="flex items-center justify-between mb-8">
+                  <h2 className="font-main text-3xl uppercase">Applications Overview</h2>
+                  <Link
+                    href="/admin/applications"
+                    className="flex items-center gap-2 text-primary hover:text-white transition-colors text-xs font-bold uppercase tracking-widest"
+                  >
+                    View All
+                    <ArrowUpRight className="w-4 h-4" />
+                  </Link>
                 </div>
 
-                <Link 
-                  href="/admin/applications"
-                  className="mt-8 flex items-center gap-2 text-primary hover:text-white transition-colors text-sm font-bold uppercase tracking-widest"
-                >
-                  View All Applications
-                  <ArrowUpRight className="w-4 h-4" />
-                </Link>
-              </div>
-            </motion.div>
-
-            {/* Recent Activity */}
-            <motion.div
-              variants={fadeInUp}
-              className="lg:col-span-1"
-            >
-              <h2 className="font-main text-3xl uppercase mb-8">Recent Activity</h2>
-              <div className="bg-white/[0.02] border border-white/10 p-8">
-                <div className="space-y-6">
-                  {stats?.recentActivity && stats.recentActivity.length > 0 ? (
-                    stats.recentActivity.slice(0, 5).map((activity) => (
-                      <ActivityItemComponent key={activity.id} activity={activity} />
-                    ))
-                  ) : (
-                    <div className="text-center py-8">
-                      <Activity className="w-8 h-8 text-white/20 mx-auto mb-2" />
-                      <p className="text-white/40 text-sm">No recent activity</p>
+                <div className="bg-white/[0.02] border border-white/10 p-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+                  <div className="space-y-6 md:col-span-2">
+                    <div className="space-y-4">
+                      <ApplicationStatusItem
+                        label="Pending Review"
+                        count={stats?.pendingApplications || 0}
+                        icon={Clock}
+                        color="yellow"
+                      />
+                      <ApplicationStatusItem
+                        label="Approved Today"
+                        count={stats?.approvedApplications || 0} // Placeholder for easier mapping later if needed
+                        icon={CheckCircle}
+                        color="green"
+                      />
+                      <ApplicationStatusItem
+                        label="Rejected Today"
+                        count={stats?.rejectedApplications || 0}
+                        icon={XCircle}
+                        color="red"
+                      />
                     </div>
-                  )}
-                </div>
+                  </div>
 
-                <Link 
-                  href="/admin/activity"
-                  className="mt-8 flex items-center gap-2 text-primary hover:text-white transition-colors text-sm font-bold uppercase tracking-widest"
-                >
-                  View All Activity
-                  <ArrowUpRight className="w-4 h-4" />
-                </Link>
-              </div>
-            </motion.div>
+                  {/* Mini Graph or Extra Info could go here */}
+                  <div className="border-l border-white/10 pl-8 hidden md:block">
+                    <div className="text-center h-full flex flex-col justify-center">
+                      <div className="text-5xl font-main text-white mb-2">{stats?.totalApplications || 0}</div>
+                      <div className="text-xs font-mono text-white/40 uppercase tracking-widest">Total S ubmssions</div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* System Health (Moved to main content for better width or keep in sidebar? - User asked for content/sidebar format. Usually Health is sidebar stuff, but if it has charts it's main. Current one is simple. Let's put text heavy stuff here or just leave it for sidebar) */}
+
+            </div>
+
+            {/* RIGHT COLUMN: Sidebar (30%) */}
+            <div className="lg:col-span-4 space-y-8 border-l border-white/10 pl-8 lg:pl-12 sticky top-24 h-fit">
+
+              {/* Quick Actions */}
+              <motion.div
+                variants={fadeInUp}
+                initial="hidden"
+                animate="visible"
+              >
+                <h2 className="font-main text-xl uppercase mb-6 text-white/50">Quick Actions</h2>
+                <div className="space-y-3">
+                  <ActionCard
+                    title="Review Applications"
+                    description="Pending artist applications"
+                    href="/admin/applications"
+                    icon={FileText}
+                    badge={stats?.pendingApplications?.toString()}
+                    urgent={(stats?.pendingApplications ?? 0) > 0}
+                  />
+                  <ActionCard
+                    title="Manage News"
+                    description="Updates & announcements"
+                    href="/admin/news"
+                    icon={Radio}
+                  />
+                  <ActionCard
+                    title="User Database"
+                    description="Manage all users"
+                    href="/admin/users"
+                    icon={Users}
+                  />
+                  <ActionCard
+                    title="System Settings"
+                    description="Platform config"
+                    href="/admin/settings"
+                    icon={Settings}
+                  />
+                </div>
+              </motion.div>
+
+              {/* Recent Activity */}
+              <motion.div
+                variants={fadeInUp}
+                initial="hidden"
+                animate="visible"
+              >
+                <h2 className="font-main text-xl uppercase mb-6 text-white/50 pt-8 border-t border-white/10">Recent Activity</h2>
+                <div className="bg-white/[0.02] border border-white/10 p-6">
+                  <div className="space-y-6">
+                    {stats?.recentActivity && stats.recentActivity.length > 0 ? (
+                      stats.recentActivity.slice(0, 5).map((activity) => (
+                        <ActivityItemComponent key={activity.id} activity={activity} />
+                      ))
+                    ) : (
+                      <div className="text-center py-8">
+                        <Activity className="w-8 h-8 text-white/20 mx-auto mb-2" />
+                        <p className="text-white/40 text-sm">No recent activity</p>
+                      </div>
+                    )}
+                  </div>
+                  <Link
+                    href="/admin/activity"
+                    className="mt-6 flex items-center justify-center gap-2 text-white/40 hover:text-white transition-colors text-xs font-bold uppercase tracking-widest"
+                  >
+                    View All History
+                  </Link>
+                </div>
+              </motion.div>
+
+              {/* System Health Mini */}
+              <motion.div
+                variants={fadeInUp}
+                initial="hidden"
+                animate="visible"
+                className="bg-white/[0.02] border border-white/10 p-6"
+              >
+                <div className="flex items-center gap-3 mb-6">
+                  <Activity className="w-4 h-4 text-primary" />
+                  <h3 className="font-main text-lg uppercase">System Status</h3>
+                </div>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-white/60">Database</span>
+                    <span className="text-xs font-bold text-green-400 bg-green-400/10 px-2 py-1 rounded">HEALTHY</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-white/60">API</span>
+                    <span className="text-xs font-bold text-green-400 bg-green-400/10 px-2 py-1 rounded">HEALTHY</span>
+                  </div>
+                </div>
+              </motion.div>
+
+            </div>
 
           </div>
-
-          {/* System Health */}
-          <motion.div
-            variants={fadeInUp}
-            className="mt-16 bg-white/[0.02] border border-white/10 p-8"
-          >
-            <div className="flex items-center gap-4 mb-8">
-              <Activity className="w-6 h-6 text-primary" />
-              <h2 className="font-main text-3xl uppercase">System Health</h2>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <HealthMetric
-                label="Database"
-                status="Operational"
-                uptime="99.9%"
-                healthy
-              />
-              <HealthMetric
-                label="API Services"
-                status="Operational"
-                uptime="99.8%"
-                healthy
-              />
-              <HealthMetric
-                label="File Storage"
-                status="Operational"
-                uptime="100%"
-                healthy
-              />
-            </div>
-          </motion.div>
 
         </main>
       </div>
@@ -367,24 +377,23 @@ export default function AdminDashboardPage() {
 
 // --- Sub-components ---
 
-const StatCard: React.FC<StatCardProps> = ({ 
-  title, 
-  value, 
-  icon: Icon, 
-  trend, 
-  color 
+const StatCard: React.FC<StatCardProps> = ({
+  title,
+  value,
+  icon: Icon,
+  trend,
+  color
 }) => (
   <motion.div
     variants={fadeInUp}
     className="bg-white/[0.02] border border-white/10 p-6 hover:border-white/20 transition-colors group"
   >
     <div className="flex items-start justify-between mb-4">
-      <Icon className={`w-6 h-6 ${
-        color === 'primary' ? 'text-primary' :
+      <Icon className={`w-6 h-6 ${color === 'primary' ? 'text-primary' :
         color === 'yellow' ? 'text-yellow-400' :
-        color === 'green' ? 'text-green-400' :
-        color === 'blue' ? 'text-blue-400' : 'text-white/40'
-      }`} />
+          color === 'green' ? 'text-green-400' :
+            color === 'blue' ? 'text-blue-400' : 'text-white/40'
+        }`} />
       <div className="text-right">
         <div className="text-3xl font-bold text-white mb-1">{value}</div>
         <div className="text-xs font-mono uppercase tracking-widest text-white/40">{title}</div>
@@ -394,13 +403,13 @@ const StatCard: React.FC<StatCardProps> = ({
   </motion.div>
 );
 
-const ActionCard: React.FC<ActionCardProps> = ({ 
-  title, 
-  description, 
-  href, 
-  icon: Icon, 
-  badge, 
-  urgent 
+const ActionCard: React.FC<ActionCardProps> = ({
+  title,
+  description,
+  href,
+  icon: Icon,
+  badge,
+  urgent
 }) => (
   <Link
     href={href}
@@ -415,9 +424,8 @@ const ActionCard: React.FC<ActionCardProps> = ({
               {title}
             </h3>
             {badge && (
-              <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-                urgent ? 'bg-red-500/20 text-red-400' : 'bg-white/10 text-white/60'
-              }`}>
+              <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${urgent ? 'bg-red-500/20 text-red-400' : 'bg-white/10 text-white/60'
+                }`}>
                 {badge}
               </span>
             )}
@@ -430,19 +438,18 @@ const ActionCard: React.FC<ActionCardProps> = ({
   </Link>
 );
 
-const ApplicationStatusItem: React.FC<ApplicationStatusItemProps> = ({ 
-  label, 
-  count, 
-  icon: Icon, 
-  color 
+const ApplicationStatusItem: React.FC<ApplicationStatusItemProps> = ({
+  label,
+  count,
+  icon: Icon,
+  color
 }) => (
   <div className="flex items-center justify-between">
     <div className="flex items-center gap-3">
-      <Icon className={`w-4 h-4 ${
-        color === 'yellow' ? 'text-yellow-400' :
+      <Icon className={`w-4 h-4 ${color === 'yellow' ? 'text-yellow-400' :
         color === 'green' ? 'text-green-400' :
-        color === 'red' ? 'text-red-400' : 'text-white/40'
-      }`} />
+          color === 'red' ? 'text-red-400' : 'text-white/40'
+        }`} />
       <span className="text-sm font-medium text-white/80">{label}</span>
     </div>
     <span className="text-lg font-bold text-white">{count}</span>
@@ -488,11 +495,11 @@ const ActivityItemComponent: React.FC<{ activity: ActivityItem }> = ({ activity 
   );
 };
 
-const HealthMetric: React.FC<HealthMetricProps> = ({ 
-  label, 
-  status, 
-  uptime, 
-  healthy 
+const HealthMetric: React.FC<HealthMetricProps> = ({
+  label,
+  status,
+  uptime,
+  healthy
 }) => (
   <div className="text-center">
     <div className={`w-4 h-4 rounded-full mx-auto mb-3 ${healthy ? 'bg-green-400' : 'bg-red-400'}`} />

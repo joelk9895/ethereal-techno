@@ -10,8 +10,7 @@ import {
     Trophy,
     Quote,
     Lock,
-    Radio,
-    ArrowRight
+    Radio
 } from "lucide-react";
 import { getAuthUser, AuthUser } from "@/lib/auth";
 import { motion, useScroll, useTransform, MotionValue } from "framer-motion";
@@ -24,12 +23,7 @@ interface NewsItem {
     priority: number;
 }
 
-interface DashboardLinkProps {
-    number: string;
-    title: string;
-    meta: string;
-    onClick: () => void;
-}
+
 
 interface MinimalFeedItemProps {
     time: string;
@@ -98,7 +92,7 @@ export default function CommunityPage() {
         const authUser = getAuthUser();
         setUser(authUser);
         setIsVerified(authUser?.type === "ARTIST" || authUser?.type === "ADMIN");
-        
+
         // Fetch live news
         fetchNews();
         setLoading(false);
@@ -209,86 +203,61 @@ export default function CommunityPage() {
 
 const VerifiedDashboard: React.FC<VerifiedDashboardProps> = ({ user, router, news }) => {
     return (
-        <div className="min-h-screen bg-black text-white font-sans selection:bg-primary selection:text-black relative">
-            <BackgroundEffects />
+        <div className="flex bg-black text-white font-sans selection:bg-primary selection:text-black overflow-hidden h-screen">
 
-            <nav className="fixed top-0 left-0 w-full px-8 py-8 flex justify-between items-start z-50 pointer-events-none mix-blend-difference">
-                <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
-                    <span className="text-[10px] font-mono uppercase tracking-widest text-white/80">
-                        Verified Session
-                    </span>
-                </div>
-                <div className="text-right">
-                    <div className="text-[10px] font-mono uppercase tracking-widest text-white/40 mb-1">LOGGED IN AS</div>
-                    <div className="font-main text-xl uppercase leading-none">{user?.username || "Artist"}</div>
-                </div>
-            </nav>
+            {/* Main Content Area */}
+            <div className="flex-1 overflow-y-auto relative no-scrollbar">
+                <BackgroundEffects />
 
-            <div className="relative z-10 max-w-[1600px] mx-auto px-6 md:px-12 pt-32 pb-20 min-h-screen flex flex-col">
+                <div className="relative z-10 w-full px-8 md:px-16 pt-24 pb-20">
 
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-20">
-
-                    <div className="lg:col-span-8 flex flex-col justify-center">
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ duration: 1 }}
-                            className="space-y-2"
-                        >
-                            <DashboardLink
-                                number="01"
-                                title="The Vault"
-                                meta="Download Assets"
-                                onClick={() => router.push("/free/content")}
-                            />
-                            <DashboardLink
-                                number="02"
-                                title="The Wire"
-                                meta="Telegram Access"
-                                onClick={() => window.open("https://t.me/etherealtechno", "_blank")}
-                            />
-                            <DashboardLink
-                                number="03"
-                                title="The Arena"
-                                meta="Contests & Events"
-                                onClick={() => { }}
-                            />
-                        </motion.div>
+                    {/* Header for Main Area */}
+                    <div className="flex justify-between items-end mb-16 border-b border-white/10 pb-6">
+                        <div>
+                            <span className="text-xs font-mono text-primary uppercase tracking-widest block mb-2">Live Feed</span>
+                            <h2 className="font-main text-5xl uppercase leading-none">Community Hub</h2>
+                        </div>
+                        <div className="text-right hidden md:block">
+                            <div className="text-[10px] font-mono uppercase tracking-widest text-white/40 mb-1">Status</div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+                                <span className="font-bold text-sm uppercase">Online</span>
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="lg:col-span-4 flex flex-col justify-center lg:pt-12">
-                        <motion.div
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 1, delay: 0.3 }}
-                            className="space-y-16"
-                        >
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+                        {/* Left Column: Feed */}
+                        <div className="lg:col-span-8 space-y-12">
                             <div>
-                                <div className="flex items-center gap-2 mb-8 border-b border-white/10 pb-2">
-                                    <Radio className="w-3 h-3 text-primary" />
-                                    <span className="text-[10px] font-mono uppercase tracking-widest text-white/50">Live Feed</span>
+                                <div className="flex items-center gap-2 mb-6">
+                                    <Radio className="w-4 h-4 text-primary" />
+                                    <h3 className="font-main text-2xl uppercase">Latest Activity</h3>
                                 </div>
-                                <div className="space-y-6">
+                                <div className="space-y-4">
                                     {news.length > 0 ? (
-                                        news.slice(0, 3).map((item) => (
-                                            <MinimalFeedItem 
-                                                key={item.id}
-                                                time={new Date(item.createdAt).toLocaleDateString()} 
-                                                text={item.title}
-                                                priority={item.priority}
-                                            />
+                                        news.map((item) => (
+                                            <div key={item.id} className="p-6 bg-white/[0.02] border border-white/5 hover:border-primary/30 transition-colors rounded-lg group">
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <span className="text-xs font-mono text-white/40">{new Date(item.createdAt).toLocaleDateString()}</span>
+                                                    {item.priority && item.priority > 0 && <span className="text-[10px] bg-primary/20 text-primary px-2 py-0.5 rounded uppercase font-bold">Priority</span>}
+                                                </div>
+                                                <h4 className="text-lg font-light group-hover:text-primary transition-colors">{item.title}</h4>
+                                            </div>
                                         ))
                                     ) : (
-                                        <MinimalFeedItem time="Now" text="No recent updates." />
+                                        <div className="text-white/30 text-sm font-mono">No recent updates.</div>
                                     )}
                                 </div>
                             </div>
+                        </div>
 
+                        {/* Right Column: Featured */}
+                        <div className="lg:col-span-4 space-y-12">
                             <div>
-                                <div className="flex items-center gap-2 mb-8 border-b border-white/10 pb-2">
-                                    <Users className="w-3 h-3 text-primary" />
-                                    <span className="text-[10px] font-mono uppercase tracking-widest text-white/50">Featured Producers</span>
+                                <div className="flex items-center gap-2 mb-6">
+                                    <Users className="w-4 h-4 text-primary" />
+                                    <h3 className="font-main text-2xl uppercase">Featured Producers</h3>
                                 </div>
                                 <div className="space-y-4">
                                     <MinimalProducer name="Seismal D" role="Contributor" />
@@ -296,64 +265,97 @@ const VerifiedDashboard: React.FC<VerifiedDashboardProps> = ({ user, router, new
                                     <MinimalProducer name="Aeon" role="Verified" />
                                 </div>
                             </div>
-                        </motion.div>
+
+                            <div className="p-6 bg-primary/5 border border-primary/20 rounded-lg">
+                                <h4 className="font-mono text-xs uppercase text-primary mb-4 tracking-widest">Next Event</h4>
+                                <p className="font-main text-3xl uppercase mb-2">Remix Contest</p>
+                                <p className="text-white/50 text-sm mb-6">Submissions open in 3 days.</p>
+                                <button className="w-full py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold uppercase tracking-widest transition-colors">
+                                    View Details
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-
             </div>
+
+            {/* Sidebar (Right) */}
+            <DashboardSidebar router={router} username={user?.username} />
         </div>
     );
 };
 
-
-const DashboardLink: React.FC<DashboardLinkProps> = ({ number, title, meta, onClick }) => {
+// --- Sidebar Component ---
+const DashboardSidebar: React.FC<{ router: ReturnType<typeof useRouter>, username?: string }> = ({ router, username }) => {
     return (
-        <div
-            onClick={onClick}
-            className="group relative border-t border-white/10 py-10 md:py-14 cursor-pointer hover:border-primary transition-colors duration-500"
-        >
-            <div className="flex items-baseline justify-between relative z-10 transition-transform duration-500 group-hover:translate-x-4">
-                <div className="flex items-baseline gap-4 md:gap-8">
-                    <span className="font-mono text-xs md:text-sm text-primary/50 group-hover:text-primary transition-colors">
-                        /{number}
-                    </span>
-                    <h2 className="font-main text-6xl md:text-8xl uppercase leading-[0.8] text-white group-hover:text-primary transition-colors duration-300">
-                        {title}
-                    </h2>
+        <div className="hidden md:flex flex-col w-80 h-full border-l border-white/10 bg-black z-20 sticky top-0">
+            {/* Brand */}
+            <div className="p-8 border-b border-white/10">
+                <div className="flex items-center gap-3 mb-1">
+                    <div className="w-3 h-3 bg-primary rounded-full" />
+                    <span className="font-bold text-xs tracking-[0.2em] uppercase">Ethereal</span>
                 </div>
-                <div className="hidden md:flex items-center gap-4">
-                    <span className="font-mono text-xs uppercase tracking-widest text-white/30 group-hover:text-white transition-colors">
-                        [{meta}]
-                    </span>
-                    <ArrowRight className="w-6 h-6 text-white/20 group-hover:text-primary transition-colors" />
+                <div className="text-[10px] font-mono text-white/40 tracking-widest pl-6">VERIFIED SESSION</div>
+            </div>
+
+            {/* Navigation */}
+            <div className="flex-1 py-8 px-6 space-y-2">
+                <SidebarLink
+                    icon={Download}
+                    label="The Vault"
+                    desc="Assets & Downloads"
+                    onClick={() => router.push("/free/content")}
+                />
+                <SidebarLink
+                    icon={MessageCircle}
+                    label="The Wire"
+                    desc="Community Chat"
+                    onClick={() => window.open("https://t.me/etherealtechno", "_blank")}
+                />
+                <SidebarLink
+                    icon={Trophy}
+                    label="The Arena"
+                    desc="Contests"
+                    active={false}
+                />
+            </div>
+
+            {/* User Footer */}
+            <div className="p-8 border-t border-white/10 bg-white/[0.02]">
+                <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center font-main text-lg text-primary">
+                        {username?.[0] || "A"}
+                    </div>
+                    <div>
+                        <div className="text-sm font-bold uppercase">{username || "Artist"}</div>
+                        <div className="text-[10px] font-mono text-white/40 tracking-wider">VERIFIED MEMBER</div>
+                    </div>
                 </div>
             </div>
         </div>
     );
-};
+}
 
-const MinimalFeedItem: React.FC<MinimalFeedItemProps> = ({ time, text, priority = 0 }) => {
-    const getPriorityColor = (priority: number): string => {
-        switch (priority) {
-            case 2: return "text-red-400";
-            case 1: return "text-yellow-400";
-            default: return "text-primary/60";
-        }
-    };
-
-    return (
-        <div className="group">
-            <div className="flex items-baseline gap-4">
-                <span className={`font-mono text-[10px] whitespace-nowrap ${getPriorityColor(priority)}`}>
-                    {time}
-                </span>
-                <p className="text-sm font-light text-white/70 leading-relaxed group-hover:text-white transition-colors">
-                    {text}
-                </p>
-            </div>
+const SidebarLink: React.FC<{ icon: React.ComponentType<{ className?: string }>, label: string, desc: string, onClick?: () => void, active?: boolean }> = ({ icon: Icon, label, desc, onClick, active = true }) => (
+    <button
+        onClick={onClick}
+        className={`w-full flex items-center gap-4 p-4 rounded-lg border border-transparent transition-all duration-300 text-left group
+        ${active ? "hover:bg-white/5 hover:border-white/10 cursor-pointer" : "opacity-50 cursor-not-allowed"}`}
+    >
+        <div className={`p-2 rounded bg-white/5 text-white/50 group-hover:text-primary group-hover:bg-primary/10 transition-colors`}>
+            <Icon className="w-5 h-5" />
         </div>
-    );
-};
+        <div>
+            <div className="font-main text-lg uppercase leading-none mb-1 group-hover:text-white transition-colors">{label}</div>
+            <div className="text-[10px] font-mono text-white/30 uppercase tracking-widest">{desc}</div>
+        </div>
+    </button>
+);
+
+
+
+
+
 
 const MinimalProducer: React.FC<MinimalProducerProps> = ({ name, role }) => (
     <div className="flex justify-between items-baseline group cursor-default">

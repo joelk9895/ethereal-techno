@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import prisma from "@/app/lib/database";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import {
@@ -15,7 +15,7 @@ import {
 import Image from "next/image";
 
 // Initialize Prisma (ideally this should be imported from a shared lib)
-const prisma = new PrismaClient();
+
 
 interface PageProps {
     params: Promise<{ username: string }>;

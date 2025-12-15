@@ -132,85 +132,85 @@ export default function AdminApplicationsPage() {
 
     return (
         <Layout>
-        <div className="min-h-screen bg-black text-white font-sans selection:bg-primary selection:text-black">
-            
-           
+            <div className="min-h-screen bg-black text-white font-sans selection:bg-primary selection:text-black">
 
-            <main className="relative z-10 pt-32 pb-20 px-6 md:px-12 max-w-7xl mx-auto">
-                
-                {/* Header & HUD Stats */}
-                <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
-                    <div>
-                        <h1 className="font-main text-6xl md:text-7xl uppercase leading-[0.85] mb-2">
-                            Artist Requests
-                        </h1>
-                        <p className="text-white/40 font-light text-lg">Manage incoming producer applications.</p>
-                    </div>
-                    
-                    {/* Minimal HUD Stats */}
-                    <div className="flex gap-8 border-l border-white/10 pl-8">
-                        <StatBlock label="Pending" value={stats.pending} active />
-                        <StatBlock label="Reviewing" value={stats.review} />
-                        <StatBlock label="Approved" value={stats.approved} />
-                    </div>
-                </div>
 
-                {/* Controls Area */}
-                <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8 border-b border-white/10 pb-8">
-                    
-                    {/* Filter Pills */}
-                    <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto no-scrollbar">
-                        <FilterPill label="All" active={statusFilter === 'all'} onClick={() => setStatusFilter('all')} />
-                        <FilterPill label="Pending" active={statusFilter === 'PENDING'} onClick={() => setStatusFilter('PENDING')} count={stats.pending} />
-                        <FilterPill label="Reviewing" active={statusFilter === 'UNDER_REVIEW'} onClick={() => setStatusFilter('UNDER_REVIEW')} />
-                        <FilterPill label="Processed" active={['APPROVED', 'REJECTED'].includes(statusFilter)} onClick={() => setStatusFilter('APPROVED')} />
+
+                <main className="relative z-10 pt-32 pb-20 px-6 md:px-12 w-full mx-auto">
+
+                    {/* Header & HUD Stats */}
+                    <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
+                        <div>
+                            <h1 className="font-main text-6xl md:text-7xl uppercase leading-[0.85] mb-2">
+                                Artist Requests
+                            </h1>
+                            <p className="text-white/40 font-light text-lg">Manage incoming producer applications.</p>
+                        </div>
+
+                        {/* Minimal HUD Stats */}
+                        <div className="flex gap-8 border-l border-white/10 pl-8">
+                            <StatBlock label="Pending" value={stats.pending} active />
+                            <StatBlock label="Reviewing" value={stats.review} />
+                            <StatBlock label="Approved" value={stats.approved} />
+                        </div>
                     </div>
 
-                    {/* Search */}
-                    <div className="relative w-full md:w-72 group">
-                        <Search className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 group-focus-within:text-primary transition-colors" />
-                        <input 
-                            type="text" 
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Find artist..."
-                            className="bg-transparent border-b border-white/10 pl-8 pr-4 py-2 w-full font-mono text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-primary transition-all"
-                        />
+                    {/* Controls Area */}
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8 border-b border-white/10 pb-8">
+
+                        {/* Filter Pills */}
+                        <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto no-scrollbar">
+                            <FilterPill label="All" active={statusFilter === 'all'} onClick={() => setStatusFilter('all')} />
+                            <FilterPill label="Pending" active={statusFilter === 'PENDING'} onClick={() => setStatusFilter('PENDING')} count={stats.pending} />
+                            <FilterPill label="Reviewing" active={statusFilter === 'UNDER_REVIEW'} onClick={() => setStatusFilter('UNDER_REVIEW')} />
+                            <FilterPill label="Processed" active={['APPROVED', 'REJECTED'].includes(statusFilter)} onClick={() => setStatusFilter('APPROVED')} />
+                        </div>
+
+                        {/* Search */}
+                        <div className="relative w-full md:w-72 group">
+                            <Search className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 group-focus-within:text-primary transition-colors" />
+                            <input
+                                type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                placeholder="Find artist..."
+                                className="bg-transparent border-b border-white/10 pl-8 pr-4 py-2 w-full font-mono text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-primary transition-all"
+                            />
+                        </div>
                     </div>
-                </div>
 
-                {/* Column Headers */}
-                <div className="hidden md:grid grid-cols-12 gap-4 px-6 pb-4 text-[10px] font-mono text-white/30 uppercase tracking-widest">
-                    <div className="col-span-4">Artist Identity</div>
-                    <div className="col-span-3">Contact</div>
-                    <div className="col-span-2">Submission Date</div>
-                    <div className="col-span-2">Status</div>
-                    <div className="col-span-1 text-right">Action</div>
-                </div>
+                    {/* Column Headers */}
+                    <div className="hidden md:grid grid-cols-12 gap-4 px-6 pb-4 text-[10px] font-mono text-white/30 uppercase tracking-widest">
+                        <div className="col-span-4">Artist Identity</div>
+                        <div className="col-span-3">Contact</div>
+                        <div className="col-span-2">Submission Date</div>
+                        <div className="col-span-2">Status</div>
+                        <div className="col-span-1 text-right">Action</div>
+                    </div>
 
-                {/* Content List */}
-                <AnimatePresence mode="wait">
-                    <motion.div 
-                        key={statusFilter + searchQuery}
-                        variants={containerVar}
-                        initial="hidden"
-                        animate="show"
-                        className="space-y-2"
-                    >
-                        {filteredApplications.length === 0 ? (
-                            <div className="py-24 text-center border border-dashed border-white/10 rounded-xl bg-white/[0.02]">
-                                <p className="font-mono text-white/30 uppercase tracking-widest text-sm">No Applications Found</p>
-                            </div>
-                        ) : (
-                            filteredApplications.map((app) => (
-                                <ApplicationRow key={app.id} app={app} router={router} />
-                            ))
-                        )}
-                    </motion.div>
-                </AnimatePresence>
+                    {/* Content List */}
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={statusFilter + searchQuery}
+                            variants={containerVar}
+                            initial="hidden"
+                            animate="show"
+                            className="space-y-2"
+                        >
+                            {filteredApplications.length === 0 ? (
+                                <div className="py-24 text-center border border-dashed border-white/10 rounded-xl bg-white/[0.02]">
+                                    <p className="font-mono text-white/30 uppercase tracking-widest text-sm">No Applications Found</p>
+                                </div>
+                            ) : (
+                                filteredApplications.map((app) => (
+                                    <ApplicationRow key={app.id} app={app} router={router} />
+                                ))
+                            )}
+                        </motion.div>
+                    </AnimatePresence>
 
-            </main>
-        </div>
+                </main>
+            </div>
         </Layout>
     );
 }
@@ -227,12 +227,12 @@ const StatBlock: React.FC<StatBlockProps> = ({ label, value, active }) => (
 );
 
 const FilterPill: React.FC<FilterPillProps> = ({ label, active, count, onClick }) => (
-    <button 
+    <button
         onClick={onClick}
         className={`
             px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2
-            ${active 
-                ? "bg-white text-black" 
+            ${active
+                ? "bg-white text-black"
                 : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
             }
         `}
@@ -249,7 +249,7 @@ const ApplicationRow: React.FC<ApplicationRowProps> = ({ app, router }) => {
     const StatusIcon = statusConfig.icon;
 
     return (
-        <motion.div 
+        <motion.div
             variants={itemVar}
             onClick={() => router.push(`/admin/applications/${app.id}`)}
             className="group grid grid-cols-1 md:grid-cols-12 gap-4 px-6 py-5 bg-white/[0.02] border border-transparent hover:border-primary/20 hover:bg-white/[0.04] transition-all cursor-pointer items-center rounded-lg"

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import prisma from "@/app/lib/database";
 import jwt from "jsonwebtoken";
 
-const prisma = new PrismaClient();
+
 const JWT_SECRET =
   process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
     console.error("Get profile error:", error);
     return NextResponse.json({ error: "An error occurred" }, { status: 500 });
   } finally {
-    await prisma.$disconnect();
+
   }
 }
 
@@ -134,6 +134,6 @@ export async function PATCH(request: NextRequest) {
     console.error("Update profile error:", error);
     return NextResponse.json({ error: "An error occurred" }, { status: 500 });
   } finally {
-    await prisma.$disconnect();
+
   }
 }

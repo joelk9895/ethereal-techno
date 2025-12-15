@@ -1,10 +1,10 @@
 import jwt from "jsonwebtoken";
 import { NextRequest } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import prisma from "@/app/lib/database";
 
 const JWT_SECRET =
   process.env.JWT_SECRET || "your-secret-key-change-in-production";
-const prisma = new PrismaClient();
+
 
 interface JWTPayload {
   userId: string;
