@@ -17,7 +17,7 @@ import {
     LucideIcon,
     AlertCircle
 } from "lucide-react";
-import { getAuthUser, setAuthUser } from "@/lib/auth"; // Added setAuthUser
+import { getAuthUser, setAuthUser, logout } from "@/lib/auth"; // Added setAuthUser
 import { motion, AnimatePresence } from "framer-motion";
 
 // --- Types ---
@@ -52,6 +52,7 @@ interface FormData {
     canCreateSerum: boolean;
     canCreateDiva: boolean;
     agreedToTerms: boolean;
+    allowContact: boolean;
 }
 
 interface MinimalInputProps {
@@ -63,6 +64,7 @@ interface MinimalInputProps {
     type?: string;
     value?: string;
     onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    onBlur?: () => void;
     placeholder?: string;
 }
 
@@ -100,6 +102,116 @@ export default function ApplyPage() {
     const [user, setUser] = useState<any>(null); // null = Guest
     const [submitError, setSubmitError] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
+    const [errors, setErrors] = useState<Record<string, string>>({});
+    const [verifying, setVerifying] = useState<Record<string, boolean>>({});
+    const [verifiedLinks, setVerifiedLinks] = useState<Record<string, { title: string | null }>>({});
+
+    const URL_PATTERNS: Record<string, RegExp> = {
+        instagram: /^(https?:\/\/)?(www\.)?instagram\.com\/[\w.-]+\/?$/,
+        tiktok: /^(https?:\/\/)?(www\.)?tiktok\.com\/@[\w.-]+\/?$/,
+        facebook: /^(https?:\/\/)?(www\.)?facebook\.com\/[\w.-]+\/?$/,
+        youtube: /^(https?:\/\/)?(www\.)?youtube\.com\/@[\w.-]+\/?$/,
+        x: /^(https?:\/\/)?(www\.)?x\.com\/[\w.-]+\/?$/,
+        linktree: /^(https?:\/\/)?(www\.)?[\w.-]+\.[\w]{2,}(\/.*)?$/, // Generic website/linktree
+        spotify: /^(https?:\/\/)?open\.spotify\.com\/artist\/[\w]+\/?$/,
+        soundcloud: /^(https?:\/\/)?(www\.)?soundcloud\.com\/[\w.-]+\/?$/,
+        beatport: /^(https?:\/\/)?(www\.)?beatport\.com\/artist\/[\w.-]+\/\d+\/?$/, // Usually beatport.com/artist/name/id
+        bandcamp: /^(https?:\/\/)?[\w.-]+\.bandcamp\.com\/?$/,
+        appleMusic: /^(https?:\/\/)?music\.apple\.com\/[\w]{2}\/artist\/[\w.-]+\/\d+\/?$/, // Apple music structure
+    };
+
+    // Simplified patterns for user-friendly placeholders (overriding strict regex for some if needed or just using regex to validate)
+    // Actually, user gave strict placeholders, I will try to match regex to them broadly but strict enough.
+    // Adjusting regex to match user's examples more closely if they provided simpler ones, but they asked for "checked each single link".
+
+    // Re-defining regex based on user's specific "placeholder" request context to ensure I validate what they expect.
+    // User examples:
+    // Instagram: instagram.com/yourprofile
+    // TikTok: tiktok.com/@yourprofile
+    // Facebook: facebook.com/yourprofile
+    // Youtube: youtube.com/@yourchannel
+    // X: x.com/yourprofile
+    // Website: yourwebsite.com
+    // Spotify: open.spotify.com/artist/3c1sTwL4HuWkrciiKHpnmx
+    // Soundcloud: soundcloud.com/yourprofile
+    // Beatport: beatport.com/artist/yourname (User didn't mention ID, but Beatport usually has it. I'll allow both or lenient)
+    // Bandcamp: yourname.bandcamp.com
+    // Apple Music: music.apple.com/artist/yourname
+
+    const validateField = (field: string, value: string) => {
+        if (!value) return true; // Allow empty? User said "controls on the links they put", implies if they put it, it must be valid.
+
+        let isValid = true;
+        let customError = "";
+        let regex = URL_PATTERNS[field];
+
+        // Specific overrides or lenient checks if needed
+        if (field === 'beatport') regex = /beatport\.com\/artist\/[^/]+/;
+        if (field === 'appleMusic') regex = /music\.apple\.com\/.*\/artist\//;
+
+        if (regex && !regex.test(value)) {
+            // Check if it's just missing https://
+            if (regex.test("https://" + value)) {
+                // If it passes with https, we can consider it valid (and maybe auto-fix it later), 
+                // but for now let's just mark it error to force them to put it or just check structure.
+                // Actually, let's be strict but allow missing protocol if the regex supports it (my regexes above have start anchor with optional http).
+                // My regexes above expect full string match.
+            }
+            // Let's refine the regexes in the constants to be robust.
+        }
+
+        // Simple includes check for safety if regex is too complex/brittle
+        switch (field) {
+            case 'instagram': isValid = value.includes("instagram.com/"); break;
+            case 'tiktok': isValid = value.includes("tiktok.com/@"); break;
+            case 'facebook': isValid = value.includes("facebook.com/"); break;
+            case 'youtube': isValid = value.includes("youtube.com/@"); break;
+            case 'x': isValid = value.includes("x.com/"); break;
+            case 'spotify': isValid = value.includes("open.spotify.com/artist/"); break;
+            case 'soundcloud': isValid = value.includes("soundcloud.com/"); break;
+            case 'beatport': isValid = value.includes("beatport.com/artist/"); break;
+            case 'bandcamp': isValid = value.includes(".bandcamp.com"); break;
+            case 'appleMusic': isValid = value.includes("music.apple.com/") && value.includes("/artist/"); break;
+            case 'track1':
+            case 'track2':
+            case 'track3':
+                if (!value.includes("soundcloud.com/")) {
+                    isValid = false;
+                    customError = "For consistency in our review process, we accept SoundCloud links only. Please update this field with a SoundCloud track link.";
+                } else if (value.includes("/sets/")) {
+                    isValid = false;
+                    customError = "Please submit individual track links only. Playlists or sets are not accepted for review. Choose a single track that best represents your sound.";
+                }
+                break;
+        }
+
+        if (!isValid) {
+            setErrors(prev => ({ ...prev, [field]: customError || `Invalid format. Expected: ${getPlaceholder(field)}` }));
+        } else {
+            setErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors[field];
+                return newErrors;
+            });
+        }
+    };
+
+    const getPlaceholder = (field: string) => {
+        switch (field) {
+            case 'instagram': return "instagram.com/yourprofile";
+            case 'tiktok': return "tiktok.com/@yourprofile";
+            case 'facebook': return "facebook.com/yourprofile";
+            case 'youtube': return "youtube.com/@yourchannel";
+            case 'x': return "x.com/yourprofile";
+            case 'linktree': return "yourwebsite.com";
+            case 'spotify': return "open.spotify.com/artist/";
+            case 'soundcloud': return "soundcloud.com/yourprofile";
+            case 'beatport': return "beatport.com/artist/yourname";
+            case 'bandcamp': return "yourname.bandcamp.com";
+            case 'appleMusic': return "music.apple.com/artist/yourname";
+            default: return "";
+        }
+    };
 
     const [formData, setFormData] = useState<FormData>({
         name: "",
@@ -124,11 +236,12 @@ export default function ApplyPage() {
         track1: "",
         track2: "",
         track3: "",
-        quote: "",
+        quote: "Ethereal Techno is ", // Initial value
         canCreateLoops: false,
         canCreateSerum: false,
         canCreateDiva: false,
-        agreedToTerms: false
+        agreedToTerms: false,
+        allowContact: false
     });
 
     const checkExistingApplication = useCallback(async () => {
@@ -192,6 +305,59 @@ export default function ApplyPage() {
 
     const handleInputChange = (field: keyof FormData, value: string | boolean | File | null) => {
         setFormData(prev => ({ ...prev, [field]: value }));
+
+        // Clear verification status on change
+        if (verifiedLinks[field]) {
+            setVerifiedLinks(prev => {
+                const newLinks = { ...prev };
+                delete newLinks[field];
+                return newLinks;
+            });
+        }
+
+        if (typeof value === 'string' && (field in URL_PATTERNS || ['instagram', 'tiktok', 'facebook', 'youtube', 'x', 'linktree', 'spotify', 'soundcloud', 'beatport', 'bandcamp', 'appleMusic', 'track1', 'track2', 'track3'].includes(field))) {
+            validateField(field, value);
+        }
+    };
+
+    const handleBlur = async (field: string) => {
+        const value = formData[field as keyof FormData];
+        if (typeof value !== 'string' || !value || errors[field]) return;
+
+        // Only verify link fields
+        if (!['instagram', 'tiktok', 'facebook', 'youtube', 'x', 'linktree', 'spotify', 'soundcloud', 'beatport', 'bandcamp', 'appleMusic'].includes(field)) return;
+
+        setVerifying(prev => ({ ...prev, [field]: true }));
+
+        try {
+            // Ensure protocol
+            let urlToVerify = value;
+            if (!urlToVerify.startsWith('http')) {
+                urlToVerify = `https://${urlToVerify}`;
+            }
+
+            const response = await fetch("/api/verify-url", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ url: urlToVerify })
+            });
+
+            const data = await response.json();
+
+            if (data.valid) {
+                setVerifiedLinks(prev => ({
+                    ...prev,
+                    [field]: { title: data.title }
+                }));
+            } else {
+                setErrors(prev => ({ ...prev, [field]: "Link is unreachable or invalid." }));
+            }
+
+        } catch (error) {
+            console.error("Verification failed", error);
+        } finally {
+            setVerifying(prev => ({ ...prev, [field]: false }));
+        }
     };
 
     // File upload handler - basic implementation for now
@@ -214,6 +380,12 @@ export default function ApplyPage() {
 
         if (!formData.agreedToTerms) {
             setSubmitError("You must agree to the terms.");
+            setSubmitting(false);
+            return;
+        }
+
+        if (Object.keys(errors).length > 0) {
+            setSubmitError("Please fix the invalid links before submitting.");
             setSubmitting(false);
             return;
         }
@@ -312,14 +484,14 @@ export default function ApplyPage() {
                         <>
                             <div>
                                 <div className="mb-12">
-                                    <div className="text-[10px] font-mono text-white/40 uppercase tracking-widest mb-2">My Account</div>
+                                    <div className="text-[10px] font-mono text-white/70 uppercase tracking-widest mb-2 font-bold">My Account</div>
                                     <h1 className="font-main text-3xl text-white uppercase leading-none break-words">
                                         {user.name}
                                     </h1>
                                     <div className="flex items-center gap-2 mt-2">
-                                        <span className="text-xs font-mono text-primary uppercase tracking-widest">@{user.username}</span>
+                                        <span className="text-xs font-mono text-primary uppercase tracking-widest font-bold">@{user.username}</span>
                                         <span className="w-1 h-1 rounded-full bg-white/20" />
-                                        <span className="text-xs font-mono text-white/40 uppercase tracking-widest">{user.type}</span>
+                                        <span className="text-xs font-mono text-white/70 uppercase tracking-widest font-medium">{user.type}</span>
                                     </div>
                                 </div>
 
@@ -345,7 +517,7 @@ export default function ApplyPage() {
                             <div className="mt-8">
                                 <button
                                     onClick={() => router.push("/signin")}
-                                    className="flex items-center gap-2 text-xs font-mono text-primary hover:text-white transition-colors uppercase tracking-widest"
+                                    className="flex items-center gap-2 text-xs font-mono text-primary hover:text-white transition-colors uppercase tracking-widest font-bold"
                                 >
                                     Already have an account? Login
                                 </button>
@@ -354,7 +526,10 @@ export default function ApplyPage() {
                     )}
                     <div className="mt-12">
                         {user && (
-                            <button className="flex items-center gap-3 text-xs font-mono text-white/40 hover:text-red-400 transition-colors uppercase tracking-widest">
+                            <button
+                                onClick={() => logout()}
+                                className="flex items-center gap-3 text-xs font-mono text-white/70 hover:text-red-400 transition-colors uppercase tracking-widest font-bold"
+                            >
                                 <LogOut className="w-4 h-4" />
                                 Sign Out
                             </button>
@@ -377,20 +552,22 @@ export default function ApplyPage() {
                             transition={{ duration: 0.8 }}
                             className="mb-24"
                         >
-                            <h1 className="font-main text-6xl md:text-8xl uppercase leading-[0.9] mb-6">
-                                Join The<br /><span className="text-primary">Circle.</span>
+                            <h1 className="font-main text-6xl md:text-8xl uppercase leading-[0.9] mb-8 text-white">
+                                Join The <span className="text-primary">Circle.</span>
                             </h1>
-                            <p className="text-xl text-white/50 font-light max-w-xl leading-relaxed">
-                                Apply to become a verified producer. Access exclusive resources, collaborate, and shape the future of Ethereal Techno.
+                            <p className="text-xl text-white font-medium leading-relaxed">
+                                Apply to become a verified Ethereal Techno producer.
+                                <br /><br />
+                                The Circle is a curated space for artists who share a deeper approach to sound, atmosphere, and intention.
                             </p>
                         </motion.div>
 
-                        <form className="space-y-32" onSubmit={handleSubmit}>
+                        <form className="space-y-40" onSubmit={handleSubmit}>
 
                             {/* 00. ACCOUNT (Only for Guests) */}
                             {!user && (
                                 <motion.section variants={fadeInUp} initial="hidden" animate="visible">
-                                    <SectionHeader number="00" title="Account Setup" />
+                                    <SectionHeader number="00" title="APPLICATION SETUP" />
                                     <div className="space-y-8">
                                         <div className="grid md:grid-cols-2 gap-8">
                                             <MinimalInput
@@ -423,23 +600,44 @@ export default function ApplyPage() {
                                             onChange={(e) => handleInputChange("password", e.target.value)}
                                         />
                                     </div>
+
+                                    {/* CONTACT PREFERENCES */}
+                                    <div className="mt-12 pt-12 border-t border-white/10">
+                                        <label className="text-xs font-mono text-white font-bold uppercase mb-8 block">Contact Preferences</label>
+                                        <div
+                                            className="flex items-start gap-4 cursor-pointer group"
+                                            onClick={() => handleInputChange("allowContact", !formData.allowContact)}
+                                        >
+                                            <div className={`w-6 h-6 border border-white/20 flex items-center justify-center transition-colors bg-transparent group-hover:border-white ${formData.allowContact ? "bg-primary text-black border-primary" : ""}`}>
+                                                {formData.allowContact && <Check size={14} />}
+                                            </div>
+                                            <div className="space-y-2">
+                                                <span className="text-sm text-white font-medium group-hover:text-white transition-colors select-none block">
+                                                    Allow other verified producers to contact me via the Ethereal Techno platform.
+                                                </span>
+                                                <p className="text-white/60 text-xs font-light">
+                                                    Your email address will not be shared. Messages are sent through a private contact form.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </motion.section>
                             )}
 
-                            {/* 01. IDENTITY */}
+                            {/* 01. ARTIST IDENTITY */}
                             <motion.section variants={fadeInUp} initial="hidden" animate="visible" transition={{ delay: 0.1 }}>
-                                <SectionHeader number={!user ? "01" : "01"} title="Identity" />
+                                <SectionHeader number={!user ? "01" : "01"} title="ARTIST IDENTITY" />
                                 <div className="space-y-12">
 
                                     {/* Artist Name */}
                                     <MinimalInput
-                                        label="Artist / Stage Name"
+                                        label="ARTIST NAME"
                                         value={formData.artistName}
                                         onChange={(e) => handleInputChange("artistName", e.target.value)}
                                         placeholder={user ? user.username : ""}
                                     />
 
-                                    {/* Photo Upload */}
+                                    {/* Artist Avatar */}
                                     <div className="flex flex-col md:flex-row items-start gap-12 pt-8">
                                         <div className="group relative w-40 h-40 flex-shrink-0 cursor-pointer">
                                             <div className={`w-full h-full rounded-full overflow-hidden border border-white/20 bg-white/5 flex items-center justify-center transition-colors relative`}>
@@ -452,64 +650,174 @@ export default function ApplyPage() {
                                             <input type="file" accept="image/*" onChange={handlePhotoUpload} className="absolute inset-0 opacity-0 cursor-pointer" />
                                         </div>
                                         <div className="flex-1 space-y-2 pt-4">
-                                            <h3 className="font-main text-2xl uppercase">Artist Avatar</h3>
-                                            <p className="text-white/40 text-sm">Upload a high-res image. This will be your face in the circle.</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="pt-8">
-                                        <label className="text-xs font-mono text-white/40 uppercase mb-6 block">Social Presence</label>
-                                        <div className="grid md:grid-cols-2 gap-8">
-                                            <MinimalInput
-                                                prefix="instagram.com/"
-                                                label="Instagram"
-                                                value={formData.instagram}
-                                                onChange={(e) => handleInputChange("instagram", e.target.value)}
-                                            />
-                                            <MinimalInput
-                                                prefix="soundcloud.com/"
-                                                label="SoundCloud"
-                                                value={formData.soundcloud}
-                                                onChange={(e) => handleInputChange("soundcloud", e.target.value)}
-                                            />
-                                            <MinimalInput
-                                                prefix="spotify.com/"
-                                                label="Spotify URL"
-                                                value={formData.spotify}
-                                                onChange={(e) => handleInputChange("spotify", e.target.value)}
-                                            />
-                                            <MinimalInput
-                                                label="Linktree / Website"
-                                                value={formData.linktree}
-                                                onChange={(e) => handleInputChange("linktree", e.target.value)}
-                                            />
+                                            <h3 className="font-main text-2xl uppercase text-white font-bold">Artist Avatar</h3>
+                                            <p className="text-white font-medium text-sm">Upload a high-resolution image. This will represent you within the Circle.</p>
                                         </div>
                                     </div>
                                 </div>
                             </motion.section>
 
-                            {/* 02. EVIDENCE */}
+                            {/* 02. SOCIAL PRESENCE */}
                             <motion.section variants={fadeInUp} initial="hidden" animate="visible" transition={{ delay: 0.2 }}>
-                                <SectionHeader number={!user ? "02" : "02"} title="Evidence" />
+                                <SectionHeader number={!user ? "02" : "02"} title="SOCIAL PRESENCE" />
+                                <div className="grid md:grid-cols-2 gap-8">
+                                    <MinimalInput
+                                        label="Instagram"
+                                        placeholder="instagram.com/yourprofile"
+                                        value={formData.instagram}
+                                        onChange={(e) => handleInputChange("instagram", e.target.value)}
+                                        onBlur={() => handleBlur("instagram")}
+                                        error={errors.instagram}
+                                        verifying={verifying.instagram}
+                                        verifiedData={verifiedLinks.instagram}
+                                    />
+                                    <MinimalInput
+                                        label="TikTok"
+                                        placeholder="tiktok.com/@yourprofile"
+                                        value={formData.tiktok}
+                                        onChange={(e) => handleInputChange("tiktok", e.target.value)}
+                                        onBlur={() => handleBlur("tiktok")}
+                                        error={errors.tiktok}
+                                        verifying={verifying.tiktok}
+                                        verifiedData={verifiedLinks.tiktok}
+                                    />
+                                    <MinimalInput
+                                        label="Facebook"
+                                        placeholder="facebook.com/yourprofile"
+                                        value={formData.facebook}
+                                        onChange={(e) => handleInputChange("facebook", e.target.value)}
+                                        onBlur={() => handleBlur("facebook")}
+                                        error={errors.facebook}
+                                        verifying={verifying.facebook}
+                                        verifiedData={verifiedLinks.facebook}
+                                    />
+                                    <MinimalInput
+                                        label="Youtube"
+                                        placeholder="youtube.com/@yourchannel"
+                                        value={formData.youtube}
+                                        onChange={(e) => handleInputChange("youtube", e.target.value)}
+                                        onBlur={() => handleBlur("youtube")}
+                                        error={errors.youtube}
+                                        verifying={verifying.youtube}
+                                        verifiedData={verifiedLinks.youtube}
+                                    />
+                                    <MinimalInput
+                                        label="X"
+                                        placeholder="x.com/yourprofile"
+                                        value={formData.x}
+                                        onChange={(e) => handleInputChange("x", e.target.value)}
+                                        onBlur={() => handleBlur("x")}
+                                        error={errors.x}
+                                        verifying={verifying.x}
+                                        verifiedData={verifiedLinks.x}
+                                    />
+                                    <MinimalInput
+                                        label="Website / Linktree"
+                                        placeholder="yourwebsite.com"
+                                        value={formData.linktree}
+                                        onChange={(e) => handleInputChange("linktree", e.target.value)}
+                                        onBlur={() => handleBlur("linktree")}
+                                        error={errors.linktree}
+                                        verifying={verifying.linktree}
+                                        verifiedData={verifiedLinks.linktree}
+                                    />
+                                </div>
+                            </motion.section>
+
+                            {/* 03. MUSIC PLATFORMS */}
+                            <motion.section variants={fadeInUp} initial="hidden" animate="visible" transition={{ delay: 0.3 }}>
+                                <SectionHeader number={!user ? "03" : "03"} title="MUSIC PLATFORMS" />
+                                <div className="grid md:grid-cols-1 gap-8">
+                                    <MinimalInput
+                                        label="Spotify"
+                                        placeholder="open.spotify.com/artist/"
+                                        value={formData.spotify}
+                                        onChange={(e) => handleInputChange("spotify", e.target.value)}
+                                        onBlur={() => handleBlur("spotify")}
+                                        error={errors.spotify}
+                                        verifying={verifying.spotify}
+                                        verifiedData={verifiedLinks.spotify}
+                                    />
+                                    <MinimalInput
+                                        label="Soundcloud"
+                                        placeholder="soundcloud.com/yourprofile"
+                                        value={formData.soundcloud}
+                                        onChange={(e) => handleInputChange("soundcloud", e.target.value)}
+                                        onBlur={() => handleBlur("soundcloud")}
+                                        error={errors.soundcloud}
+                                        verifying={verifying.soundcloud}
+                                        verifiedData={verifiedLinks.soundcloud}
+                                    />
+                                    <MinimalInput
+                                        label="Beatport"
+                                        placeholder="beatport.com/artist/yourname"
+                                        value={formData.beatport}
+                                        onChange={(e) => handleInputChange("beatport", e.target.value)}
+                                        onBlur={() => handleBlur("beatport")}
+                                        error={errors.beatport}
+                                        verifying={verifying.beatport}
+                                        verifiedData={verifiedLinks.beatport}
+                                    />
+                                    <MinimalInput
+                                        label="Bandcamp"
+                                        placeholder="yourname.bandcamp.com"
+                                        value={formData.bandcamp}
+                                        onChange={(e) => handleInputChange("bandcamp", e.target.value)}
+                                        onBlur={() => handleBlur("bandcamp")}
+                                        error={errors.bandcamp}
+                                        verifying={verifying.bandcamp}
+                                        verifiedData={verifiedLinks.bandcamp}
+                                    />
+                                    <MinimalInput
+                                        label="Apple Music"
+                                        placeholder="music.apple.com/artist/yourname"
+                                        value={formData.appleMusic}
+                                        onChange={(e) => handleInputChange("appleMusic", e.target.value)}
+                                        onBlur={() => handleBlur("appleMusic")}
+                                        error={errors.appleMusic}
+                                        verifying={verifying.appleMusic}
+                                        verifiedData={verifiedLinks.appleMusic}
+                                    />
+                                </div>
+                            </motion.section>
+
+                            {/* 04. EVIDENCE */}
+                            <motion.section variants={fadeInUp} initial="hidden" animate="visible" transition={{ delay: 0.4 }}>
+                                <SectionHeader number={!user ? "04" : "04"} title="Evidence" />
                                 <div className="space-y-8">
-                                    <p className="text-white/50 text-lg font-light">
-                                        Provide links to your 3 best tracks. We are looking for depth, quality, and emotion.
+                                    <p className="text-white text-lg font-medium">
+                                        Provide links to up to three of your strongest tracks.
+                                        <br />
+                                        Please share SoundCloud links only - no sets, playlists, podcasts, or DJ mixes.
                                     </p>
                                     <div className="grid gap-6">
-                                        <MinimalInput label="Track Submission 1" placeholder="https://soundcloud.com/..." value={formData.track1} onChange={(e) => handleInputChange("track1", e.target.value)} />
-                                        <MinimalInput label="Track Submission 2" placeholder="https://soundcloud.com/..." value={formData.track2} onChange={(e) => handleInputChange("track2", e.target.value)} />
-                                        <MinimalInput label="Track Submission 3" placeholder="https://soundcloud.com/..." value={formData.track3} onChange={(e) => handleInputChange("track3", e.target.value)} />
+                                        <div>
+                                            <MinimalInput label="Track Submission 1" placeholder="https://soundcloud.com/..." value={formData.track1} onChange={(e) => handleInputChange("track1", e.target.value)} error={errors.track1} />
+                                            {!errors.track1 && <SoundCloudEmbed url={formData.track1} />}
+                                        </div>
+                                        <div>
+                                            <MinimalInput label="Track Submission 2" placeholder="https://soundcloud.com/..." value={formData.track2} onChange={(e) => handleInputChange("track2", e.target.value)} error={errors.track2} />
+                                            {!errors.track2 && <SoundCloudEmbed url={formData.track2} />}
+                                        </div>
+                                        <div>
+                                            <MinimalInput label="Track Submission 3" placeholder="https://soundcloud.com/..." value={formData.track3} onChange={(e) => handleInputChange("track3", e.target.value)} error={errors.track3} />
+                                            {!errors.track3 && <SoundCloudEmbed url={formData.track3} />}
+                                        </div>
                                     </div>
                                 </div>
                             </motion.section>
 
-                            {/* 03. MANIFESTO */}
-                            <motion.section variants={fadeInUp} initial="hidden" animate="visible" transition={{ delay: 0.3 }}>
-                                <SectionHeader number={!user ? "03" : "03"} title="Manifesto" />
+                            {/* 05. CONTRIBUTION */}
+                            <motion.section variants={fadeInUp} initial="hidden" animate="visible" transition={{ delay: 0.5 }}>
+                                <SectionHeader number={!user ? "05" : "05"} title="CONTRIBUTION" />
                                 <div className="space-y-12">
-                                    <div className="space-y-4">
-                                        <label className="font-main text-3xl uppercase text-white">Production Capabilities</label>
-                                        <p className="text-white/40 text-sm mb-4">What can you contribute to the vault?</p>
+                                    <div className="space-y-6">
+                                        <label className="font-main text-2xl uppercase text-white font-bold">Production Capabilities</label>
+                                        <p className="text-white font-medium text-sm mb-6">
+                                            What can you contribute to the Ethereal Techno vault?
+                                            <br />
+                                            This information helps us understand your skills. Contribution opportunities are optional and may be explored in the future.
+                                        </p>
                                         <div className="grid md:grid-cols-3 gap-4">
                                             <CapabilityCheckbox
                                                 label="Audio Loops"
@@ -532,13 +840,18 @@ export default function ApplyPage() {
                                         </div>
                                     </div>
 
-                                    <div className="space-y-4">
-                                        <label className="font-main text-3xl uppercase text-white">The Vision</label>
+                                    <div className="space-y-6">
+                                        <label className="font-main text-2xl uppercase text-white font-bold">The Vision</label>
+                                        <p className="text-white font-medium text-sm mb-6">
+                                            Complete the sentence below in your own words.
+                                            <br />
+                                            We’re interested in how you perceive Ethereal Techno - think about emotion, atmosphere, intention, or what draws you to this sound.
+                                        </p>
                                         <div className="relative group">
                                             <textarea
                                                 rows={4}
-                                                className="w-full bg-transparent border-b border-white/20 py-4 text-xl md:text-3xl font-light text-white focus:outline-none focus:border-primary transition-colors placeholder:text-white/10 resize-none"
-                                                placeholder='Complete the sentence: &ldquo;Ethereal Techno is...&rdquo;'
+                                                className="w-full bg-transparent border-b border-white/20 py-4 text-xl md:text-3xl font-medium text-white focus:outline-none focus:border-primary transition-colors placeholder:text-white/50 resize-none"
+                                                placeholder="Ethereal Techno is …"
                                                 value={formData.quote}
                                                 onChange={(e) => handleInputChange("quote", e.target.value)}
                                             />
@@ -556,7 +869,7 @@ export default function ApplyPage() {
                             )}
 
                             {/* SUBMIT */}
-                            <motion.section variants={fadeInUp} initial="hidden" animate="visible" transition={{ delay: 0.4 }} className="space-y-8">
+                            <motion.section variants={fadeInUp} initial="hidden" animate="visible" transition={{ delay: 0.6 }} className="space-y-8">
                                 <div
                                     className="flex items-start gap-4 cursor-pointer group"
                                     onClick={() => handleInputChange("agreedToTerms", !formData.agreedToTerms)}
@@ -564,7 +877,7 @@ export default function ApplyPage() {
                                     <div className={`w-6 h-6 border border-white/20 flex items-center justify-center transition-colors bg-transparent group-hover:border-white ${formData.agreedToTerms ? "bg-primary text-black border-primary" : ""}`}>
                                         {formData.agreedToTerms && <Check size={14} />}
                                     </div>
-                                    <span className="text-sm text-white/60 group-hover:text-white transition-colors select-none">
+                                    <span className="text-sm text-white font-medium group-hover:text-white transition-colors select-none">
                                         I have read and agree to the Community Rules and Membership Policy.
                                     </span>
                                 </div>
@@ -588,33 +901,69 @@ export default function ApplyPage() {
 
 // --- SUB-COMPONENTS ---
 
-const MinimalInput: React.FC<MinimalInputProps> = ({ label, error, prefix, className = "", disabled = false, ...props }) => (
+interface MinimalInputProps {
+    label: string;
+    error?: string;
+    prefix?: string;
+    className?: string;
+    disabled?: boolean;
+    type?: string;
+    value?: string;
+    onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    onBlur?: () => void;
+    placeholder?: string;
+    verifying?: boolean;
+    verifiedData?: { title: string | null };
+}
+
+const MinimalInput: React.FC<MinimalInputProps> = ({
+    label, error, prefix, className = "", disabled = false, verifying, verifiedData, ...props
+}) => (
     <div className={`group relative w-full ${className}`}>
-        <div className="flex items-end">
-            {prefix && <span className="text-white/30 pb-4 pr-1 font-light select-none">{prefix}</span>}
+        <div className="flex items-end relative">
+            {prefix && <span className="text-white/80 pb-4 pr-1 font-medium select-none">{prefix}</span>}
             <input
                 className={`
-                    block w-full bg-transparent border-b py-4 text-white placeholder:text-white/10 
-                    focus:outline-none transition-colors font-light text-lg
-                    ${error ? "border-red-500" : "border-white/20 focus:border-primary"}
+                    block w-full bg-transparent border-b py-4 text-white placeholder:text-white/50 
+                    focus:outline-none transition-colors font-medium text-lg pr-8
+                    ${error ? "border-red-500" : verifiedData ? "border-green-500" : "border-white/20 focus:border-primary"}
                     ${disabled ? "opacity-50 cursor-not-allowed" : ""}
                 `}
                 placeholder={label}
                 disabled={disabled}
                 {...props}
             />
+
+            {/* Verification Status Indicators */}
+            <div className="absolute right-0 bottom-4 pb-1">
+                {verifying && <Loader2 className="w-4 h-4 animate-spin text-white/50" />}
+                {!verifying && verifiedData && <Check className="w-4 h-4 text-green-500" />}
+                {!verifying && error && <AlertCircle className="w-4 h-4 text-red-500" />}
+            </div>
         </div>
-        <label className="absolute top-0 left-0 text-[10px] font-mono uppercase tracking-widest text-white/40 transition-all -translate-y-full mb-2">
-            {label}
-        </label>
-        {error && <span className="absolute -bottom-5 left-0 text-[10px] text-red-500 font-mono">{error}</span>}
+
+        <div className="flex justify-between items-start mt-2">
+            <label className="text-xs font-mono uppercase tracking-widest text-white font-bold">
+                {label}
+            </label>
+
+            {/* Feedback Messages */}
+            <div className="text-right">
+                {error && <span className="text-[10px] text-red-500 font-mono block">{error}</span>}
+                {verifiedData && (
+                    <span className="text-[10px] text-green-400 font-mono block max-w-[200px] truncate">
+                        Verified: {verifiedData.title || "Link Active"}
+                    </span>
+                )}
+            </div>
+        </div>
     </div>
 );
 
 const SectionHeader: React.FC<SectionHeaderProps> = ({ number, title }) => (
-    <div className="flex items-baseline gap-4 mb-12 border-b border-white/10 pb-4">
-        <span className="font-mono text-primary text-sm">/{number}</span>
-        <h2 className="font-main text-4xl uppercase">{title}</h2>
+    <div className="flex items-baseline gap-4 mb-16 border-b border-white/10 pb-4">
+        <span className="font-mono text-primary text-sm font-bold">/{number}</span>
+        <h2 className="font-main text-3xl uppercase text-white font-bold">{title}</h2>
     </div>
 );
 
@@ -623,7 +972,7 @@ const CapabilityCheckbox: React.FC<CapabilityCheckboxProps> = ({ label, active, 
         onClick={onClick}
         className={`
             cursor-pointer border p-6 flex flex-col items-center justify-center gap-4 transition-all duration-300
-            ${active ? "bg-white text-black border-white" : "bg-transparent border-white/10 text-white/40 hover:border-white/30 hover:text-white"}
+            ${active ? "bg-white text-black border-white" : "bg-transparent border-white/10 text-white hover:border-white/30 hover:text-white"}
         `}
     >
         <Icon size={24} />
@@ -651,3 +1000,26 @@ const NavItem: React.FC<NavItemProps> = ({ id, label, icon: Icon, active, onClic
         {external && <ArrowUpRight className="w-3 h-3 text-white/20 group-hover:text-primary" />}
     </button>
 );
+
+interface SoundCloudEmbedProps {
+    url: string;
+}
+
+const SoundCloudEmbed: React.FC<SoundCloudEmbedProps> = ({ url }) => {
+    if (!url || !url.includes("soundcloud.com/") || url.includes("/sets/")) return null;
+
+    const src = `https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}&color=%23ff5500&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=true`;
+
+    return (
+        <div className="mt-4 border border-white/10 overflow-hidden">
+            <iframe
+                width="100%"
+                height="300"
+                scrolling="no"
+                frameBorder="no"
+                allow="autoplay"
+                src={src}
+            />
+        </div>
+    );
+};
