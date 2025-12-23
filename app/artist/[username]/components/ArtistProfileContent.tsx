@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import {
     Instagram,
@@ -9,7 +9,10 @@ import {
     Link as LinkIcon,
     Mic2,
     Award,
+    Music,
+    Play
 } from "lucide-react";
+import { motion } from "framer-motion";
 import { ShareModal } from "./ShareModal";
 import { AccessDeniedModal } from "./AccessDeniedModal";
 import { MessageModal } from "./MessageModal";
@@ -89,6 +92,77 @@ interface ArtistProfileContentProps {
     username: string;
 }
 
+interface SoundCloudTrack {
+    thumbnail_url: string;
+    title: string;
+}
+
+// Animation Variants
+const fadeInUp = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as const }
+    }
+};
+
+const staggerContainer = {
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.1,
+            delayChildren: 0.2
+        }
+    }
+};
+
+const scaleIn = {
+    hidden: { scale: 0.8, opacity: 0 },
+    visible: {
+        scale: 1,
+        opacity: 1,
+        transition: { duration: 0.8, ease: "easeOut" as const }
+    }
+};
+
+// Slot Machine Text Animation
+const SlotText = ({ text, className }: { text: string, className?: string }) => {
+    const letters = text.split("");
+
+    return (
+        <div className={`overflow-hidden flex flex-wrap justify-center md:justify-start ${className}`} style={{ perspective: "400px" }}>
+            {letters.map((letter, index) => (
+                <motion.span
+                    key={index}
+                    initial={{ opacity: 0, filter: "blur(10px)" }}
+                    animate={{ opacity: 1, filter: "blur(0px)" }}
+                    transition={{
+                        duration: 0.8,
+                        ease: "easeOut",
+                        delay: index * 0.05
+                    }}
+                    className="inline-block"
+                >
+                    <motion.span
+                        initial={{ y: "100%", rotateX: -90 }}
+                        animate={{ y: 0, rotateX: 0 }}
+                        transition={{
+                            duration: 0.8,
+                            ease: [0.2, 0.65, 0.3, 0.9] as const,
+                            delay: index * 0.05
+                        }}
+                        className="inline-block origin-bottom"
+                    >
+                        {letter === " " ? "\u00A0" : letter}
+                    </motion.span>
+                </motion.span>
+            ))}
+        </div>
+    );
+};
+
 export default function ArtistProfileContent({ profile, user, username }: ArtistProfileContentProps) {
     const artistName = profile?.artistName || user.name || username;
     const bio = profile?.quote || "Verified Artist on Ethereal Techno.";
@@ -99,17 +173,6 @@ export default function ArtistProfileContent({ profile, user, username }: Artist
     const [shareOpen, setShareOpen] = useState(false);
     const [accessDeniedOpen, setAccessDeniedOpen] = useState(false);
     const [messageModalOpen, setMessageModalOpen] = useState(false);
-    // In a real app, verify properly. Here simplistic check if client has token or relying on passed user if available
-    // For now, I'll check custom logic or just default to check if 'accessToken' exists in localStorage
-
-    // Actually, user authentication is usually handled by the layout or provider. 
-    // Since I don't have access to the global context here immediately, I will unimplemented the "isVerified" check slightly
-    // or assume a "isVerified" prop could be passed? 
-    // The user instruction: "If someone try to click Send A Message but it is not a Verified Producer, a pop up message should appear"
-    // I can check localStorage for 'accessToken' and maybe parse it or fetch a 'me' endpoint.
-    // For this task, I'll optimize: 
-    // 1. Check if user is logged in (token). 
-    // 2. If logged in, assume verified for now OR try to fetch /api/me to check type.
 
     const handleMessageClick = () => {
         const token = typeof window !== 'undefined' ? localStorage.getItem("accessToken") : null;
@@ -150,17 +213,22 @@ export default function ArtistProfileContent({ profile, user, username }: Artist
                 artistName={artistName}
             />
 
+            {/* Background Ambient Animation - S REMOVED to fix visual artifact (Square Box) reported by user */}
             <div className="fixed inset-0 pointer-events-none z-0">
                 <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.05]"></div>
-                <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] bg-primary/20 rounded-full blur-[120px] mix-blend-screen opacity-20 animate-pulse-slow"></div>
-                <div className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] bg-purple-900/20 rounded-full blur-[120px] mix-blend-screen opacity-20"></div>
             </div>
 
             <div className="relative z-10 w-full px-6 md:px-12 py-24 md:py-32">
 
+                {/* Hero Section */}
                 <div className="flex flex-col md:flex-row items-center md:items-end gap-12 mb-24 border-b border-white/10 pb-16">
 
-                    <div className="relative group shrink-0">
+                    <motion.div
+                        initial="hidden"
+                        animate="visible"
+                        variants={scaleIn}
+                        className="relative group shrink-0"
+                    >
                         <div className="w-56 h-56 md:w-64 md:h-64 rounded-full border border-white/10 p-1 relative z-10 bg-black">
                             <div className="w-full h-full rounded-full overflow-hidden bg-neutral-900 relative">
                                 {photoUrl ? (
@@ -178,51 +246,83 @@ export default function ArtistProfileContent({ profile, user, username }: Artist
                                 )}
                             </div>
                         </div>
-                        {/* Decorative Rings */}
-                        <div className="absolute inset-0 rounded-full border border-white/5 scale-110 group-hover:scale-110 transition-transform duration-1000 ease-out z-0 pointer-events-none"></div>
-                        <div className="absolute inset-0 rounded-full border border-white/5 scale-125 group-hover:scale-125 transition-transform duration-1000 ease-out delay-75 z-0 pointer-events-none"></div>
-                    </div>
+                        {/* Decorative Rings - Animated */}
+                        <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                            className="absolute inset-0 rounded-full border border-white/5 scale-110 z-0 pointer-events-none border-dashed"
+                        ></motion.div>
+                        <motion.div
+                            animate={{ rotate: -360 }}
+                            transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+                            className="absolute inset-0 rounded-full border border-white/5 scale-125 z-0 pointer-events-none"
+                        ></motion.div>
+                    </motion.div>
 
                     {/* Name & Info */}
                     <div className="flex-1 space-y-8 w-full text-center md:text-left">
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-center md:justify-start gap-3">
-                                <span className="px-3 py-1 rounded-full border border-primary/30 bg-primary/10 text-primary text-[10px] font-mono uppercase tracking-widest flex items-center gap-2">
-                                    <Award size={12} /> Verified Producer
+                        <motion.div
+                            initial="hidden"
+                            animate="visible"
+                            variants={staggerContainer}
+                            className="space-y-4"
+                        >
+                            <motion.div variants={fadeInUp} className="flex items-center justify-center md:justify-start gap-3">
+                                <span className="px-3 py-1 rounded-full border border-primary/30 bg-primary/10 text-primary text-lg font-mono uppercase tracking-widest flex items-center gap-2">
+                                    <Award size={14} /> Verified Producer
                                 </span>
+                            </motion.div>
+
+                            <div className="overflow-hidden">
+                                <SlotText
+                                    text={artistName}
+                                    className="text-7xl md:text-9xl font-main uppercase leading-none tracking-wide break-words"
+                                />
                             </div>
-                            <h1 className="text-6xl md:text-8xl font-main uppercase leading-none tracking-tight break-words font-bold">
-                                {artistName}
-                            </h1>
-                            <div className="flex items-center justify-center md:justify-start gap-6 text-xs font-mono text-white/50 uppercase tracking-wide pt-2">
+
+                            <motion.div variants={fadeInUp} className="flex items-center justify-center md:justify-start gap-6 text-lg font-mono text-white/50 uppercase tracking-wide pt-2">
                                 <span className="flex items-center gap-2"><span className="text-white/30">BASED IN</span> {country}</span>
                                 <span className="flex items-center gap-2"><span className="text-white/30">MEMBER SINCE</span> {memberSince}</span>
-                            </div>
-                        </div>
+                            </motion.div>
+                        </motion.div>
 
                         {/* Social Row & Share */}
-                        <div className="flex flex-col md:flex-row items-center justify-between gap-6 pt-4">
+                        <motion.div
+                            initial="hidden"
+                            animate="visible"
+                            variants={staggerContainer}
+                            className="flex flex-col md:flex-row items-center justify-between gap-6 pt-4"
+                        >
                             {/* Social Icons */}
                             <div className="flex flex-wrap items-center gap-3">
-                                <SocialLink href={profile?.instagram} icon={Instagram} label="Instagram" />
-                                <SocialLink href={profile?.tiktok} icon={TikTokIcon} label="TikTok" />
-                                <SocialLink href={profile?.facebook} icon={Facebook} label="Facebook" />
-                                <SocialLink href={profile?.youtube} icon={Youtube} label="YouTube" />
-                                <SocialLink href={profile?.x} icon={XIcon} label="X" />
-                                <SocialLink href={profile?.linktree} icon={LinkIcon} label="Linktree" />
+                                {[
+                                    { href: profile?.instagram, icon: Instagram, label: "Instagram" },
+                                    { href: profile?.tiktok, icon: TikTokIcon, label: "TikTok" },
+                                    { href: profile?.facebook, icon: Facebook, label: "Facebook" },
+                                    { href: profile?.youtube, icon: Youtube, label: "YouTube" },
+                                    { href: profile?.x, icon: XIcon, label: "X" },
+                                    { href: profile?.linktree, icon: LinkIcon, label: "Linktree" }
+                                ].map((social, index) => (
+                                    <motion.div key={index} variants={fadeInUp}>
+                                        <SocialLink href={social.href} icon={social.icon} label={social.label} />
+                                    </motion.div>
+                                ))}
                             </div>
 
                             {/* Share Action */}
-                            <button
+                            <motion.button
+                                variants={fadeInUp}
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
                                 onClick={() => setShareOpen(true)}
                                 className="flex items-center gap-3 group px-4 py-2 hover:bg-white/5 rounded-full transition-colors"
                             >
-                                <span className="text-xs font-mono uppercase tracking-widest text-white/70 group-hover:text-white transition-colors">Share the Artist</span>
+                                <span className="text-lg font-mono uppercase tracking-widest text-white/70 group-hover:text-white transition-colors">Share the Artist</span>
                                 <div className="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center group-hover:border-primary group-hover:text-primary transition-colors">
                                     <LinkIcon size={14} />
                                 </div>
-                            </button>
-                        </div>
+                            </motion.button>
+                        </motion.div>
                     </div>
                 </div>
 
@@ -233,55 +333,82 @@ export default function ArtistProfileContent({ profile, user, username }: Artist
                     <div className="space-y-16">
 
                         {/* Listen Elsewhere */}
-                        <div className="space-y-8">
-                            <h2 className="text-xs font-mono text-white/40 uppercase tracking-widest">Listen Elsewhere</h2>
-                            <div className="flex flex-wrap gap-4">
+                        <motion.div
+                            initial="hidden"
+                            whileInView="visible"
+                            viewport={{ once: true, margin: "-100px" }}
+                            variants={staggerContainer}
+                            className="space-y-8"
+                        >
+                            <motion.h2 variants={fadeInUp} className="text-2xl font-mono text-white/40 uppercase tracking-widest">Listen Elsewhere</motion.h2>
+                            <motion.div variants={fadeInUp} className="flex flex-wrap gap-4">
                                 <PlatformLink href={profile?.spotify} icon={SpotifyIcon} label="Spotify" />
                                 <PlatformLink href={profile?.soundcloud} icon={SoundCloudIcon} label="Soundcloud" />
                                 <PlatformLink href={profile?.beatport} icon={BeatportIcon} label="Beatport" />
                                 <PlatformLink href={profile?.bandcamp} icon={BandcampIcon} label="Bandcamp" />
                                 <PlatformLink href={profile?.appleMusic} icon={AppleMusicIcon} label="Apple Music" />
-                            </div>
-                        </div>
+                            </motion.div>
+                        </motion.div>
 
                         {/* Reach Out */}
-                        <div className="space-y-8">
-                            <h2 className="text-xs font-mono text-white/40 uppercase tracking-widest">Reach Out</h2>
-                            <button
+                        <motion.div
+                            initial="hidden"
+                            whileInView="visible"
+                            viewport={{ once: true, margin: "-100px" }}
+                            variants={fadeInUp}
+                            className="space-y-8"
+                        >
+                            <h2 className="text-2xl font-mono text-white/40 uppercase tracking-widest">Reach Out</h2>
+                            <motion.button
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
                                 onClick={handleMessageClick}
-                                className="w-full py-4 bg-primary text-black font-main text-sm uppercase tracking-widest hover:bg-white transition-colors font-bold"
+                                className="w-full py-4 bg-primary text-black font-main text-2xl uppercase tracking-widest hover:bg-white transition-colors"
                             >
                                 Send a Message
-                            </button>
-                        </div>
+                            </motion.button>
+                        </motion.div>
                     </div>
 
                     {/* Right Content: Selected Works */}
                     <div className="space-y-12">
-                        <div className="space-y-8">
-                            <h2 className="text-xs font-mono text-white/40 uppercase tracking-widest">Selected Works</h2>
+                        <motion.div
+                            initial="hidden"
+                            whileInView="visible"
+                            viewport={{ once: true, margin: "-100px" }}
+                            variants={staggerContainer}
+                            className="space-y-8"
+                        >
+                            <motion.h2 variants={fadeInUp} className="text-2xl font-mono text-white/40 uppercase tracking-widest">Selected Works</motion.h2>
 
                             {(profile?.track1 || profile?.track2 || profile?.track3) ? (
                                 <div className="grid md:grid-cols-3 gap-6">
-                                    {profile?.track1 && <SoundCloudEmbed url={profile.track1} />}
-                                    {profile?.track2 && <SoundCloudEmbed url={profile.track2} />}
-                                    {profile?.track3 && <SoundCloudEmbed url={profile.track3} />}
+                                    {profile?.track1 && <motion.div variants={fadeInUp}><SoundCloudEmbed url={profile.track1} /></motion.div>}
+                                    {profile?.track2 && <motion.div variants={fadeInUp}><SoundCloudEmbed url={profile.track2} /></motion.div>}
+                                    {profile?.track3 && <motion.div variants={fadeInUp}><SoundCloudEmbed url={profile.track3} /></motion.div>}
                                 </div>
                             ) : (
-                                <div className="text-white/30 text-sm font-light italic">
+                                <motion.div variants={fadeInUp} className="text-white/30 text-lg font-light italic">
                                     No tracks selected yet.
-                                </div>
+                                </motion.div>
                             )}
-                        </div>
+                        </motion.div>
                     </div>
                 </div>
 
                 {/* --- Statement Section (Bottom) --- */}
                 <div className="max-w-4xl mx-auto text-center space-y-8">
-                    <h2 className="text-xs font-mono text-white/40 uppercase tracking-widest">Statement</h2>
-                    <p className="text-3xl md:text-5xl font-main font-bold leading-tight text-white/90">
-                        &ldquo;{bio}&rdquo;
-                    </p>
+                    <motion.div
+                        initial={{ opacity: 0, y: 50 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, ease: "easeOut" }}
+                        viewport={{ once: true }}
+                    >
+                        <h2 className="text-2xl font-mono text-white/40 uppercase tracking-widest mb-8">Statement</h2>
+                        <p className="text-4xl md:text-6xl font-main leading-tight text-white/90 tracking-wide">
+                            &ldquo;{bio}&rdquo;
+                        </p>
+                    </motion.div>
                 </div>
 
             </div>
@@ -329,28 +456,77 @@ function PlatformLink({ href, icon: Icon, label }: { href?: string | null, icon:
 }
 
 const SoundCloudEmbed = ({ url }: { url: string }) => {
-    if (!url) return null;
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [trackData, setTrackData] = useState<SoundCloudTrack | null>(null);
+    const [error, setError] = useState(false);
 
-    // Ensure protocol
-    let finalUrl = url;
-    if (!finalUrl.startsWith("https://")) {
-        finalUrl = `https://${finalUrl}`;
+    useEffect(() => {
+        if (!url) return;
+
+        let finalUrl = url;
+        if (!finalUrl.startsWith("https://")) {
+            finalUrl = `https://${finalUrl}`;
+        }
+
+        if (!finalUrl.includes("soundcloud") || finalUrl.includes("/sets/")) {
+            setError(true);
+            return;
+        }
+
+        // Fetch data from our proxy
+        fetch(`/api/soundcloud?url=${encodeURIComponent(finalUrl)}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.thumbnail_url) {
+                    setTrackData(data);
+                } else {
+                    setError(true);
+                }
+            })
+            .catch(() => setError(true));
+    }, [url]);
+
+    if (error || !url) return null;
+
+    if (isPlaying) {
+        const src = `https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}&color=%23ff5500&auto_play=true&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false&visual=true`;
+        return (
+            <div className="aspect-square w-full border border-white/10 bg-neutral-900">
+                <iframe
+                    width="100%"
+                    height="100%"
+                    scrolling="no"
+                    frameBorder="no"
+                    allow="autoplay"
+                    src={src}
+                />
+            </div>
+        );
     }
 
-    if (!finalUrl.includes("soundcloud") || finalUrl.includes("/sets/")) return null;
-
-    const src = `https://w.soundcloud.com/player/?url=${encodeURIComponent(finalUrl)}&color=%23ff5500&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=true`;
-
     return (
-        <div className="border border-white/10 overflow-hidden bg-black/50">
-            <iframe
-                width="100%"
-                height="300"
-                scrolling="no"
-                frameBorder="no"
-                allow="autoplay"
-                src={src}
-            />
+        <div
+            className="group relative aspect-square w-full border border-white/10 bg-neutral-900 cursor-pointer overflow-hidden"
+            onClick={() => setIsPlaying(true)}
+        >
+            {trackData?.thumbnail_url ? (
+                <Image
+                    src={trackData.thumbnail_url}
+                    alt={trackData.title || "SoundCloud Track"}
+                    fill
+                    className="object-cover transition-transform duration-700 group-hover:scale-110 opacity-80 group-hover:opacity-100"
+                />
+            ) : (
+                <div className="absolute inset-0 flex items-center justify-center text-white/20">
+                    <Music size={48} />
+                </div>
+            )}
+
+            <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">
+                <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white group-hover:scale-110 transition-transform duration-300 border border-white/20">
+                    <Play size={32} fill="currentColor" className="ml-1" />
+                </div>
+            </div>
         </div>
     );
 };

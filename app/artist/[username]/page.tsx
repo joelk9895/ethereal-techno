@@ -66,33 +66,25 @@ export default async function ArtistProfilePage({ params }: PageProps) {
         try {
             let key = signedPhotoUrl;
 
-            // Check if it's a full URL and extract key
             if (signedPhotoUrl.startsWith("http")) {
                 try {
                     const urlObj = new URL(signedPhotoUrl);
-                    // Extract key: path excluding leading slash. decodeURIComponent to handle formatted URLs
                     key = decodeURIComponent(urlObj.pathname.substring(1));
                 } catch (e) {
                     console.error("Error parsing URL:", e);
                 }
             } else {
-                // Ensure key is decoded if it was stored with encodings
                 key = decodeURIComponent(key);
             }
 
-            // Only sign if we have a key (and it looks like a key, not a public external URL)
             if (key && !key.startsWith("http")) {
-                // Use local proxy to allow Next.js Image Optimization to work efficiently
-                // Next.js will cache the image based on this URL, sparing S3 bandwidth from repeated fetches
                 signedPhotoUrl = `/api/image-proxy?key=${encodeURIComponent(key)}`;
             }
         } catch (error) {
             console.error("Failed to parse photo URL for proxy", error);
-            // Fallback: keep original (likely won't load if it needs signing, but safe fallback)
         }
     }
 
-    // Pass the potentially updated URL as part of a new object or override
     const profileWithSignedUrl = {
         ...profile,
         photoUrl: signedPhotoUrl

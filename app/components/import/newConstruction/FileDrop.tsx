@@ -349,7 +349,7 @@ export default function FileDrop({
     files.every((_, index) => {
       const data = fileData[index];
       const fileType = determineFileType(files[index]);
-      
+
       // Full Loop only needs category
       if (data?.category === "Full Loop") {
         return Boolean(data.category);
@@ -359,7 +359,7 @@ export default function FileDrop({
       if (fileType === "MIDI" || fileType === "Preset") {
         return data?.category && data?.type;
       }
-      
+
       // Other audio files need category, group, and type
       return data?.category && data?.group && data?.type;
     });
@@ -399,7 +399,6 @@ export default function FileDrop({
   useEffect(() => {
     if (defaultFullLoopIndex !== null) {
       const file = files[defaultFullLoopIndex];
-      // Only calculate BPM for new, local files that have a size.
       if (file && !file.isExisting && file.size > 0) {
         calculateBPMFromFile(file as File).then((result) => {
           if (result) {
@@ -411,22 +410,19 @@ export default function FileDrop({
     }
   }, [defaultFullLoopIndex, files, onBPMDetected]);
 
-  const handleUploadAllFiles = async (e?: React.MouseEvent): Promise<void> => {
+  const handleUploadAllFiles = async (): Promise<void> => {
     const allFilesOrganized = files.every((_, index) => {
       const data = fileData[index];
       const fileType = determineFileType(files[index]);
 
-      // Full Loop only needs category
       if (data?.category === "Full Loop") {
         return Boolean(data.category);
       }
 
-      // MIDI and Preset files need category and type  
       if (fileType === "MIDI" || fileType === "Preset") {
         return data?.category && data?.type;
       }
-      
-      // Other files need category, group, and type
+
       return data?.category && data?.group && data?.type;
     });
 

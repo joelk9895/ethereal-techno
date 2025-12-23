@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import {
     Loader2,
     Upload,
@@ -17,19 +18,21 @@ import {
     LucideIcon,
     AlertCircle
 } from "lucide-react";
-import { getAuthUser, setAuthUser, logout } from "@/lib/auth"; // Added setAuthUser
+// Assumes these exist in your project. If not, remove or mock them.
+import { getAuthUser, setAuthUser, logout, AuthUser } from "@/lib/auth";
 import { motion, AnimatePresence } from "framer-motion";
 
-// --- Types ---
+// --- INTERFACES ---
+
+
+
 interface FormData {
-    // Account (Guest only)
     name: string;
     surname: string;
     email: string;
     username: string;
     password: string;
 
-    // Application
     artistName: string;
     photo: File | null;
     photoPreview: string | null;
@@ -55,17 +58,13 @@ interface FormData {
     allowContact: boolean;
 }
 
-interface MinimalInputProps {
+interface MinimalInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
     label: string;
     error?: string;
     prefix?: string;
     className?: string;
-    disabled?: boolean;
-    type?: string;
-    value?: string;
-    onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    onBlur?: () => void;
-    placeholder?: string;
+    verifying?: boolean;
+    verifiedData?: { title: string | null };
 }
 
 interface SectionHeaderProps {
@@ -89,129 +88,28 @@ interface NavItemProps {
     external?: boolean;
 }
 
-// --- Animation Variants ---
+interface SoundCloudEmbedProps {
+    url: string;
+}
+
 const fadeInUp = {
     hidden: { opacity: 0, y: 30 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as const } }
 };
 
+// --- MAIN COMPONENT ---
+
 export default function ApplyPage() {
     const router = useRouter();
+    const PREFIX = "Ethereal Techno is ";
+
     const [loading, setLoading] = useState(true);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [user, setUser] = useState<any>(null); // null = Guest
+    const [user, setUser] = useState<AuthUser | null>(null);
     const [submitError, setSubmitError] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [verifying, setVerifying] = useState<Record<string, boolean>>({});
     const [verifiedLinks, setVerifiedLinks] = useState<Record<string, { title: string | null }>>({});
-
-    const URL_PATTERNS: Record<string, RegExp> = {
-        instagram: /^(https?:\/\/)?(www\.)?instagram\.com\/[\w.-]+\/?$/,
-        tiktok: /^(https?:\/\/)?(www\.)?tiktok\.com\/@[\w.-]+\/?$/,
-        facebook: /^(https?:\/\/)?(www\.)?facebook\.com\/[\w.-]+\/?$/,
-        youtube: /^(https?:\/\/)?(www\.)?youtube\.com\/@[\w.-]+\/?$/,
-        x: /^(https?:\/\/)?(www\.)?x\.com\/[\w.-]+\/?$/,
-        linktree: /^(https?:\/\/)?(www\.)?[\w.-]+\.[\w]{2,}(\/.*)?$/, // Generic website/linktree
-        spotify: /^(https?:\/\/)?open\.spotify\.com\/artist\/[\w]+\/?$/,
-        soundcloud: /^(https?:\/\/)?(www\.)?soundcloud\.com\/[\w.-]+\/?$/,
-        beatport: /^(https?:\/\/)?(www\.)?beatport\.com\/artist\/[\w.-]+\/\d+\/?$/, // Usually beatport.com/artist/name/id
-        bandcamp: /^(https?:\/\/)?[\w.-]+\.bandcamp\.com\/?$/,
-        appleMusic: /^(https?:\/\/)?music\.apple\.com\/[\w]{2}\/artist\/[\w.-]+\/\d+\/?$/, // Apple music structure
-    };
-
-    // Simplified patterns for user-friendly placeholders (overriding strict regex for some if needed or just using regex to validate)
-    // Actually, user gave strict placeholders, I will try to match regex to them broadly but strict enough.
-    // Adjusting regex to match user's examples more closely if they provided simpler ones, but they asked for "checked each single link".
-
-    // Re-defining regex based on user's specific "placeholder" request context to ensure I validate what they expect.
-    // User examples:
-    // Instagram: instagram.com/yourprofile
-    // TikTok: tiktok.com/@yourprofile
-    // Facebook: facebook.com/yourprofile
-    // Youtube: youtube.com/@yourchannel
-    // X: x.com/yourprofile
-    // Website: yourwebsite.com
-    // Spotify: open.spotify.com/artist/3c1sTwL4HuWkrciiKHpnmx
-    // Soundcloud: soundcloud.com/yourprofile
-    // Beatport: beatport.com/artist/yourname (User didn't mention ID, but Beatport usually has it. I'll allow both or lenient)
-    // Bandcamp: yourname.bandcamp.com
-    // Apple Music: music.apple.com/artist/yourname
-
-    const validateField = (field: string, value: string) => {
-        if (!value) return true; // Allow empty? User said "controls on the links they put", implies if they put it, it must be valid.
-
-        let isValid = true;
-        let customError = "";
-        let regex = URL_PATTERNS[field];
-
-        // Specific overrides or lenient checks if needed
-        if (field === 'beatport') regex = /beatport\.com\/artist\/[^/]+/;
-        if (field === 'appleMusic') regex = /music\.apple\.com\/.*\/artist\//;
-
-        if (regex && !regex.test(value)) {
-            // Check if it's just missing https://
-            if (regex.test("https://" + value)) {
-                // If it passes with https, we can consider it valid (and maybe auto-fix it later), 
-                // but for now let's just mark it error to force them to put it or just check structure.
-                // Actually, let's be strict but allow missing protocol if the regex supports it (my regexes above have start anchor with optional http).
-                // My regexes above expect full string match.
-            }
-            // Let's refine the regexes in the constants to be robust.
-        }
-
-        // Simple includes check for safety if regex is too complex/brittle
-        switch (field) {
-            case 'instagram': isValid = value.includes("instagram.com/"); break;
-            case 'tiktok': isValid = value.includes("tiktok.com/@"); break;
-            case 'facebook': isValid = value.includes("facebook.com/"); break;
-            case 'youtube': isValid = value.includes("youtube.com/@"); break;
-            case 'x': isValid = value.includes("x.com/"); break;
-            case 'spotify': isValid = value.includes("open.spotify.com/artist/"); break;
-            case 'soundcloud': isValid = value.includes("soundcloud.com/"); break;
-            case 'beatport': isValid = value.includes("beatport.com/artist/"); break;
-            case 'bandcamp': isValid = value.includes(".bandcamp.com"); break;
-            case 'appleMusic': isValid = value.includes("music.apple.com/") && value.includes("/artist/"); break;
-            case 'track1':
-            case 'track2':
-            case 'track3':
-                if (!value.includes("soundcloud.com/")) {
-                    isValid = false;
-                    customError = "For consistency in our review process, we accept SoundCloud links only. Please update this field with a SoundCloud track link.";
-                } else if (value.includes("/sets/")) {
-                    isValid = false;
-                    customError = "Please submit individual track links only. Playlists or sets are not accepted for review. Choose a single track that best represents your sound.";
-                }
-                break;
-        }
-
-        if (!isValid) {
-            setErrors(prev => ({ ...prev, [field]: customError || `Invalid format. Expected: ${getPlaceholder(field)}` }));
-        } else {
-            setErrors(prev => {
-                const newErrors = { ...prev };
-                delete newErrors[field];
-                return newErrors;
-            });
-        }
-    };
-
-    const getPlaceholder = (field: string) => {
-        switch (field) {
-            case 'instagram': return "instagram.com/yourprofile";
-            case 'tiktok': return "tiktok.com/@yourprofile";
-            case 'facebook': return "facebook.com/yourprofile";
-            case 'youtube': return "youtube.com/@yourchannel";
-            case 'x': return "x.com/yourprofile";
-            case 'linktree': return "yourwebsite.com";
-            case 'spotify': return "open.spotify.com/artist/";
-            case 'soundcloud': return "soundcloud.com/yourprofile";
-            case 'beatport': return "beatport.com/artist/yourname";
-            case 'bandcamp': return "yourname.bandcamp.com";
-            case 'appleMusic': return "music.apple.com/artist/yourname";
-            default: return "";
-        }
-    };
 
     const [formData, setFormData] = useState<FormData>({
         name: "",
@@ -236,7 +134,7 @@ export default function ApplyPage() {
         track1: "",
         track2: "",
         track3: "",
-        quote: "Ethereal Techno is ", // Initial value
+        quote: "Ethereal Techno is ",
         canCreateLoops: false,
         canCreateSerum: false,
         canCreateDiva: false,
@@ -244,9 +142,92 @@ export default function ApplyPage() {
         allowContact: false
     });
 
+    const URL_PATTERNS: Record<string, RegExp> = {
+        instagram: /^(https?:\/\/)?(www\.)?instagram\.com\/[\w.-]+\/?$/,
+        tiktok: /^(https?:\/\/)?(www\.)?tiktok\.com\/@[\w.-]+\/?$/,
+        facebook: /^(https?:\/\/)?(www\.)?facebook\.com\/[\w.-]+\/?$/,
+        youtube: /^(https?:\/\/)?(www\.)?youtube\.com\/@[\w.-]+\/?$/,
+        x: /^(https?:\/\/)?(www\.)?x\.com\/[\w.-]+\/?$/,
+        linktree: /^(https?:\/\/)?(www\.)?[\w.-]+\.[\w]{2,}(\/.*)?$/,
+        spotify: /^(https?:\/\/)?(open\.)?spotify\.com\/artist\/[\w]+\/?$/, // Fixed regex
+        soundcloud: /^(https?:\/\/)?(www\.)?soundcloud\.com\/[\w.-]+\/?$/,
+        beatport: /^(https?:\/\/)?(www\.)?beatport\.com\/artist\/[\w.-]+\/\d+\/?$/,
+        bandcamp: /^(https?:\/\/)?[\w.-]+\.bandcamp\.com\/?$/,
+        appleMusic: /^(https?:\/\/)?music\.apple\.com\/[\w]{2}\/artist\/[\w.-]+\/\d+\/?$/,
+    };
+
+    const validateField = (field: string, value: string) => {
+        if (!value) return true;
+
+        let isValid = true;
+        let customError = "";
+        let regex = URL_PATTERNS[field];
+
+        if (field === 'beatport') regex = /beatport\.com\/artist\/[^/]+/;
+        if (field === 'appleMusic') regex = /music\.apple\.com\/.*\/artist\//;
+
+        // Fallback checks
+        switch (field) {
+            case 'instagram': isValid = value.includes("instagram.com/"); break;
+            case 'tiktok': isValid = value.includes("tiktok.com/@"); break;
+            case 'facebook': isValid = value.includes("facebook.com/"); break;
+            case 'youtube': isValid = value.includes("youtube.com/@"); break;
+            case 'x': isValid = value.includes("x.com/"); break;
+            case 'spotify': isValid = value.includes("spotify.com/"); break;
+            case 'soundcloud': isValid = value.includes("soundcloud.com/"); break;
+            case 'beatport': isValid = value.includes("beatport.com/artist/"); break;
+            case 'bandcamp': isValid = value.includes(".bandcamp.com"); break;
+            case 'appleMusic': isValid = value.includes("music.apple.com/") && value.includes("/artist/"); break;
+            case 'track1':
+            case 'track2':
+            case 'track3':
+                if (!value.includes("soundcloud.com/")) {
+                    isValid = false;
+                    customError = "For consistency in our review process, we accept SoundCloud links only.";
+                } else if (value.includes("/sets/")) {
+                    isValid = false;
+                    customError = "Please submit individual track links only. Playlists or sets are not accepted.";
+                }
+                break;
+        }
+
+        // Apply Regex check if specific logic passed but we have a regex
+        if (regex && isValid) {
+            // simplified loose check: if value exists, let's trust the includes check above for now 
+            // or enforce regex. For this fix, relying on the 'includes' switch is safer 
+            // if user input varies (http vs https).
+        }
+
+        if (!isValid) {
+            setErrors(prev => ({ ...prev, [field]: customError || `Invalid format. Expected: ${getPlaceholder(field)}` }));
+        } else {
+            setErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors[field];
+                return newErrors;
+            });
+        }
+    };
+
+    const getPlaceholder = (field: string) => {
+        switch (field) {
+            case 'instagram': return "instagram.com/yourprofile";
+            case 'tiktok': return "tiktok.com/@yourprofile";
+            case 'facebook': return "facebook.com/yourprofile";
+            case 'youtube': return "youtube.com/@yourchannel";
+            case 'x': return "x.com/yourprofile";
+            case 'linktree': return "yourwebsite.com";
+            case 'spotify': return "open.spotify.com/artist/...";
+            case 'soundcloud': return "soundcloud.com/yourprofile";
+            case 'beatport': return "beatport.com/artist/yourname";
+            case 'bandcamp': return "yourname.bandcamp.com";
+            case 'appleMusic': return "music.apple.com/artist/yourname";
+            default: return "";
+        }
+    };
+
     const checkExistingApplication = useCallback(async () => {
         const token = localStorage.getItem("accessToken");
-        // Only check if we have a token (logged in user)
         if (!token) return;
 
         try {
@@ -267,20 +248,16 @@ export default function ApplyPage() {
 
     useEffect(() => {
         const authUser = getAuthUser();
-        // Allow access to guests (authUser is null) 
-        // OR users of type USER.
 
         if (authUser) {
             if (authUser.type !== "USER") {
-                router.push("/dashboard"); // Redirect producers/admins
+                router.push("/dashboard");
                 return;
             }
-            setUser(authUser);
+            setUser(authUser as AuthUser);
             // Pre-fill name if available
             setFormData(prev => ({ ...prev, name: authUser.name || "", email: authUser.email || "" }));
         }
-
-        // If guest, we just stay here.
 
         checkExistingApplication();
         setLoading(false);
@@ -292,21 +269,19 @@ export default function ApplyPage() {
             if (id === "shop") router.push("/shop");
             return;
         }
-        // If guest, prevent dashboard nav? Or let them go to login
         if (!user && (id === "overview" || id === "profile" || id === "applications")) {
             router.push("/signin");
             return;
         }
 
         if (id === "overview") router.push("/dashboard");
-        if (id === "profile") router.push("/dashboard"); // Or add logic to open profile tab
+        if (id === "profile") router.push("/dashboard");
         if (id === "applications") router.push("/dashboard");
     };
 
     const handleInputChange = (field: keyof FormData, value: string | boolean | File | null) => {
         setFormData(prev => ({ ...prev, [field]: value }));
 
-        // Clear verification status on change
         if (verifiedLinks[field]) {
             setVerifiedLinks(prev => {
                 const newLinks = { ...prev };
@@ -324,13 +299,11 @@ export default function ApplyPage() {
         const value = formData[field as keyof FormData];
         if (typeof value !== 'string' || !value || errors[field]) return;
 
-        // Only verify link fields
         if (!['instagram', 'tiktok', 'facebook', 'youtube', 'x', 'linktree', 'spotify', 'soundcloud', 'beatport', 'bandcamp', 'appleMusic'].includes(field)) return;
 
         setVerifying(prev => ({ ...prev, [field]: true }));
 
         try {
-            // Ensure protocol
             let urlToVerify = value;
             if (!urlToVerify.startsWith('http')) {
                 urlToVerify = `https://${urlToVerify}`;
@@ -360,11 +333,9 @@ export default function ApplyPage() {
         }
     };
 
-    // File upload handler - basic implementation for now
     const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
-            // Create preview
             const reader = new FileReader();
             reader.onloadend = () => {
                 setFormData(prev => ({ ...prev, photo: file, photoPreview: reader.result as string }));
@@ -391,7 +362,6 @@ export default function ApplyPage() {
         }
 
         try {
-            // Simplified payload - converting fields as needed
             const payload = {
                 // Guest / Account fields
                 ...(!user ? {
@@ -402,12 +372,9 @@ export default function ApplyPage() {
                     surname: formData.surname,
                 } : {}),
 
-                // Application fields
-                artistName: formData.artistName || (user ? user.username : formData.username), // Default to username if empty
+                artistName: formData.artistName || (user ? user.username : formData.username),
                 quote: formData.quote,
-                // Photo uploading logic would normally go to a separate endpoint first to get a URL, 
-                // skipping for this implementation as backend expects URL strings.
-                photoUrl: null,
+                photoUrl: null, // Logic to upload file usually happens before or via FormData object
                 instagram: formData.instagram,
                 soundcloud: formData.soundcloud,
                 spotify: formData.spotify,
@@ -439,8 +406,6 @@ export default function ApplyPage() {
                 return;
             }
 
-            // Success!
-            // If we got a token back (Guest flow), log them in
             if (data.token && data.user) {
                 localStorage.setItem("accessToken", data.token);
                 setAuthUser(data.user);
@@ -484,14 +449,14 @@ export default function ApplyPage() {
                         <>
                             <div>
                                 <div className="mb-12">
-                                    <div className="text-[10px] font-mono text-white/70 uppercase tracking-widest mb-2 font-bold">My Account</div>
-                                    <h1 className="font-main text-3xl text-white uppercase leading-none break-words">
+                                    <div className="text-lg font-mono text-white/70 uppercase tracking-widest mb-2 ">My Account</div>
+                                    <h1 className="font-main text-3xl text-white uppercase leading-none break-words tracking-wide">
                                         {user.name}
                                     </h1>
                                     <div className="flex items-center gap-2 mt-2">
-                                        <span className="text-xs font-mono text-primary uppercase tracking-widest font-bold">@{user.username}</span>
+                                        <span className="text-lg font-mono text-primary uppercase tracking-widest ">@{user.username}</span>
                                         <span className="w-1 h-1 rounded-full bg-white/20" />
-                                        <span className="text-xs font-mono text-white/70 uppercase tracking-widest font-medium">{user.type}</span>
+                                        <span className="text-lg font-mono text-white/70 uppercase tracking-widest font-medium">{user.type}</span>
                                     </div>
                                 </div>
 
@@ -506,18 +471,18 @@ export default function ApplyPage() {
                         // Guest Sidebar Content
                         <div>
                             <div className="mb-12">
-                                <div className="text-[10px] font-mono text-white/40 uppercase tracking-widest mb-2">Apply</div>
-                                <h1 className="font-main text-3xl text-white uppercase leading-none break-words">
+                                <div className="text-lg font-mono text-white/40 uppercase tracking-widest mb-2">Apply</div>
+                                <h1 className="font-main text-3xl text-white uppercase leading-none break-words tracking-wide">
                                     Guest
                                 </h1>
                             </div>
-                            <div className="p-4 bg-white/5 border border-white/10 rounded-none text-xs text-white/60 mb-8">
+                            <div className="p-4 bg-white/5 border border-white/10 rounded-none text-lg text-white/60 mb-8">
                                 <p>You are applying as a guest. An account will be created for you automatically.</p>
                             </div>
                             <div className="mt-8">
                                 <button
                                     onClick={() => router.push("/signin")}
-                                    className="flex items-center gap-2 text-xs font-mono text-primary hover:text-white transition-colors uppercase tracking-widest font-bold"
+                                    className="flex items-center gap-2 text-lg font-mono text-primary hover:text-white transition-colors uppercase tracking-widest "
                                 >
                                     Already have an account? Login
                                 </button>
@@ -528,7 +493,7 @@ export default function ApplyPage() {
                         {user && (
                             <button
                                 onClick={() => logout()}
-                                className="flex items-center gap-3 text-xs font-mono text-white/70 hover:text-red-400 transition-colors uppercase tracking-widest font-bold"
+                                className="flex items-center gap-3 text-lg font-mono text-white/70 hover:text-red-400 transition-colors uppercase tracking-widest "
                             >
                                 <LogOut className="w-4 h-4" />
                                 Sign Out
@@ -552,10 +517,10 @@ export default function ApplyPage() {
                             transition={{ duration: 0.8 }}
                             className="mb-24"
                         >
-                            <h1 className="font-main text-6xl md:text-8xl uppercase leading-[0.9] mb-8 text-white">
+                            <h1 className="font-main text-8xl md:text-9xl uppercase leading-[0.9] mb-8 text-white tracking-wide">
                                 Join The <span className="text-primary">Circle.</span>
                             </h1>
-                            <p className="text-xl text-white font-medium leading-relaxed">
+                            <p className="text-2xl text-white font-medium leading-relaxed">
                                 Apply to become a verified Ethereal Techno producer.
                                 <br /><br />
                                 The Circle is a curated space for artists who share a deeper approach to sound, atmosphere, and intention.
@@ -603,19 +568,19 @@ export default function ApplyPage() {
 
                                     {/* CONTACT PREFERENCES */}
                                     <div className="mt-12 pt-12 border-t border-white/10">
-                                        <label className="text-xs font-mono text-white font-bold uppercase mb-8 block">Contact Preferences</label>
+                                        <label className="text-lg font-mono text-white  uppercase mb-8 block">Contact Preferences</label>
                                         <div
                                             className="flex items-start gap-4 cursor-pointer group"
                                             onClick={() => handleInputChange("allowContact", !formData.allowContact)}
                                         >
-                                            <div className={`w-6 h-6 border border-white/20 flex items-center justify-center transition-colors bg-transparent group-hover:border-white ${formData.allowContact ? "bg-primary text-black border-primary" : ""}`}>
-                                                {formData.allowContact && <Check size={14} />}
+                                            <div className={`w-6 h-6 border border-white/20 flex items-center justify-center transition-colors bg-transparent group-hover:border-white ${formData.allowContact ? "bg-black border-white" : ""}`}>
+                                                {formData.allowContact && <Check size={14} color="white" strokeWidth={3} />}
                                             </div>
                                             <div className="space-y-2">
-                                                <span className="text-sm text-white font-medium group-hover:text-white transition-colors select-none block">
+                                                <span className="text-xl text-white font-medium group-hover:text-white transition-colors select-none block">
                                                     Allow other verified producers to contact me via the Ethereal Techno platform.
                                                 </span>
-                                                <p className="text-white/60 text-xs font-light">
+                                                <p className="text-white/60 text-lg font-light">
                                                     Your email address will not be shared. Messages are sent through a private contact form.
                                                 </p>
                                             </div>
@@ -642,16 +607,16 @@ export default function ApplyPage() {
                                         <div className="group relative w-40 h-40 flex-shrink-0 cursor-pointer">
                                             <div className={`w-full h-full rounded-full overflow-hidden border border-white/20 bg-white/5 flex items-center justify-center transition-colors relative`}>
                                                 {formData.photoPreview ? (
-                                                    <img src={formData.photoPreview} alt="Preview" className="w-full h-full object-cover" />
+                                                    <Image src={formData.photoPreview} alt="Preview" fill className="object-cover" unoptimized />
                                                 ) : (
                                                     <Upload className="w-8 h-8 text-white/20 group-hover:text-primary transition-colors" />
                                                 )}
                                             </div>
                                             <input type="file" accept="image/*" onChange={handlePhotoUpload} className="absolute inset-0 opacity-0 cursor-pointer" />
                                         </div>
-                                        <div className="flex-1 space-y-2 pt-4">
-                                            <h3 className="font-main text-2xl uppercase text-white font-bold">Artist Avatar</h3>
-                                            <p className="text-white font-medium text-sm">Upload a high-resolution image. This will represent you within the Circle.</p>
+                                        <div className="flex-1 space-y-4 pt-4">
+                                            <h3 className="font-main text-3xl uppercase text-white tracking-wide">Artist Avatar</h3>
+                                            <p className="text-white font-medium text-xl">Upload a high-resolution image. This will represent you within the Circle.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -730,7 +695,7 @@ export default function ApplyPage() {
                                 <div className="grid md:grid-cols-1 gap-8">
                                     <MinimalInput
                                         label="Spotify"
-                                        placeholder="open.spotify.com/artist/"
+                                        placeholder="open.spotify.com/artist/..."
                                         value={formData.spotify}
                                         onChange={(e) => handleInputChange("spotify", e.target.value)}
                                         onBlur={() => handleBlur("spotify")}
@@ -785,7 +750,7 @@ export default function ApplyPage() {
                             <motion.section variants={fadeInUp} initial="hidden" animate="visible" transition={{ delay: 0.4 }}>
                                 <SectionHeader number={!user ? "04" : "04"} title="Evidence" />
                                 <div className="space-y-8">
-                                    <p className="text-white text-lg font-medium">
+                                    <p className="text-white text-xl font-light">
                                         Provide links to up to three of your strongest tracks.
                                         <br />
                                         Please share SoundCloud links only - no sets, playlists, podcasts, or DJ mixes.
@@ -812,13 +777,13 @@ export default function ApplyPage() {
                                 <SectionHeader number={!user ? "05" : "05"} title="CONTRIBUTION" />
                                 <div className="space-y-12">
                                     <div className="space-y-6">
-                                        <label className="font-main text-2xl uppercase text-white font-bold">Production Capabilities</label>
-                                        <p className="text-white font-medium text-sm mb-6">
+                                        <label className="font-bold text-3xl uppercase text-white tracking-wide block mb-8">Production Capabilities</label>
+                                        <p className="text-white leading-relaxed font-light text-xl mb-12">
                                             What can you contribute to the Ethereal Techno vault?
                                             <br />
                                             This information helps us understand your skills. Contribution opportunities are optional and may be explored in the future.
                                         </p>
-                                        <div className="grid md:grid-cols-3 gap-4">
+                                        <div className="grid md:grid-cols-3 gap-4 mb-24">
                                             <CapabilityCheckbox
                                                 label="Audio Loops"
                                                 active={formData.canCreateLoops}
@@ -841,19 +806,32 @@ export default function ApplyPage() {
                                     </div>
 
                                     <div className="space-y-6">
-                                        <label className="font-main text-2xl uppercase text-white font-bold">The Vision</label>
-                                        <p className="text-white font-medium text-sm mb-6">
+                                        <label className="font-bold text-3xl uppercase text-white tracking-wide block mb-8">The Vision</label>
+                                        <p className="text-white leading-relaxed font-light text-xl mb-6">
                                             Complete the sentence below in your own words.
                                             <br />
                                             We’re interested in how you perceive Ethereal Techno - think about emotion, atmosphere, intention, or what draws you to this sound.
                                         </p>
-                                        <div className="relative group">
+                                        <div className="relative group border-b border-white/20 focus-within:border-primary transition-colors">
                                             <textarea
-                                                rows={4}
-                                                className="w-full bg-transparent border-b border-white/20 py-4 text-xl md:text-3xl font-medium text-white focus:outline-none focus:border-primary transition-colors placeholder:text-white/50 resize-none"
-                                                placeholder="Ethereal Techno is …"
+                                                rows={1}
+                                                className="w-full bg-transparent border-none py-4 text-2xl md:text-4xl font-medium text-white focus:outline-none focus:ring-0 resize-none placeholder:text-white/20"
+                                                placeholder=""
                                                 value={formData.quote}
-                                                onChange={(e) => handleInputChange("quote", e.target.value)}
+                                                onChange={(e) => {
+                                                    const val = e.target.value;
+                                                    // Ensure strict prefix
+                                                    if (!val.startsWith(PREFIX)) {
+                                                        // Prevent deletion of prefix
+                                                        handleInputChange("quote", PREFIX);
+                                                    } else {
+                                                        const target = e.target;
+                                                        target.style.height = 'auto';
+                                                        target.style.height = `${target.scrollHeight}px`;
+                                                        handleInputChange("quote", val);
+                                                    }
+                                                }}
+                                                style={{ height: 'auto', minHeight: '1.5em' }}
                                             />
                                         </div>
                                     </div>
@@ -874,10 +852,10 @@ export default function ApplyPage() {
                                     className="flex items-start gap-4 cursor-pointer group"
                                     onClick={() => handleInputChange("agreedToTerms", !formData.agreedToTerms)}
                                 >
-                                    <div className={`w-6 h-6 border border-white/20 flex items-center justify-center transition-colors bg-transparent group-hover:border-white ${formData.agreedToTerms ? "bg-primary text-black border-primary" : ""}`}>
-                                        {formData.agreedToTerms && <Check size={14} />}
+                                    <div className={`w-6 h-6 border border-white/20 flex items-center justify-center transition-colors bg-transparent group-hover:border-white ${formData.agreedToTerms ? "bg-black border-white" : ""}`}>
+                                        {formData.agreedToTerms && <Check size={14} color="white" strokeWidth={3} />}
                                     </div>
-                                    <span className="text-sm text-white font-medium group-hover:text-white transition-colors select-none">
+                                    <span className="text-lg text-white font-medium group-hover:text-white transition-colors select-none">
                                         I have read and agree to the Community Rules and Membership Policy.
                                     </span>
                                 </div>
@@ -885,9 +863,21 @@ export default function ApplyPage() {
                                 <button
                                     type="submit"
                                     disabled={submitting || !formData.agreedToTerms}
-                                    className="w-full py-6 bg-white text-black font-main text-2xl uppercase tracking-wide hover:bg-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="w-full relative group overflow-hidden"
                                 >
-                                    {submitting ? "Submitting..." : "Submit Application"}
+                                    <motion.div
+                                        whileHover={{ scale: 1.01 }}
+                                        whileTap={{ scale: 0.99 }}
+                                        className="w-full py-6 bg-white text-black font-main text-2xl uppercase tracking-wide transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        <span className="relative z-10">{submitting ? "Submitting..." : "Submit Application"}</span>
+                                        <motion.div
+                                            className="absolute inset-0 bg-primary z-0 origin-left"
+                                            initial={{ scaleX: 0 }}
+                                            whileHover={{ scaleX: 1 }}
+                                            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                                        />
+                                    </motion.div>
                                 </button>
                             </motion.section>
 
@@ -899,111 +889,143 @@ export default function ApplyPage() {
     );
 }
 
-// --- SUB-COMPONENTS ---
-
-interface MinimalInputProps {
-    label: string;
-    error?: string;
-    prefix?: string;
-    className?: string;
-    disabled?: boolean;
-    type?: string;
-    value?: string;
-    onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    onBlur?: () => void;
-    placeholder?: string;
-    verifying?: boolean;
-    verifiedData?: { title: string | null };
-}
+// --- SUB-COMPONENTS (Moved outside to prevent re-renders) ---
 
 const MinimalInput: React.FC<MinimalInputProps> = ({
     label, error, prefix, className = "", disabled = false, verifying, verifiedData, ...props
-}) => (
-    <div className={`group relative w-full ${className}`}>
-        <div className="flex items-end relative">
-            {prefix && <span className="text-white/80 pb-4 pr-1 font-medium select-none">{prefix}</span>}
-            <input
-                className={`
+}) => {
+    const [focused, setFocused] = useState(false);
+
+    return (
+        <div className={`group relative w-full ${className}`}>
+            <div className="flex items-end relative">
+                {prefix && <span className={`pb-4 pr-1 font-medium select-none transition-colors duration-300 ${focused ? "text-primary" : "text-white/50"}`}>{prefix}</span>}
+                <input
+                    className={`
                     block w-full bg-transparent border-b py-4 text-white placeholder:text-white/50 
-                    focus:outline-none transition-colors font-medium text-lg pr-8
-                    ${error ? "border-red-500" : verifiedData ? "border-green-500" : "border-white/20 focus:border-primary"}
+                    focus:outline-none font-medium text-2xl pr-8
+                    transition-colors duration-300
+                    ${error ? "border-red-500" : verifiedData ? "border-green-500" : "border-white/20"}
                     ${disabled ? "opacity-50 cursor-not-allowed" : ""}
                 `}
-                placeholder={label}
-                disabled={disabled}
-                {...props}
-            />
+                    placeholder={label}
+                    disabled={disabled}
+                    onFocus={(e) => {
+                        setFocused(true);
+                        props.onFocus?.(e);
+                    }}
+                    onBlur={(e) => {
+                        setFocused(false);
+                        props.onBlur?.(e);
+                    }}
+                    {...props}
+                />
 
-            {/* Verification Status Indicators */}
-            <div className="absolute right-0 bottom-4 pb-1">
-                {verifying && <Loader2 className="w-4 h-4 animate-spin text-white/50" />}
-                {!verifying && verifiedData && <Check className="w-4 h-4 text-green-500" />}
-                {!verifying && error && <AlertCircle className="w-4 h-4 text-red-500" />}
+                {/* Animated Bottom Border */}
+                <div className="absolute bottom-0 left-0 w-full h-[1px] bg-transparent overflow-hidden pointer-events-none">
+                    <motion.div
+                        initial={{ x: "-100%" }}
+                        animate={{ x: focused ? "0%" : "-100%" }}
+                        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                        className={`h-full w-full ${error ? "bg-red-500" : verifiedData ? "bg-green-500" : "bg-primary"}`}
+                    />
+                </div>
+
+                {/* Verification Status Indicators */}
+                <div className="absolute right-0 bottom-4 pb-1">
+                    {verifying && <Loader2 className="w-5 h-5 animate-spin text-white/50" />}
+                    {!verifying && verifiedData && <motion.div initial={{ scale: 0, rotate: -45 }} animate={{ scale: 1, rotate: 0 }}><Check className="w-5 h-5 text-green-500" /></motion.div>}
+                    {!verifying && error && <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}><AlertCircle className="w-5 h-5 text-red-500" /></motion.div>}
+                </div>
+            </div>
+
+            <div className="flex justify-between items-start mt-2">
+                <label className={`text-lg font-mono uppercase tracking-widest transition-colors duration-300 ${focused ? "text-primary" : "text-white"}`}>
+                    {label}
+                </label>
+
+                {/* Feedback Messages */}
+                <div className="text-right">
+                    <AnimatePresence mode="wait">
+                        {error && (
+                            <motion.span
+                                initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                                className="text-lg text-red-500 font-mono block"
+                            >
+                                {error}
+                            </motion.span>
+                        )}
+                        {verifiedData && (
+                            <motion.span
+                                initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                                className="text-lg text-green-400 font-mono block max-w-[200px] truncate"
+                            >
+                                Verified: {verifiedData.title || "Link Active"}
+                            </motion.span>
+                        )}
+                    </AnimatePresence>
+                </div>
             </div>
         </div>
-
-        <div className="flex justify-between items-start mt-2">
-            <label className="text-xs font-mono uppercase tracking-widest text-white font-bold">
-                {label}
-            </label>
-
-            {/* Feedback Messages */}
-            <div className="text-right">
-                {error && <span className="text-[10px] text-red-500 font-mono block">{error}</span>}
-                {verifiedData && (
-                    <span className="text-[10px] text-green-400 font-mono block max-w-[200px] truncate">
-                        Verified: {verifiedData.title || "Link Active"}
-                    </span>
-                )}
-            </div>
-        </div>
-    </div>
-);
+    );
+};
 
 const SectionHeader: React.FC<SectionHeaderProps> = ({ number, title }) => (
     <div className="flex items-baseline gap-4 mb-16 border-b border-white/10 pb-4">
-        <span className="font-mono text-primary text-sm font-bold">/{number}</span>
-        <h2 className="font-main text-3xl uppercase text-white font-bold">{title}</h2>
+        <span className="font-mono text-primary text-4xl ">/{number}</span>
+        <h2 className="font-main text-6xl uppercase text-white tracking-widest">{title}</h2>
     </div>
 );
 
 const CapabilityCheckbox: React.FC<CapabilityCheckboxProps> = ({ label, active, onClick, icon: Icon }) => (
-    <div
+    <motion.div
         onClick={onClick}
-        className={`
-            cursor-pointer border p-6 flex flex-col items-center justify-center gap-4 transition-all duration-300
-            ${active ? "bg-white text-black border-white" : "bg-transparent border-white/10 text-white hover:border-white/30 hover:text-white"}
-        `}
+        initial={false}
+        animate={{
+            backgroundColor: active ? "#ffffff" : "transparent",
+            color: active ? "#000000" : "#ffffff",
+            borderColor: active ? "#ffffff" : "rgba(255, 255, 255, 0.1)"
+        }}
+        whileHover={{
+            scale: 1.02,
+            backgroundColor: active ? "#ffffff" : "rgba(255, 255, 255, 0.05)",
+            borderColor: active ? "#ffffff" : "rgba(255, 255, 255, 0.3)"
+        }}
+        whileTap={{ scale: 0.98 }}
+        className="cursor-pointer border p-6 flex flex-col items-center justify-center gap-4 transition-colors duration-300"
     >
         <Icon size={24} />
-        <span className="text-xs font-bold uppercase tracking-widest">{label}</span>
+        <span className="text-lg uppercase tracking-widest">{label}</span>
+    </motion.div>
+);
+
+const NavItem: React.FC<NavItemProps> = ({ label, icon: Icon, active, onClick, external }) => (
+    <div className="relative w-full">
+        {active && (
+            <motion.div
+                layoutId="activeNav"
+                className="absolute left-0 top-0 bottom-0 w-[2px] bg-primary z-10"
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            />
+        )}
+        <motion.button
+            whileHover={{ x: 4, backgroundColor: "rgba(255, 255, 255, 0.03)" }}
+            onClick={onClick}
+            className={`
+                group w-full flex items-center justify-between py-4 px-4 rounded-none border-l-2 border-transparent transition-all duration-300
+                ${active ? "bg-white/[0.03]" : "hover:border-white/20"}
+            `}
+        >
+            <div className="flex items-center gap-4">
+                <Icon className={`w-5 h-5 transition-colors ${active ? "text-primary" : "text-white/30 group-hover:text-white/60"}`} />
+                <span className={`text-lg font-medium uppercase tracking-wider transition-colors ${active ? "text-white" : "text-white/60 group-hover:text-white"}`}>
+                    {label}
+                </span>
+            </div>
+            {external && <ArrowUpRight className="w-3 h-3 text-white/20 group-hover:text-primary" />}
+        </motion.button>
     </div>
 );
-
-const NavItem: React.FC<NavItemProps> = ({ id, label, icon: Icon, active, onClick, external }) => (
-    <button
-        onClick={onClick}
-        className={`
-            group w-full flex items-center justify-between py-4 px-4 rounded-none border-l-2 transition-all duration-300
-            ${active
-                ? "border-primary bg-white/[0.03]"
-                : "border-transparent hover:border-white/20 hover:bg-white/[0.02]"
-            }
-        `}
-    >
-        <div className="flex items-center gap-4">
-            <Icon className={`w-4 h-4 transition-colors ${active ? "text-primary" : "text-white/30 group-hover:text-white/60"}`} />
-            <span className={`text-sm font-medium uppercase tracking-wider transition-colors ${active ? "text-white" : "text-white/60 group-hover:text-white"}`}>
-                {label}
-            </span>
-        </div>
-        {external && <ArrowUpRight className="w-3 h-3 text-white/20 group-hover:text-primary" />}
-    </button>
-);
-
-interface SoundCloudEmbedProps {
-    url: string;
-}
 
 const SoundCloudEmbed: React.FC<SoundCloudEmbedProps> = ({ url }) => {
     if (!url || !url.includes("soundcloud.com/") || url.includes("/sets/")) return null;
@@ -1013,6 +1035,7 @@ const SoundCloudEmbed: React.FC<SoundCloudEmbedProps> = ({ url }) => {
     return (
         <div className="mt-4 border border-white/10 overflow-hidden">
             <iframe
+                title="SoundCloud Player"
                 width="100%"
                 height="300"
                 scrolling="no"

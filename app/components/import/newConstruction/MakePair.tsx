@@ -292,7 +292,7 @@ export default function MakePair({
         "Some selected files were removed because they're not compatible with the new pair type"
       );
     }
-  }, [selectedPairType]);
+  }, [selectedPairType, contentItems, pairTypes]);
 
   return (
     <div className="">
@@ -357,12 +357,12 @@ export default function MakePair({
                           <div
                             key={item.id}
                             className={`flex items-center p-3 rounded-lg border transition-all ${isSelected
-                                ? "bg-blue-900/30 border-blue-500/50 cursor-pointer"
-                                : isPaired
-                                  ? "bg-green-900/30 border-green-500/50 opacity-70"
-                                  : canSelect
-                                    ? "border-white/10 hover:border-white/30 bg-white/5 cursor-pointer"
-                                    : "border-white/10 bg-white/5 opacity-40 cursor-not-allowed"
+                              ? "bg-blue-900/30 border-blue-500/50 cursor-pointer"
+                              : isPaired
+                                ? "bg-green-900/30 border-green-500/50 opacity-70"
+                                : canSelect
+                                  ? "border-white/10 hover:border-white/30 bg-white/5 cursor-pointer"
+                                  : "border-white/10 bg-white/5 opacity-40 cursor-not-allowed"
                               }`}
                             onClick={() => {
                               if (isSelected || canSelect) {
@@ -381,10 +381,10 @@ export default function MakePair({
                             <div className="flex-1 flex items-center gap-3">
                               <div
                                 className={`rounded-lg p-2 ${isSelected
-                                    ? "bg-blue-900/50"
-                                    : isPaired
-                                      ? "bg-green-900/50"
-                                      : "bg-white/10"
+                                  ? "bg-blue-900/50"
+                                  : isPaired
+                                    ? "bg-green-900/50"
+                                    : "bg-white/10"
                                   }`}
                               >
                                 {getFileIcon(item.contentType)}
@@ -442,8 +442,8 @@ export default function MakePair({
                           <div
                             key={type.name}
                             className={`p-3 rounded-lg border cursor-pointer transition-all ${selectedPairType === type.name
-                                ? "bg-blue-900/30 border-blue-500/50"
-                                : "bg-black/70 border-white/20 hover:border-white/40"
+                              ? "bg-blue-900/30 border-blue-500/50"
+                              : "bg-black/70 border-white/20 hover:border-white/40"
                               }`}
                             onClick={() => setSelectedPairType(type.name)}
                           >
@@ -465,8 +465,8 @@ export default function MakePair({
                                   key={reqType}
                                   variant="outline"
                                   className={`text-xs ${selectedTypeCounts[reqType]
-                                      ? "bg-green-900/30 border-green-500/50 text-green-300"
-                                      : "border-white/20 text-white/70 bg-white/5"
+                                    ? "bg-green-900/30 border-green-500/50 text-green-300"
+                                    : "border-white/20 text-white/70 bg-white/5"
                                     }`}
                                 >
                                   {selectedTypeCounts[reqType] ? "✓ " : ""}

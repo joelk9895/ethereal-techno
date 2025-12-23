@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   Loader2,
   Plus,
-  Edit,
+
   Trash2,
   Save,
   X,
@@ -346,8 +346,8 @@ export default function AdminNewsPage() {
                           />
                           <div
                             className={`w-5 h-5 border border-white/20 flex items-center justify-center transition-colors ${formData.isActive
-                                ? "bg-primary border-primary"
-                                : ""
+                              ? "bg-primary border-primary"
+                              : ""
                               }`}
                           >
                             {formData.isActive && (
