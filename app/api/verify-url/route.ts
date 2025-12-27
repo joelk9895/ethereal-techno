@@ -48,7 +48,8 @@ export async function POST(request: NextRequest) {
                 title: title
             });
 
-        } catch (fetchError) {
+        } catch {
+            // fetchError ignored
             clearTimeout(timeoutId);
             return NextResponse.json({
                 valid: false,
@@ -56,7 +57,8 @@ export async function POST(request: NextRequest) {
             }, { status: 200 });
         }
 
-    } catch (error) {
+    } catch {
+        // error ignored
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

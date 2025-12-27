@@ -243,31 +243,9 @@ export default function ImportSidebar() {
     }
   }, [loopEnabled]);
 
-  const isAudioFile = (fileName: string | undefined): boolean => {
-    if (!fileName) return false;
-    const lowerName = fileName.toLowerCase();
-    return (
-      lowerName.endsWith(".wav") ||
-      lowerName.endsWith(".mp3") ||
-      lowerName.endsWith(".aiff") ||
-      lowerName.endsWith(".aif")
-    );
-  };
 
-  const getContentTypeIcon = (contentType: string) => {
-    switch (contentType) {
-      case "Construction Kit":
-        return <Package className="w-3 h-3 text-yellow-400" />;
-      case "Preset Bundle":
-      case "Preset":
-        return <FileCode className="w-3 h-3 text-purple-400" />;
-      case "Loop+MIDI Bundle":
-      case "MIDI":
-        return <Music className="w-3 h-3 text-blue-400" />;
-      default:
-        return <FileAudio className="w-3 h-3 text-green-400" />;
-    }
-  };
+
+
 
   const filteredData = contentFilter
     ? sideData?.filter((item) => item.contentType === contentFilter)

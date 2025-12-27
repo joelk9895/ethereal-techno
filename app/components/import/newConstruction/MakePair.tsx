@@ -292,7 +292,7 @@ export default function MakePair({
         "Some selected files were removed because they're not compatible with the new pair type"
       );
     }
-  }, [selectedPairType, contentItems, pairTypes]);
+  }, [selectedPairType, contentItems, pairTypes, selectedItems]);
 
   return (
     <div className="">

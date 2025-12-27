@@ -423,7 +423,7 @@ export default function ApplyPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-black flex items-center justify-center">
+            <div className="min-h-screen bg-background flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
                     <Loader2 className="w-8 h-8 animate-spin text-primary" />
                     <span className="text-xs font-mono tracking-widest text-white/50">LOADING...</span>
@@ -433,7 +433,7 @@ export default function ApplyPage() {
     }
 
     return (
-        <div className="flex h-screen bg-black text-white font-sans selection:bg-primary selection:text-black overflow-hidden relative">
+        <div className="flex h-screen bg-background text-white font-sans selection:bg-primary selection:text-black overflow-hidden relative">
 
             {/* Background */}
             <div className="fixed inset-0 pointer-events-none z-0">

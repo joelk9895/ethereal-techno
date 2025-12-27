@@ -138,7 +138,7 @@ export default function AdminDashboardPage() {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-black text-white font-sans selection:bg-primary selection:text-black relative overflow-hidden">
+      <div className="min-h-screen bg-background text-white font-sans selection:bg-primary selection:text-black relative overflow-hidden">
 
         {/* Background Effects */}
         <div className="fixed inset-0 pointer-events-none z-0">
@@ -494,17 +494,3 @@ const ActivityItemComponent: React.FC<{ activity: ActivityItem }> = ({ activity 
     </div>
   );
 };
-
-const HealthMetric: React.FC<HealthMetricProps> = ({
-  label,
-  status,
-  uptime,
-  healthy
-}) => (
-  <div className="text-center">
-    <div className={`w-4 h-4 rounded-full mx-auto mb-3 ${healthy ? 'bg-green-400' : 'bg-red-400'}`} />
-    <h3 className="font-bold text-white mb-1">{label}</h3>
-    <p className="text-sm text-white/60 mb-1">{status}</p>
-    <p className="text-xs font-mono text-white/40">{uptime} uptime</p>
-  </div>
-);

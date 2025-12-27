@@ -165,7 +165,8 @@ const SlotText = ({ text, className }: { text: string, className?: string }) => 
 
 export default function ArtistProfileContent({ profile, user, username }: ArtistProfileContentProps) {
     const artistName = profile?.artistName || user.name || username;
-    const bio = profile?.quote || "Verified Artist on Ethereal Techno.";
+    profile.quote = undefined
+    const bio = profile?.quote || "Music expresses that which cannot be said and on which it is impossible to be silent. The rhythm of the body, the melody of the mind and the harmony of the soul create the symphony of life.";
     const photoUrl = profile?.photoUrl;
     const country = user.country || "Global";
     const memberSince = new Date(user.createdAt).getFullYear();
@@ -194,7 +195,7 @@ export default function ArtistProfileContent({ profile, user, username }: Artist
     };
 
     return (
-        <div className="min-h-screen bg-black text-white selection:bg-primary selection:text-black font-sans relative overflow-hidden">
+        <div className="min-h-screen bg-[#121212] text-white selection:bg-primary selection:text-black font-sans relative overflow-hidden">
 
             {/* Modals */}
             <ShareModal
@@ -221,77 +222,81 @@ export default function ArtistProfileContent({ profile, user, username }: Artist
             <div className="relative z-10 w-full px-6 md:px-12 py-24 md:py-32">
 
                 {/* Hero Section */}
-                <div className="flex flex-col md:flex-row items-center md:items-end gap-12 mb-24 border-b border-white/10 pb-16">
+                <div className="grid lg:grid-cols-[350px_1fr] gap-16 items-center mb-20 border-b border-white/10 pb-16">
 
-                    <motion.div
-                        initial="hidden"
-                        animate="visible"
-                        variants={scaleIn}
-                        className="relative group shrink-0"
-                    >
-                        <div className="w-56 h-56 md:w-64 md:h-64 rounded-full border border-white/10 p-1 relative z-10 bg-black">
-                            <div className="w-full h-full rounded-full overflow-hidden bg-neutral-900 relative">
-                                {photoUrl ? (
-                                    <Image
-                                        src={photoUrl}
-                                        alt={artistName}
-                                        fill
-                                        sizes="(max-width: 768px) 224px, 256px"
-                                        className="object-cover transition-transform duration-700 group-hover:scale-110"
-                                    />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-white/20">
-                                        <Mic2 size={48} />
-                                    </div>
-                                )}
+                    <div className="flex justify-center">
+
+                        <motion.div
+                            initial="hidden"
+                            animate="visible"
+                            variants={scaleIn}
+                            className="relative group shrink-0"
+                        >
+                            <div className="w-56 h-56 md:w-64 md:h-64 rounded-full border border-white/10 p-1 relative z-10 bg-black">
+                                <div className="w-full h-full rounded-full overflow-hidden bg-neutral-900 relative">
+                                    {photoUrl ? (
+                                        <Image
+                                            src={photoUrl}
+                                            alt={artistName}
+                                            fill
+                                            sizes="(max-width: 768px) 224px, 256px"
+                                            className="object-cover transition-transform duration-700 group-hover:scale-110"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-white/20">
+                                            <Mic2 size={48} />
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                        {/* Decorative Rings - Animated */}
-                        <motion.div
-                            animate={{ rotate: 360 }}
-                            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                            className="absolute inset-0 rounded-full border border-white/5 scale-110 z-0 pointer-events-none border-dashed"
-                        ></motion.div>
-                        <motion.div
-                            animate={{ rotate: -360 }}
-                            transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-                            className="absolute inset-0 rounded-full border border-white/5 scale-125 z-0 pointer-events-none"
-                        ></motion.div>
-                    </motion.div>
+                            {/* Decorative Rings - Animated */}
+                            <motion.div
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                                className="absolute inset-0 rounded-full border border-white/80 scale-110 z-0 pointer-events-none border-dashed"
+                            ></motion.div>
+                            <motion.div
+                                animate={{ rotate: -360 }}
+                                transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+                                className="absolute inset-0 rounded-full border border-white/80 scale-125 z-0 pointer-events-none"
+                            ></motion.div>
+                        </motion.div>
+                    </div>
 
                     {/* Name & Info */}
-                    <div className="flex-1 space-y-8 w-full text-center md:text-left">
+                    <div className="space-y-6 w-full text-center lg:text-left self-end">
                         <motion.div
                             initial="hidden"
                             animate="visible"
                             variants={staggerContainer}
                             className="space-y-4"
                         >
-                            <motion.div variants={fadeInUp} className="flex items-center justify-center md:justify-start gap-3">
-                                <span className="px-3 py-1 rounded-full border border-primary/30 bg-primary/10 text-primary text-lg font-mono uppercase tracking-widest flex items-center gap-2">
-                                    <Award size={14} /> Verified Producer
+                            <motion.div variants={fadeInUp} className="flex items-center justify-center lg:justify-start gap-3">
+                                <span className="px-2 py-0.5 rounded-full border border-primary/30 bg-primary/10 text-primary text-xs font-sans uppercase tracking-widest flex items-center gap-1.5">
+                                    <Award size={12} /> Verified Producer
                                 </span>
                             </motion.div>
 
                             <div className="overflow-hidden">
                                 <SlotText
                                     text={artistName}
-                                    className="text-7xl md:text-9xl font-main uppercase leading-none tracking-wide break-words"
+                                    className="text-5xl md:text-7xl font-main font-light uppercase leading-none tracking-wide break-words"
                                 />
                             </div>
 
-                            <motion.div variants={fadeInUp} className="flex items-center justify-center md:justify-start gap-6 text-lg font-mono text-white/50 uppercase tracking-wide pt-2">
+                            <motion.div variants={fadeInUp} className="flex items-center justify-center lg:justify-start gap-6 text-xs font-sans text-white/50 uppercase tracking-wide pt-1">
                                 <span className="flex items-center gap-2"><span className="text-white/30">BASED IN</span> {country}</span>
                                 <span className="flex items-center gap-2"><span className="text-white/30">MEMBER SINCE</span> {memberSince}</span>
                             </motion.div>
                         </motion.div>
 
                         {/* Social Row & Share */}
+                        {/* Social Row & Share */}
                         <motion.div
                             initial="hidden"
                             animate="visible"
                             variants={staggerContainer}
-                            className="flex flex-col md:flex-row items-center justify-between gap-6 pt-4"
+                            className="flex flex-col lg:flex-row items-center justify-between gap-6 pt-2"
                         >
                             {/* Social Icons */}
                             <div className="flex flex-wrap items-center gap-3">
@@ -317,7 +322,7 @@ export default function ArtistProfileContent({ profile, user, username }: Artist
                                 onClick={() => setShareOpen(true)}
                                 className="flex items-center gap-3 group px-4 py-2 hover:bg-white/5 rounded-full transition-colors"
                             >
-                                <span className="text-lg font-mono uppercase tracking-widest text-white/70 group-hover:text-white transition-colors">Share the Artist</span>
+                                <span className="text-xs font-sans uppercase tracking-widest text-white/70 group-hover:text-white transition-colors">Share</span>
                                 <div className="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center group-hover:border-primary group-hover:text-primary transition-colors">
                                     <LinkIcon size={14} />
                                 </div>
@@ -338,9 +343,9 @@ export default function ArtistProfileContent({ profile, user, username }: Artist
                             whileInView="visible"
                             viewport={{ once: true, margin: "-100px" }}
                             variants={staggerContainer}
-                            className="space-y-8"
+                            className="space-y-6"
                         >
-                            <motion.h2 variants={fadeInUp} className="text-2xl font-mono text-white/40 uppercase tracking-widest">Listen Elsewhere</motion.h2>
+                            <motion.h2 variants={fadeInUp} className="text-xs font-sans text-white/40 uppercase tracking-widest">Listen Elsewhere</motion.h2>
                             <motion.div variants={fadeInUp} className="flex flex-wrap gap-4">
                                 <PlatformLink href={profile?.spotify} icon={SpotifyIcon} label="Spotify" />
                                 <PlatformLink href={profile?.soundcloud} icon={SoundCloudIcon} label="Soundcloud" />
@@ -356,14 +361,14 @@ export default function ArtistProfileContent({ profile, user, username }: Artist
                             whileInView="visible"
                             viewport={{ once: true, margin: "-100px" }}
                             variants={fadeInUp}
-                            className="space-y-8"
+                            className="space-y-6"
                         >
-                            <h2 className="text-2xl font-mono text-white/40 uppercase tracking-widest">Reach Out</h2>
+                            <h2 className="text-xs font-sans text-white/40 uppercase tracking-widest">Reach Out</h2>
                             <motion.button
                                 whileHover={{ scale: 1.02 }}
                                 whileTap={{ scale: 0.98 }}
                                 onClick={handleMessageClick}
-                                className="w-full py-4 bg-primary text-black font-main text-2xl uppercase tracking-widest hover:bg-white transition-colors"
+                                className="w-full py-3 bg-white text-black font-sans text-sm font-medium rounded-full hover:bg-white/90 transition-colors"
                             >
                                 Send a Message
                             </motion.button>
@@ -371,15 +376,15 @@ export default function ArtistProfileContent({ profile, user, username }: Artist
                     </div>
 
                     {/* Right Content: Selected Works */}
-                    <div className="space-y-12">
+                    <div className="bg-[#1E1E1E] rounded-3xl p-8 space-y-8 border border-white/5">
                         <motion.div
                             initial="hidden"
                             whileInView="visible"
                             viewport={{ once: true, margin: "-100px" }}
                             variants={staggerContainer}
-                            className="space-y-8"
+                            className="space-y-6"
                         >
-                            <motion.h2 variants={fadeInUp} className="text-2xl font-mono text-white/40 uppercase tracking-widest">Selected Works</motion.h2>
+                            <motion.h2 variants={fadeInUp} className="text-xs font-sans text-white/40 uppercase tracking-widest">Selected Works</motion.h2>
 
                             {(profile?.track1 || profile?.track2 || profile?.track3) ? (
                                 <div className="grid md:grid-cols-3 gap-6">
@@ -388,7 +393,7 @@ export default function ArtistProfileContent({ profile, user, username }: Artist
                                     {profile?.track3 && <motion.div variants={fadeInUp}><SoundCloudEmbed url={profile.track3} /></motion.div>}
                                 </div>
                             ) : (
-                                <motion.div variants={fadeInUp} className="text-white/30 text-lg font-light italic">
+                                <motion.div variants={fadeInUp} className="text-white/30 text-base font-light italic">
                                     No tracks selected yet.
                                 </motion.div>
                             )}
@@ -396,16 +401,15 @@ export default function ArtistProfileContent({ profile, user, username }: Artist
                     </div>
                 </div>
 
-                {/* --- Statement Section (Bottom) --- */}
-                <div className="max-w-4xl mx-auto text-center space-y-8">
+                <div className="max-w-4xl mx-auto text-center space-y-8 pb-12">
                     <motion.div
                         initial={{ opacity: 0, y: 50 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8, ease: "easeOut" }}
                         viewport={{ once: true }}
                     >
-                        <h2 className="text-2xl font-mono text-white/40 uppercase tracking-widest mb-8">Statement</h2>
-                        <p className="text-4xl md:text-6xl font-main leading-tight text-white/90 tracking-wide">
+                        <h2 className="text-xs font-sans text-white/40 uppercase tracking-widest mb-6">Statement</h2>
+                        <p className="text-xl md:text-3xl font-sans italic leading-relaxed text-white/90 tracking-wide font-light max-w-5xl mx-auto">
                             &ldquo;{bio}&rdquo;
                         </p>
                     </motion.div>
@@ -427,10 +431,10 @@ function SocialLink({ href, icon: Icon, label }: { href?: string | null, icon: R
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-10 h-10 rounded-full bg-white/5 border border-white/5 flex items-center justify-center text-white/50 hover:text-black hover:bg-white hover:border-white transition-all duration-300 transform hover:scale-110"
+            className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/70 hover:text-black hover:bg-white hover:border-white transition-all duration-300 transform hover:scale-110"
             title={label}
         >
-            <Icon className="w-4 h-4" />
+            <Icon className="w-6 h-6" />
         </a>
     );
 }
@@ -444,7 +448,7 @@ function PlatformLink({ href, icon: Icon, label }: { href?: string | null, icon:
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            className="group flex flex-col items-center gap-2 opacity-50 hover:opacity-100 transition-opacity"
+            className="group flex flex-col items-center gap-2 opacity-100 hover:opacity-80 transition-opacity"
             title={label}
         >
             <div className="w-12 h-12 flex items-center justify-center border border-white/20 rounded-lg group-hover:border-primary group-hover:text-primary transition-colors">
@@ -491,42 +495,60 @@ const SoundCloudEmbed = ({ url }: { url: string }) => {
     if (isPlaying) {
         const src = `https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}&color=%23ff5500&auto_play=true&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false&visual=true`;
         return (
-            <div className="aspect-square w-full border border-white/10 bg-neutral-900">
-                <iframe
-                    width="100%"
-                    height="100%"
-                    scrolling="no"
-                    frameBorder="no"
-                    allow="autoplay"
-                    src={src}
-                />
+            <div className="group space-y-3 cursor-pointer">
+                <div className="aspect-square w-full border border-white/5 bg-neutral-900 rounded-xl overflow-hidden">
+                    <iframe
+                        width="100%"
+                        height="100%"
+                        scrolling="no"
+                        frameBorder="no"
+                        allow="autoplay"
+                        src={src}
+                    />
+                </div>
+                {trackData?.title && (
+                    <div className="px-1">
+                        <p className="text-white/70 group-hover:text-white transition-colors text-xs font-sans font-medium line-clamp-2 leading-snug tracking-wide">
+                            {trackData.title}
+                        </p>
+                    </div>
+                )}
             </div>
         );
     }
 
     return (
-        <div
-            className="group relative aspect-square w-full border border-white/10 bg-neutral-900 cursor-pointer overflow-hidden"
-            onClick={() => setIsPlaying(true)}
-        >
-            {trackData?.thumbnail_url ? (
-                <Image
-                    src={trackData.thumbnail_url}
-                    alt={trackData.title || "SoundCloud Track"}
-                    fill
-                    className="object-cover transition-transform duration-700 group-hover:scale-110 opacity-80 group-hover:opacity-100"
-                />
-            ) : (
-                <div className="absolute inset-0 flex items-center justify-center text-white/20">
-                    <Music size={48} />
-                </div>
-            )}
+        <div className="group space-y-3 cursor-pointer" onClick={() => setIsPlaying(true)}>
+            <div
+                className="relative aspect-square w-full border border-white/5 bg-neutral-900 rounded-xl overflow-hidden"
+            >
+                {trackData?.thumbnail_url ? (
+                    <Image
+                        src={trackData.thumbnail_url}
+                        alt={trackData.title || "SoundCloud Track"}
+                        fill
+                        className="object-cover transition-transform duration-700 group-hover:scale-110 opacity-80 group-hover:opacity-100"
+                    />
+                ) : (
+                    <div className="absolute inset-0 flex items-center justify-center text-white/20">
+                        <Music size={48} />
+                    </div>
+                )}
 
-            <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">
-                <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white group-hover:scale-110 transition-transform duration-300 border border-white/20">
-                    <Play size={32} fill="currentColor" className="ml-1" />
+                <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">
+                    <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white group-hover:scale-110 transition-transform duration-300 border border-white/20">
+                        <Play size={32} fill="currentColor" className="ml-1" />
+                    </div>
                 </div>
             </div>
+
+            {trackData?.title && (
+                <div className="px-1">
+                    <p className="text-white/70 group-hover:text-white transition-colors text-xs font-sans font-medium line-clamp-2 leading-snug tracking-wide">
+                        {trackData.title}
+                    </p>
+                </div>
+            )}
         </div>
     );
-};
+}

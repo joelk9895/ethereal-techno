@@ -11,19 +11,7 @@ interface JWTPayload {
   exp?: number;
 }
 
-interface ActivityItem {
-  id: string;
-  type: string;
-  description: string;
-  timestamp: string;
-}
 
-interface ActivityLog {
-  id: string;
-  type: string;
-  description: string;
-  createdAt: Date;
-}
 
 interface DashboardStats {
   totalUsers: number;

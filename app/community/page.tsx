@@ -25,11 +25,7 @@ interface NewsItem {
 
 
 
-interface MinimalFeedItemProps {
-    time: string;
-    text: string;
-    priority?: number;
-}
+
 
 interface MinimalProducerProps {
     name: string;

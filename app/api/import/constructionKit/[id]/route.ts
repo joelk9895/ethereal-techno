@@ -78,7 +78,7 @@ export async function POST(
         let defaultFullLoopId: string | null = null;
 
         for (const file of files) {
-          const { fileName, category, type, key, url } = file;
+          const { fileName, category, type, key } = file;
 
           const isMidi = category === "MIDI";
           const typeParts = type.split(" > ");

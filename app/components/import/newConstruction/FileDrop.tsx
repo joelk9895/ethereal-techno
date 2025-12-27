@@ -317,10 +317,9 @@ export default function FileDrop({
     input.accept = "audio/wav,.mid,.midi,.SerumPreset,.h2p,.mp3,.aiff";
     input.multiple = true;
 
-    input.onchange = (e) => {
-      const target = e.target as HTMLInputElement;
-      if (target && target.files && target.files.length > 0) {
-        addFiles(Array.from(target.files));
+    input.onchange = () => {
+      if (input.files && input.files.length > 0) {
+        addFiles(Array.from(input.files));
       }
     };
     input.click();
@@ -394,7 +393,7 @@ export default function FileDrop({
     if (fullLoopIndices.length > 0 && defaultFullLoopIndex === null) {
       setAsDefaultFullLoop(fullLoopIndices[0]);
     }
-  }, [files, fileData]);
+  }, [files, fileData, defaultFullLoopIndex]);
 
   useEffect(() => {
     if (defaultFullLoopIndex !== null) {
