@@ -18,11 +18,9 @@ import {
     LucideIcon,
     AlertCircle
 } from "lucide-react";
-// Assumes these exist in your project. If not, remove or mock them.
 import { getAuthUser, setAuthUser, logout, AuthUser } from "@/lib/auth";
 import { motion, AnimatePresence } from "framer-motion";
 
-// --- INTERFACES ---
 
 
 
@@ -433,30 +431,30 @@ export default function ApplyPage() {
     }
 
     return (
-        <div className="flex h-screen bg-background text-white font-sans selection:bg-primary selection:text-black overflow-hidden relative">
+        <div className="flex h-screen bg-[#121212] text-white font-sans selection:bg-primary selection:text-black overflow-hidden relative">
 
             {/* Background */}
             <div className="fixed inset-0 pointer-events-none z-0">
-                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.04]"></div>
+                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.05]"></div>
                 <div className="absolute top-[-20%] left-[-20%] w-[50vw] h-[50vw] bg-primary/5 blur-[150px] rounded-full opacity-50" />
             </div>
 
             <div className="relative z-10 flex flex-col lg:flex-row-reverse w-full h-full">
 
                 {/* --- RIGHT SIDEBAR (Navigation) --- */}
-                <aside className="hidden lg:flex w-80 h-full border-l border-white/10 bg-black/50 backdrop-blur-xl z-20 pt-24 pb-12 px-8 flex-col justify-between overflow-y-auto no-scrollbar">
+                <aside className="hidden lg:flex w-80 h-full border-l border-white/5 bg-black/50 backdrop-blur-xl z-20 pt-24 pb-12 px-8 flex-col justify-between overflow-y-auto no-scrollbar">
                     {user ? (
                         <>
                             <div>
-                                <div className="mb-12">
-                                    <div className="text-lg font-mono text-white/70 uppercase tracking-widest mb-2 ">My Account</div>
-                                    <h1 className="font-main text-3xl text-white uppercase leading-none break-words tracking-wide">
+                                <div className="mb-8 px-4">
+                                    <div className="text-xs font-sans text-white/40 uppercase tracking-widest mb-4">My Account</div>
+                                    <h1 className="font-main text-3xl text-white uppercase leading-none break-words tracking-wide mb-3">
                                         {user.name}
                                     </h1>
-                                    <div className="flex items-center gap-2 mt-2">
-                                        <span className="text-lg font-mono text-primary uppercase tracking-widest ">@{user.username}</span>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs font-sans text-primary uppercase tracking-widest">@{user.username}</span>
                                         <span className="w-1 h-1 rounded-full bg-white/20" />
-                                        <span className="text-lg font-mono text-white/70 uppercase tracking-widest font-medium">{user.type}</span>
+                                        <span className="text-xs font-sans text-white/40 uppercase tracking-widest font-medium">{user.type}</span>
                                     </div>
                                 </div>
 
@@ -470,21 +468,21 @@ export default function ApplyPage() {
                     ) : (
                         // Guest Sidebar Content
                         <div>
-                            <div className="mb-12">
-                                <div className="text-lg font-mono text-white/40 uppercase tracking-widest mb-2">Apply</div>
+                            <div className="mb-8 px-4">
+                                <div className="text-xs font-sans text-white/40 uppercase tracking-widest mb-4">Apply</div>
                                 <h1 className="font-main text-3xl text-white uppercase leading-none break-words tracking-wide">
                                     Guest
                                 </h1>
                             </div>
-                            <div className="p-4 bg-white/5 border border-white/10 rounded-none text-lg text-white/60 mb-8">
+                            <div className="p-4 bg-white/5 border border-white/5 rounded-2xl text-sm text-white/60 mb-8 font-light leading-relaxed">
                                 <p>You are applying as a guest. An account will be created for you automatically.</p>
                             </div>
                             <div className="mt-8">
                                 <button
                                     onClick={() => router.push("/signin")}
-                                    className="flex items-center gap-2 text-lg font-mono text-primary hover:text-white transition-colors uppercase tracking-widest "
+                                    className="group w-full flex items-center justify-start gap-4 py-3 px-4 rounded-xl border border-transparent transition-all duration-300 text-primary hover:text-white hover:bg-white/5"
                                 >
-                                    Already have an account? Login
+                                    <span className="text-xs font-sans uppercase tracking-widest">Login</span>
                                 </button>
                             </div>
                         </div>
@@ -493,10 +491,10 @@ export default function ApplyPage() {
                         {user && (
                             <button
                                 onClick={() => logout()}
-                                className="flex items-center gap-3 text-lg font-mono text-white/70 hover:text-red-400 transition-colors uppercase tracking-widest "
+                                className="group w-full flex items-center justify-start gap-4 py-3 px-4 rounded-xl border border-transparent transition-all duration-300 text-white/40 hover:text-red-400 hover:bg-white/5"
                             >
-                                <LogOut className="w-4 h-4" />
-                                Sign Out
+                                <LogOut className="w-4 h-4 transition-colors" />
+                                <span className="text-xs font-sans uppercase tracking-widest">Sign Out</span>
                             </button>
                         )}
                         <div className="mt-8 space-y-1">
@@ -515,12 +513,12 @@ export default function ApplyPage() {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8 }}
-                            className="mb-24"
+                            className="mb-16"
                         >
-                            <h1 className="font-main text-8xl md:text-9xl uppercase leading-[0.9] mb-8 text-white tracking-wide">
+                            <h1 className="font-main text-5xl md:text-7xl uppercase leading-[0.9] mb-6 text-white tracking-wide">
                                 Join The <span className="text-primary">Circle.</span>
                             </h1>
-                            <p className="text-2xl text-white font-medium leading-relaxed">
+                            <p className="text-xl text-white font-medium leading-relaxed max-w-2xl">
                                 Apply to become a verified Ethereal Techno producer.
                                 <br /><br />
                                 The Circle is a curated space for artists who share a deeper approach to sound, atmosphere, and intention.
@@ -529,11 +527,10 @@ export default function ApplyPage() {
 
                         <form className="space-y-40" onSubmit={handleSubmit}>
 
-                            {/* 00. ACCOUNT (Only for Guests) */}
                             {!user && (
                                 <motion.section variants={fadeInUp} initial="hidden" animate="visible">
-                                    <SectionHeader number="00" title="APPLICATION SETUP" />
-                                    <div className="space-y-8">
+                                    <div className="bg-[#1E1E1E] rounded-3xl p-8 border border-white/5 space-y-8">
+                                        <SectionHeader number="00" title="APPLICATION SETUP" />
                                         <div className="grid md:grid-cols-2 gap-8">
                                             <MinimalInput
                                                 label="First Name"
@@ -564,25 +561,26 @@ export default function ApplyPage() {
                                             value={formData.password}
                                             onChange={(e) => handleInputChange("password", e.target.value)}
                                         />
-                                    </div>
 
-                                    {/* CONTACT PREFERENCES */}
-                                    <div className="mt-12 pt-12 border-t border-white/10">
-                                        <label className="text-lg font-mono text-white  uppercase mb-8 block">Contact Preferences</label>
-                                        <div
-                                            className="flex items-start gap-4 cursor-pointer group"
-                                            onClick={() => handleInputChange("allowContact", !formData.allowContact)}
-                                        >
-                                            <div className={`w-6 h-6 border border-white/20 flex items-center justify-center transition-colors bg-transparent group-hover:border-white ${formData.allowContact ? "bg-black border-white" : ""}`}>
-                                                {formData.allowContact && <Check size={14} color="white" strokeWidth={3} />}
-                                            </div>
-                                            <div className="space-y-2">
-                                                <span className="text-xl text-white font-medium group-hover:text-white transition-colors select-none block">
-                                                    Allow other verified producers to contact me via the Ethereal Techno platform.
-                                                </span>
-                                                <p className="text-white/60 text-lg font-light">
-                                                    Your email address will not be shared. Messages are sent through a private contact form.
-                                                </p>
+
+                                        {/* CONTACT PREFERENCES */}
+                                        <div className="mt-12 pt-12 border-t border-white/10">
+                                            <label className="text-lg font-mono text-white  uppercase mb-8 block">Contact Preferences</label>
+                                            <div
+                                                className="flex items-start gap-4 cursor-pointer group"
+                                                onClick={() => handleInputChange("allowContact", !formData.allowContact)}
+                                            >
+                                                <div className={`w-6 h-6 border border-white/20 flex items-center justify-center transition-colors bg-transparent group-hover:border-white ${formData.allowContact ? "bg-black border-white" : ""}`}>
+                                                    {formData.allowContact && <Check size={14} color="white" strokeWidth={3} />}
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <span className="text-sm text-white font-medium group-hover:text-white transition-colors select-none block">
+                                                        Allow other verified producers to contact me via the Ethereal Techno platform.
+                                                    </span>
+                                                    <p className="text-white/60 text-xs font-light">
+                                                        Your email address will not be shared. Messages are sent through a private contact form.
+                                                    </p>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -591,8 +589,8 @@ export default function ApplyPage() {
 
                             {/* 01. ARTIST IDENTITY */}
                             <motion.section variants={fadeInUp} initial="hidden" animate="visible" transition={{ delay: 0.1 }}>
-                                <SectionHeader number={!user ? "01" : "01"} title="ARTIST IDENTITY" />
-                                <div className="space-y-12">
+                                <div className="bg-[#1E1E1E] rounded-3xl p-8 border border-white/5 space-y-12">
+                                    <SectionHeader number={!user ? "01" : "01"} title="ARTIST IDENTITY" />
 
                                     {/* Artist Name */}
                                     <MinimalInput
@@ -614,9 +612,9 @@ export default function ApplyPage() {
                                             </div>
                                             <input type="file" accept="image/*" onChange={handlePhotoUpload} className="absolute inset-0 opacity-0 cursor-pointer" />
                                         </div>
-                                        <div className="flex-1 space-y-4 pt-4">
-                                            <h3 className="font-main text-3xl uppercase text-white tracking-wide">Artist Avatar</h3>
-                                            <p className="text-white font-medium text-xl">Upload a high-resolution image. This will represent you within the Circle.</p>
+                                        <div className="flex-1 space-y-2 pt-2">
+                                            <h3 className="font-main text-xl uppercase text-white tracking-wide">Artist Avatar</h3>
+                                            <p className="text-white/60 font-light text-sm">Upload a high-resolution image. This will represent you within the Circle.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -624,149 +622,155 @@ export default function ApplyPage() {
 
                             {/* 02. SOCIAL PRESENCE */}
                             <motion.section variants={fadeInUp} initial="hidden" animate="visible" transition={{ delay: 0.2 }}>
-                                <SectionHeader number={!user ? "02" : "02"} title="SOCIAL PRESENCE" />
-                                <div className="grid md:grid-cols-2 gap-8">
-                                    <MinimalInput
-                                        label="Instagram"
-                                        placeholder="instagram.com/yourprofile"
-                                        value={formData.instagram}
-                                        onChange={(e) => handleInputChange("instagram", e.target.value)}
-                                        onBlur={() => handleBlur("instagram")}
-                                        error={errors.instagram}
-                                        verifying={verifying.instagram}
-                                        verifiedData={verifiedLinks.instagram}
-                                    />
-                                    <MinimalInput
-                                        label="TikTok"
-                                        placeholder="tiktok.com/@yourprofile"
-                                        value={formData.tiktok}
-                                        onChange={(e) => handleInputChange("tiktok", e.target.value)}
-                                        onBlur={() => handleBlur("tiktok")}
-                                        error={errors.tiktok}
-                                        verifying={verifying.tiktok}
-                                        verifiedData={verifiedLinks.tiktok}
-                                    />
-                                    <MinimalInput
-                                        label="Facebook"
-                                        placeholder="facebook.com/yourprofile"
-                                        value={formData.facebook}
-                                        onChange={(e) => handleInputChange("facebook", e.target.value)}
-                                        onBlur={() => handleBlur("facebook")}
-                                        error={errors.facebook}
-                                        verifying={verifying.facebook}
-                                        verifiedData={verifiedLinks.facebook}
-                                    />
-                                    <MinimalInput
-                                        label="Youtube"
-                                        placeholder="youtube.com/@yourchannel"
-                                        value={formData.youtube}
-                                        onChange={(e) => handleInputChange("youtube", e.target.value)}
-                                        onBlur={() => handleBlur("youtube")}
-                                        error={errors.youtube}
-                                        verifying={verifying.youtube}
-                                        verifiedData={verifiedLinks.youtube}
-                                    />
-                                    <MinimalInput
-                                        label="X"
-                                        placeholder="x.com/yourprofile"
-                                        value={formData.x}
-                                        onChange={(e) => handleInputChange("x", e.target.value)}
-                                        onBlur={() => handleBlur("x")}
-                                        error={errors.x}
-                                        verifying={verifying.x}
-                                        verifiedData={verifiedLinks.x}
-                                    />
-                                    <MinimalInput
-                                        label="Website / Linktree"
-                                        placeholder="yourwebsite.com"
-                                        value={formData.linktree}
-                                        onChange={(e) => handleInputChange("linktree", e.target.value)}
-                                        onBlur={() => handleBlur("linktree")}
-                                        error={errors.linktree}
-                                        verifying={verifying.linktree}
-                                        verifiedData={verifiedLinks.linktree}
-                                    />
+                                <div className="bg-[#1E1E1E] rounded-3xl p-8 border border-white/5 space-y-8">
+                                    <SectionHeader number={!user ? "02" : "02"} title="SOCIAL PRESENCE" />
+                                    <div className="grid md:grid-cols-2 gap-8">
+                                        <MinimalInput
+                                            label="Instagram"
+                                            placeholder="instagram.com/yourprofile"
+                                            value={formData.instagram}
+                                            onChange={(e) => handleInputChange("instagram", e.target.value)}
+                                            onBlur={() => handleBlur("instagram")}
+                                            error={errors.instagram}
+                                            verifying={verifying.instagram}
+                                            verifiedData={verifiedLinks.instagram}
+                                        />
+                                        <MinimalInput
+                                            label="TikTok"
+                                            placeholder="tiktok.com/@yourprofile"
+                                            value={formData.tiktok}
+                                            onChange={(e) => handleInputChange("tiktok", e.target.value)}
+                                            onBlur={() => handleBlur("tiktok")}
+                                            error={errors.tiktok}
+                                            verifying={verifying.tiktok}
+                                            verifiedData={verifiedLinks.tiktok}
+                                        />
+                                        <MinimalInput
+                                            label="Facebook"
+                                            placeholder="facebook.com/yourprofile"
+                                            value={formData.facebook}
+                                            onChange={(e) => handleInputChange("facebook", e.target.value)}
+                                            onBlur={() => handleBlur("facebook")}
+                                            error={errors.facebook}
+                                            verifying={verifying.facebook}
+                                            verifiedData={verifiedLinks.facebook}
+                                        />
+                                        <MinimalInput
+                                            label="Youtube"
+                                            placeholder="youtube.com/@yourchannel"
+                                            value={formData.youtube}
+                                            onChange={(e) => handleInputChange("youtube", e.target.value)}
+                                            onBlur={() => handleBlur("youtube")}
+                                            error={errors.youtube}
+                                            verifying={verifying.youtube}
+                                            verifiedData={verifiedLinks.youtube}
+                                        />
+                                        <MinimalInput
+                                            label="X"
+                                            placeholder="x.com/yourprofile"
+                                            value={formData.x}
+                                            onChange={(e) => handleInputChange("x", e.target.value)}
+                                            onBlur={() => handleBlur("x")}
+                                            error={errors.x}
+                                            verifying={verifying.x}
+                                            verifiedData={verifiedLinks.x}
+                                        />
+                                        <MinimalInput
+                                            label="Website / Linktree"
+                                            placeholder="yourwebsite.com"
+                                            value={formData.linktree}
+                                            onChange={(e) => handleInputChange("linktree", e.target.value)}
+                                            onBlur={() => handleBlur("linktree")}
+                                            error={errors.linktree}
+                                            verifying={verifying.linktree}
+                                            verifiedData={verifiedLinks.linktree}
+                                        />
+                                    </div>
                                 </div>
                             </motion.section>
 
                             {/* 03. MUSIC PLATFORMS */}
                             <motion.section variants={fadeInUp} initial="hidden" animate="visible" transition={{ delay: 0.3 }}>
-                                <SectionHeader number={!user ? "03" : "03"} title="MUSIC PLATFORMS" />
-                                <div className="grid md:grid-cols-1 gap-8">
-                                    <MinimalInput
-                                        label="Spotify"
-                                        placeholder="open.spotify.com/artist/..."
-                                        value={formData.spotify}
-                                        onChange={(e) => handleInputChange("spotify", e.target.value)}
-                                        onBlur={() => handleBlur("spotify")}
-                                        error={errors.spotify}
-                                        verifying={verifying.spotify}
-                                        verifiedData={verifiedLinks.spotify}
-                                    />
-                                    <MinimalInput
-                                        label="Soundcloud"
-                                        placeholder="soundcloud.com/yourprofile"
-                                        value={formData.soundcloud}
-                                        onChange={(e) => handleInputChange("soundcloud", e.target.value)}
-                                        onBlur={() => handleBlur("soundcloud")}
-                                        error={errors.soundcloud}
-                                        verifying={verifying.soundcloud}
-                                        verifiedData={verifiedLinks.soundcloud}
-                                    />
-                                    <MinimalInput
-                                        label="Beatport"
-                                        placeholder="beatport.com/artist/yourname"
-                                        value={formData.beatport}
-                                        onChange={(e) => handleInputChange("beatport", e.target.value)}
-                                        onBlur={() => handleBlur("beatport")}
-                                        error={errors.beatport}
-                                        verifying={verifying.beatport}
-                                        verifiedData={verifiedLinks.beatport}
-                                    />
-                                    <MinimalInput
-                                        label="Bandcamp"
-                                        placeholder="yourname.bandcamp.com"
-                                        value={formData.bandcamp}
-                                        onChange={(e) => handleInputChange("bandcamp", e.target.value)}
-                                        onBlur={() => handleBlur("bandcamp")}
-                                        error={errors.bandcamp}
-                                        verifying={verifying.bandcamp}
-                                        verifiedData={verifiedLinks.bandcamp}
-                                    />
-                                    <MinimalInput
-                                        label="Apple Music"
-                                        placeholder="music.apple.com/artist/yourname"
-                                        value={formData.appleMusic}
-                                        onChange={(e) => handleInputChange("appleMusic", e.target.value)}
-                                        onBlur={() => handleBlur("appleMusic")}
-                                        error={errors.appleMusic}
-                                        verifying={verifying.appleMusic}
-                                        verifiedData={verifiedLinks.appleMusic}
-                                    />
+                                <div className="bg-[#1E1E1E] rounded-3xl p-8 border border-white/5 space-y-8">
+                                    <SectionHeader number={!user ? "03" : "03"} title="MUSIC PLATFORMS" />
+                                    <div className="grid md:grid-cols-1 gap-8">
+                                        <MinimalInput
+                                            label="Spotify"
+                                            placeholder="open.spotify.com/artist/..."
+                                            value={formData.spotify}
+                                            onChange={(e) => handleInputChange("spotify", e.target.value)}
+                                            onBlur={() => handleBlur("spotify")}
+                                            error={errors.spotify}
+                                            verifying={verifying.spotify}
+                                            verifiedData={verifiedLinks.spotify}
+                                        />
+                                        <MinimalInput
+                                            label="Soundcloud"
+                                            placeholder="soundcloud.com/yourprofile"
+                                            value={formData.soundcloud}
+                                            onChange={(e) => handleInputChange("soundcloud", e.target.value)}
+                                            onBlur={() => handleBlur("soundcloud")}
+                                            error={errors.soundcloud}
+                                            verifying={verifying.soundcloud}
+                                            verifiedData={verifiedLinks.soundcloud}
+                                        />
+                                        <MinimalInput
+                                            label="Beatport"
+                                            placeholder="beatport.com/artist/yourname"
+                                            value={formData.beatport}
+                                            onChange={(e) => handleInputChange("beatport", e.target.value)}
+                                            onBlur={() => handleBlur("beatport")}
+                                            error={errors.beatport}
+                                            verifying={verifying.beatport}
+                                            verifiedData={verifiedLinks.beatport}
+                                        />
+                                        <MinimalInput
+                                            label="Bandcamp"
+                                            placeholder="yourname.bandcamp.com"
+                                            value={formData.bandcamp}
+                                            onChange={(e) => handleInputChange("bandcamp", e.target.value)}
+                                            onBlur={() => handleBlur("bandcamp")}
+                                            error={errors.bandcamp}
+                                            verifying={verifying.bandcamp}
+                                            verifiedData={verifiedLinks.bandcamp}
+                                        />
+                                        <MinimalInput
+                                            label="Apple Music"
+                                            placeholder="music.apple.com/artist/yourname"
+                                            value={formData.appleMusic}
+                                            onChange={(e) => handleInputChange("appleMusic", e.target.value)}
+                                            onBlur={() => handleBlur("appleMusic")}
+                                            error={errors.appleMusic}
+                                            verifying={verifying.appleMusic}
+                                            verifiedData={verifiedLinks.appleMusic}
+                                        />
+                                    </div>
                                 </div>
                             </motion.section>
 
                             {/* 04. EVIDENCE */}
                             <motion.section variants={fadeInUp} initial="hidden" animate="visible" transition={{ delay: 0.4 }}>
-                                <SectionHeader number={!user ? "04" : "04"} title="Evidence" />
-                                <div className="space-y-8">
-                                    <p className="text-white text-xl font-light">
-                                        Provide links to up to three of your strongest tracks.
-                                        <br />
-                                        Please share SoundCloud links only - no sets, playlists, podcasts, or DJ mixes.
-                                    </p>
-                                    <div className="grid gap-6">
-                                        <div>
-                                            <MinimalInput label="Track Submission 1" placeholder="https://soundcloud.com/..." value={formData.track1} onChange={(e) => handleInputChange("track1", e.target.value)} error={errors.track1} />
-                                            {!errors.track1 && <SoundCloudEmbed url={formData.track1} />}
-                                        </div>
-                                        <div>
-                                            <MinimalInput label="Track Submission 2" placeholder="https://soundcloud.com/..." value={formData.track2} onChange={(e) => handleInputChange("track2", e.target.value)} error={errors.track2} />
-                                            {!errors.track2 && <SoundCloudEmbed url={formData.track2} />}
-                                        </div>
-                                        <div>
-                                            <MinimalInput label="Track Submission 3" placeholder="https://soundcloud.com/..." value={formData.track3} onChange={(e) => handleInputChange("track3", e.target.value)} error={errors.track3} />
-                                            {!errors.track3 && <SoundCloudEmbed url={formData.track3} />}
+                                <div className="bg-[#1E1E1E] rounded-3xl p-8 border border-white/5 space-y-8">
+                                    <SectionHeader number={!user ? "04" : "04"} title="Evidence" />
+                                    <div className="space-y-8">
+                                        <p className="text-white text-xl font-light">
+                                            Provide links to up to three of your strongest tracks.
+                                            <br />
+                                            Please share SoundCloud links only - no sets, playlists, podcasts, or DJ mixes.
+                                        </p>
+                                        <div className="grid gap-6">
+                                            <div>
+                                                <MinimalInput label="Track Submission 1" placeholder="https://soundcloud.com/..." value={formData.track1} onChange={(e) => handleInputChange("track1", e.target.value)} error={errors.track1} />
+                                                {!errors.track1 && <SoundCloudEmbed url={formData.track1} />}
+                                            </div>
+                                            <div>
+                                                <MinimalInput label="Track Submission 2" placeholder="https://soundcloud.com/..." value={formData.track2} onChange={(e) => handleInputChange("track2", e.target.value)} error={errors.track2} />
+                                                {!errors.track2 && <SoundCloudEmbed url={formData.track2} />}
+                                            </div>
+                                            <div>
+                                                <MinimalInput label="Track Submission 3" placeholder="https://soundcloud.com/..." value={formData.track3} onChange={(e) => handleInputChange("track3", e.target.value)} error={errors.track3} />
+                                                {!errors.track3 && <SoundCloudEmbed url={formData.track3} />}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -774,16 +778,16 @@ export default function ApplyPage() {
 
                             {/* 05. CONTRIBUTION */}
                             <motion.section variants={fadeInUp} initial="hidden" animate="visible" transition={{ delay: 0.5 }}>
-                                <SectionHeader number={!user ? "05" : "05"} title="CONTRIBUTION" />
-                                <div className="space-y-12">
+                                <div className="bg-[#1E1E1E] rounded-3xl p-8 border border-white/5 space-y-12">
+                                    <SectionHeader number={!user ? "05" : "05"} title="CONTRIBUTION" />
                                     <div className="space-y-6">
-                                        <label className="font-bold text-3xl uppercase text-white tracking-wide block mb-8">Production Capabilities</label>
-                                        <p className="text-white leading-relaxed font-light text-xl mb-12">
+                                        <label className="font-main text-xl uppercase text-white tracking-wide block mb-4">Production Capabilities</label>
+                                        <p className="text-white/60 leading-relaxed font-light text-sm mb-8">
                                             What can you contribute to the Ethereal Techno vault?
                                             <br />
                                             This information helps us understand your skills. Contribution opportunities are optional and may be explored in the future.
                                         </p>
-                                        <div className="grid md:grid-cols-3 gap-4 mb-24">
+                                        <div className="grid md:grid-cols-3 gap-4 mb-16">
                                             <CapabilityCheckbox
                                                 label="Audio Loops"
                                                 active={formData.canCreateLoops}
@@ -806,8 +810,8 @@ export default function ApplyPage() {
                                     </div>
 
                                     <div className="space-y-6">
-                                        <label className="font-bold text-3xl uppercase text-white tracking-wide block mb-8">The Vision</label>
-                                        <p className="text-white leading-relaxed font-light text-xl mb-6">
+                                        <label className="font-main text-xl uppercase text-white tracking-wide block mb-4">The Vision</label>
+                                        <p className="text-white/60 leading-relaxed font-light text-sm mb-4">
                                             Complete the sentence below in your own words.
                                             <br />
                                             We’re interested in how you perceive Ethereal Techno - think about emotion, atmosphere, intention, or what draws you to this sound.
@@ -815,7 +819,7 @@ export default function ApplyPage() {
                                         <div className="relative group border-b border-white/20 focus-within:border-primary transition-colors">
                                             <textarea
                                                 rows={1}
-                                                className="w-full bg-transparent border-none py-4 text-2xl md:text-4xl font-medium text-white focus:outline-none focus:ring-0 resize-none placeholder:text-white/20"
+                                                className="w-full bg-transparent border-none py-4 text-xl md:text-2xl font-medium text-white focus:outline-none focus:ring-0 resize-none placeholder:text-white/20"
                                                 placeholder=""
                                                 value={formData.quote}
                                                 onChange={(e) => {
@@ -839,12 +843,14 @@ export default function ApplyPage() {
                             </motion.section>
 
                             {/* Error Message */}
-                            {submitError && (
-                                <div className="p-4 border border-red-500/50 bg-red-500/10 text-red-200 flex items-center gap-2">
-                                    <AlertCircle className="w-4 h-4" />
-                                    <span className="text-sm font-mono">{submitError}</span>
-                                </div>
-                            )}
+                            {
+                                submitError && (
+                                    <div className="p-4 border border-red-500/50 bg-red-500/10 text-red-200 flex items-center gap-2">
+                                        <AlertCircle className="w-4 h-4" />
+                                        <span className="text-sm font-mono">{submitError}</span>
+                                    </div>
+                                )
+                            }
 
                             {/* SUBMIT */}
                             <motion.section variants={fadeInUp} initial="hidden" animate="visible" transition={{ delay: 0.6 }} className="space-y-8">
@@ -855,7 +861,7 @@ export default function ApplyPage() {
                                     <div className={`w-6 h-6 border border-white/20 flex items-center justify-center transition-colors bg-transparent group-hover:border-white ${formData.agreedToTerms ? "bg-black border-white" : ""}`}>
                                         {formData.agreedToTerms && <Check size={14} color="white" strokeWidth={3} />}
                                     </div>
-                                    <span className="text-lg text-white font-medium group-hover:text-white transition-colors select-none">
+                                    <span className="text-sm text-white font-medium group-hover:text-white transition-colors select-none">
                                         I have read and agree to the Community Rules and Membership Policy.
                                     </span>
                                 </div>
@@ -863,12 +869,12 @@ export default function ApplyPage() {
                                 <button
                                     type="submit"
                                     disabled={submitting || !formData.agreedToTerms}
-                                    className="w-full relative group overflow-hidden"
+                                    className="w-full relative group overflow-hidden rounded-full"
                                 >
                                     <motion.div
                                         whileHover={{ scale: 1.01 }}
                                         whileTap={{ scale: 0.99 }}
-                                        className="w-full py-6 bg-white text-black font-main text-2xl uppercase tracking-wide transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="w-full py-4 bg-white text-black font-sans font-medium text-sm uppercase tracking-wide transition-colors disabled:opacity-50 disabled:cursor-not-allowed rounded-full"
                                     >
                                         <span className="relative z-10">{submitting ? "Submitting..." : "Submit Application"}</span>
                                         <motion.div
@@ -881,11 +887,11 @@ export default function ApplyPage() {
                                 </button>
                             </motion.section>
 
-                        </form>
-                    </div>
-                </main>
-            </div>
-        </div>
+                        </form >
+                    </div >
+                </main >
+            </div >
+        </div >
     );
 }
 
@@ -902,8 +908,8 @@ const MinimalInput: React.FC<MinimalInputProps> = ({
                 {prefix && <span className={`pb-4 pr-1 font-medium select-none transition-colors duration-300 ${focused ? "text-primary" : "text-white/50"}`}>{prefix}</span>}
                 <input
                     className={`
-                    block w-full bg-transparent border-b py-4 text-white placeholder:text-white/50 
-                    focus:outline-none font-medium text-2xl pr-8
+                    block w-full bg-transparent border-b py-2 text-white placeholder:text-white/50 
+                    focus:outline-none font-medium text-lg pr-8
                     transition-colors duration-300
                     ${error ? "border-red-500" : verifiedData ? "border-green-500" : "border-white/20"}
                     ${disabled ? "opacity-50 cursor-not-allowed" : ""}
@@ -940,7 +946,7 @@ const MinimalInput: React.FC<MinimalInputProps> = ({
             </div>
 
             <div className="flex justify-between items-start mt-2">
-                <label className={`text-lg font-mono uppercase tracking-widest transition-colors duration-300 ${focused ? "text-primary" : "text-white"}`}>
+                <label className={`text-xs font-sans uppercase tracking-widest transition-colors duration-300 ${focused ? "text-primary" : "text-white/40"}`}>
                     {label}
                 </label>
 
@@ -971,9 +977,8 @@ const MinimalInput: React.FC<MinimalInputProps> = ({
 };
 
 const SectionHeader: React.FC<SectionHeaderProps> = ({ number, title }) => (
-    <div className="flex items-baseline gap-4 mb-16 border-b border-white/10 pb-4">
-        <span className="font-mono text-primary text-4xl ">/{number}</span>
-        <h2 className="font-main text-6xl uppercase text-white tracking-widest">{title}</h2>
+    <div className="flex items-baseline gap-4 mb-8 border-b border-white/5 pb-4">
+        <h2 className="text-xs font-sans text-white/40 uppercase tracking-widest">{title}</h2>
     </div>
 );
 
@@ -982,47 +987,40 @@ const CapabilityCheckbox: React.FC<CapabilityCheckboxProps> = ({ label, active, 
         onClick={onClick}
         initial={false}
         animate={{
-            backgroundColor: active ? "#ffffff" : "transparent",
+            backgroundColor: active ? "#ffffff" : "rgba(255, 255, 255, 0.05)",
             color: active ? "#000000" : "#ffffff",
             borderColor: active ? "#ffffff" : "rgba(255, 255, 255, 0.1)"
         }}
         whileHover={{
             scale: 1.02,
-            backgroundColor: active ? "#ffffff" : "rgba(255, 255, 255, 0.05)",
+            backgroundColor: active ? "#ffffff" : "rgba(255, 255, 255, 0.1)",
             borderColor: active ? "#ffffff" : "rgba(255, 255, 255, 0.3)"
         }}
         whileTap={{ scale: 0.98 }}
-        className="cursor-pointer border p-6 flex flex-col items-center justify-center gap-4 transition-colors duration-300"
+        className="cursor-pointer border rounded-xl p-4 flex flex-col items-center justify-center gap-2 transition-colors duration-300"
     >
-        <Icon size={24} />
-        <span className="text-lg uppercase tracking-widest">{label}</span>
+        <Icon size={20} />
+        <span className="text-xs font-sans uppercase tracking-widest">{label}</span>
     </motion.div>
 );
 
 const NavItem: React.FC<NavItemProps> = ({ label, icon: Icon, active, onClick, external }) => (
     <div className="relative w-full">
-        {active && (
-            <motion.div
-                layoutId="activeNav"
-                className="absolute left-0 top-0 bottom-0 w-[2px] bg-primary z-10"
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            />
-        )}
         <motion.button
-            whileHover={{ x: 4, backgroundColor: "rgba(255, 255, 255, 0.03)" }}
+            whileHover={{ x: 4, backgroundColor: "rgba(255, 255, 255, 0.05)" }}
             onClick={onClick}
             className={`
-                group w-full flex items-center justify-between py-4 px-4 rounded-none border-l-2 border-transparent transition-all duration-300
-                ${active ? "bg-white/[0.03]" : "hover:border-white/20"}
+                group w-full flex items-center justify-between py-3 px-4 rounded-xl border border-transparent transition-all duration-300
+                ${active ? "bg-white/[0.08] text-white border-white/5" : "text-white/40 hover:text-white hover:border-white/5"}
             `}
         >
             <div className="flex items-center gap-4">
-                <Icon className={`w-5 h-5 transition-colors ${active ? "text-primary" : "text-white/30 group-hover:text-white/60"}`} />
-                <span className={`text-lg font-medium uppercase tracking-wider transition-colors ${active ? "text-white" : "text-white/60 group-hover:text-white"}`}>
+                <Icon className={`w-4 h-4 transition-colors ${active ? "text-primary" : "text-white/40 group-hover:text-white"}`} />
+                <span className={`text-xs font-sans uppercase tracking-widest transition-colors ${active ? "text-white" : "text-white/40 group-hover:text-white"}`}>
                     {label}
                 </span>
             </div>
-            {external && <ArrowUpRight className="w-3 h-3 text-white/20 group-hover:text-primary" />}
+            {external && <ArrowUpRight className="w-3 h-3 text-white/20 group-hover:text-primary transition-colors" />}
         </motion.button>
     </div>
 );
