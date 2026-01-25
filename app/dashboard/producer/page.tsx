@@ -167,9 +167,9 @@ export default function ProducerOverviewPage() {
                     {/* Stat 2 */}
                     <div className="flex-1 rounded-[2.5rem] bg-white/5 border border-white/5 p-8 flex flex-col justify-center relative overflow-hidden group hover:bg-white/10 transition-colors">
                         <div className="relative z-10">
-                            <span className="text-sm font-mono uppercase tracking-widest text-white/40 block mb-2">Total Revenue</span>
+                            <span className="text-sm font-mono uppercase tracking-widest text-white/40 block mb-2">Total Sales</span>
                             <div className="font-main text-5xl text-white">
-                                ${orders.reduce((acc, order) => acc + order.amount, 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                {orders.length}
                             </div>
                         </div>
                         <div className="absolute right-8 top-1/2 -translate-y-1/2 opacity-20 group-hover:opacity-40 transition-opacity">
