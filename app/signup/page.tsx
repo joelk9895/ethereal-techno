@@ -73,9 +73,7 @@ export default function SignUpPage() {
     return (
         <div className="min-h-screen bg-black text-white font-sans selection:bg-primary selection:text-black grid lg:grid-cols-2">
 
-            {/* --- LEFT PANEL: Brand Atmosphere (Hidden on Mobile) --- */}
-            <div className="hidden lg:flex relative flex-col justify-between p-12 bg-white/[0.02] border-r border-white/10 overflow-hidden">
-                {/* Background Noise */}
+            <div className="hidden lg:flex relative flex-col justify-between p-12 bg-black border-r border-white/10 overflow-hidden">
                 <div className="absolute inset-0 pointer-events-none z-0 opacity-[0.04] bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
                 <div className="absolute bottom-[-20%] right-[-20%] w-[60vw] h-[60vw] bg-primary/5 rounded-full blur-[150px]" />
 

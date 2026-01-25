@@ -8,12 +8,16 @@ datasource db {
 }
 
 model Content {
-  id          String   @id @default(uuid()) @map("_id")
+  id          String        @id @default(uuid()) @map("_id")
   contentType String
   contentName String
   soundGroup  String
   subGroup    String?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime      @default(now())
+  status      ContentStatus @default(PENDING)
+
+  userId String? @db.ObjectId
+  user   User?   @relation(fields: [userId], references: [id])
 
   fileId String @unique
   file   File   @relation(fields: [fileId], references: [id])
@@ -37,11 +41,15 @@ model Content {
 }
 
 model Loopandmidi {
-  id         String   @id @default(uuid()) @map("_id")
+  id         String        @id @default(uuid()) @map("_id")
   name       String
   soundGroup String
   subGroup   String?
-  createdAt  DateTime @default(now())
+  createdAt  DateTime      @default(now())
+  status     ContentStatus @default(PENDING)
+
+  userId String? @db.ObjectId
+  user   User?   @relation(fields: [userId], references: [id])
 
   loopContentId String?
   loopContent   Content? @relation("LoopContent", fields: [loopContentId], references: [id])
@@ -57,9 +65,13 @@ model Loopandmidi {
 }
 
 model Preset {
-  id         String   @id @default(uuid()) @map("_id")
-  name       String
-  createdAt  DateTime @default(now())
+  id        String        @id @default(uuid()) @map("_id")
+  name      String
+  createdAt DateTime      @default(now())
+  status    ContentStatus @default(PENDING)
+
+  userId     String? @db.ObjectId
+  user       User?   @relation(fields: [userId], references: [id])
   soundGroup String
   subGroup   String?
 
@@ -80,11 +92,12 @@ model Preset {
 }
 
 model Constructionkit {
-  id          String   @id @default(uuid()) @map("_id")
+  id          String        @id @default(uuid()) @map("_id")
   kitName     String
   description String?
-  createdAt   DateTime @default(now())
-  price       Float    @default(0)
+  createdAt   DateTime      @default(now())
+  price       Float         @default(0)
+  status      ContentStatus @default(PENDING)
 
   userId String
   user   User   @relation(fields: [userId], references: [id])
@@ -134,6 +147,25 @@ model User {
   surname            String?
   type               UserType            @default(USER)
   country            String?
+  city               String?
+  artistName         String?
+  artistPhoto        String?
+  quote              String?
+  instagram          String?
+  soundcloud         String?
+  spotify            String?
+  tiktok             String?
+  facebook           String?
+  youtube            String?
+  x                  String?
+  linktree           String?
+  beatport           String?
+  bandcamp           String?
+  appleMusic         String?
+  track1             String?
+  track2             String?
+  track3             String?
+  billing            Json?
   approvedAt         DateTime?
   canCreateSamples   Boolean             @default(false)
   canCreateSerum     Boolean             @default(false)
@@ -144,6 +176,13 @@ model User {
   constructionkits   Constructionkit[]
   sessions           Session[]
   riskLogs           RiskLog[]
+  contents           Content[]
+  loopandmidis       Loopandmidi[]
+  presets            Preset[]
+
+  telegramChatId          String? @unique
+  telegramUsername        String?
+  telegramConnectionToken String? @unique
 }
 
 model Session {
@@ -170,7 +209,7 @@ model RiskLog {
   session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   userId    String   @db.ObjectId
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  event     String // "LOGIN", "REFRESH", "SUSPICIOUS"
+  event     String
   score     Int
   details   Json?
   createdAt DateTime @default(now())
@@ -222,10 +261,10 @@ model News {
   title     String
   content   String
   isActive  Boolean  @default(true)
-  priority  Int      @default(0) // Higher number = higher priority
+  priority  Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  createdBy String // User ID who created it
+  createdBy String
 
   @@map("news")
 }
@@ -265,4 +304,11 @@ model OrderItem {
   kit       Constructionkit? @relation(fields: [kitId], references: [id])
   price     Float
   createdAt DateTime         @default(now())
+}
+
+enum ContentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  NEEDS_FIX
 }

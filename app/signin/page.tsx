@@ -13,8 +13,8 @@ const fadeInUp = {
 };
 
 interface SignInFormData {
-  email: string;
-  password: string;
+    email: string;
+    password: string;
 }
 
 function SignInContent() {
@@ -31,7 +31,6 @@ function SignInContent() {
     useEffect(() => {
         if (registered === "true") {
             setShowSuccess(true);
-            // Optional: clear param to prevent showing again on refresh
             window.history.replaceState(null, '', '/signin');
         }
     }, [registered]);
@@ -43,9 +42,7 @@ function SignInContent() {
             case "ARTIST":
                 return "/dashboard/producer";
             case "ARTIST_APPLICANT":
-                // Check if they have a pending application
-                return "/dashboard"; // They can view their application status
-            case "USER":
+                return "/dashboard";
             default:
                 return "/dashboard";
         }
@@ -81,15 +78,12 @@ function SignInContent() {
                 return;
             }
 
-            // Store auth data
             localStorage.setItem("accessToken", data.accessToken);
             localStorage.setItem("refreshToken", data.refreshToken);
             localStorage.setItem("user", JSON.stringify(data.user));
 
-            // Determine redirect URL based on user type
             const redirectUrl = getRedirectUrl(data.user.type);
-            
-            // Add a small delay to ensure localStorage is set
+
             setTimeout(() => {
                 router.push(redirectUrl);
             }, 100);
@@ -103,37 +97,24 @@ function SignInContent() {
     return (
         <div className="min-h-screen bg-black text-white font-sans selection:bg-primary selection:text-black grid lg:grid-cols-2">
 
-            {/* --- LEFT PANEL: Brand Atmosphere (Hidden on Mobile) --- */}
-            <div className="hidden lg:flex relative flex-col justify-between p-12 bg-white/[0.02] border-r border-white/10 overflow-hidden">
-                {/* Background Noise */}
-                <div className="absolute inset-0 pointer-events-none z-0 opacity-[0.04] bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
+            <div className="hidden lg:flex relative flex-col justify-center p-12 bg-black border-r border-white/10 overflow-hidden">
+                <div className="absolute inset-0 pointer-events-none z-0 opacity-[0.1] bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
                 <div className="absolute top-[-20%] left-[-20%] w-[60vw] h-[60vw] bg-primary/5 rounded-full blur-[150px]" />
 
-                <div className="relative z-10">
-                    <div className="flex items-center gap-3 mb-8">
-                        <div className="w-3 h-3 bg-primary rounded-full animate-pulse" />
-                        <span className="text-[10px] font-mono uppercase tracking-widest text-white/60">Secure Access</span>
-                    </div>
-                </div>
 
                 <div className="relative z-10">
                     <h1 className="font-main text-8xl uppercase leading-[0.9] mb-6">
-                        Ethereal<br />Techno
+                        Ethereal Techno
                     </h1>
                     <p className="text-xl text-white/50 font-light max-w-md leading-relaxed">
                         Log in to access your dashboard, manage content, and connect with the circle.
                     </p>
                 </div>
 
-                <div className="relative z-10 text-[10px] font-mono text-white/30 uppercase tracking-widest">
-                    © 2025 Ethereal Techno // All Rights Reserved
-                </div>
             </div>
 
-            {/* --- RIGHT PANEL: Login Form --- */}
-            <div className="flex flex-col justify-center px-6 sm:px-12 lg:px-24 py-12 relative">
+            <div className="flex flex-col bg-background justify-center px-6 sm:px-12 lg:px-24 py-12 relative">
 
-                {/* Mobile Home Link */}
                 <Link href="/" className="absolute top-8 left-6 lg:left-12 flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-white/40 hover:text-white transition-colors">
                     <ArrowLeft className="w-3 h-3" /> Back Home
                 </Link>
@@ -144,19 +125,16 @@ function SignInContent() {
                     variants={fadeInUp}
                     className="w-full max-w-md mx-auto"
                 >
-                    {/* Mobile Header */}
                     <div className="lg:hidden mb-12 mt-12">
                         <h1 className="font-main text-5xl uppercase mb-2">Sign In</h1>
                         <p className="text-white/50">Welcome back to the circle.</p>
                     </div>
 
-                    {/* Desktop Header */}
                     <div className="hidden lg:block mb-12">
                         <h2 className="font-main text-4xl uppercase mb-2">Identify</h2>
                         <p className="text-white/50">Enter your credentials to continue.</p>
                     </div>
 
-                    {/* Alerts */}
                     {showSuccess && (
                         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-8 p-4 border-l-2 border-green-500 bg-green-500/10 flex items-start gap-3">
                             <Check className="w-5 h-5 text-green-400 mt-0.5" />
@@ -177,13 +155,11 @@ function SignInContent() {
                         </motion.div>
                     )}
 
-                    {/* Form */}
                     <form onSubmit={handleSubmit} className="space-y-8">
 
-                        {/* Email */}
                         <div className="group">
                             <div className="flex justify-between items-baseline mb-2">
-                                <label className="text-[10px] font-mono uppercase tracking-widest text-white/40 group-focus-within:text-primary transition-colors">Email Address</label>
+                                <label className="text-[10px] font-mono uppercase tracking-widest text-white group-focus-within:text-primary transition-colors">Email Address</label>
                                 {errors.email && <span className="text-[10px] text-red-500 font-mono">{errors.email}</span>}
                             </div>
                             <input
@@ -198,10 +174,9 @@ function SignInContent() {
                             />
                         </div>
 
-                        {/* Password */}
                         <div className="group">
                             <div className="flex justify-between items-baseline mb-2">
-                                <label className="text-[10px] font-mono uppercase tracking-widest text-white/40 group-focus-within:text-primary transition-colors">Password</label>
+                                <label className="text-[10px] font-mono uppercase tracking-widest text-white group-focus-within:text-primary transition-colors">Password</label>
                                 {errors.password && <span className="text-[10px] text-red-500 font-mono">{errors.password}</span>}
                             </div>
                             <div className="relative">
@@ -230,11 +205,10 @@ function SignInContent() {
                             </div>
                         </div>
 
-                        {/* Submit */}
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full group relative py-4 bg-white text-black font-bold uppercase tracking-widest text-xs hover:bg-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 overflow-hidden"
+                            className="w-full p-8 rounded-3xl group relative py-4 bg-white text-black font-bold uppercase tracking-widest text-xs hover:bg-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 overflow-hidden"
                         >
                             {loading ? (
                                 <>
@@ -249,7 +223,6 @@ function SignInContent() {
                             )}
                         </button>
 
-                        {/* Footer Links */}
                         <div className="pt-8 border-t border-white/10 text-center">
                             <p className="text-sm text-white/40">
                                 New to the circle?{" "}
@@ -261,18 +234,6 @@ function SignInContent() {
 
                     </form>
 
-                    {/* Admin Test Hint (Dev Only) */}
-                    {process.env.NODE_ENV === "development" && (
-                        <div className="mt-12 p-4 border border-dashed border-white/10 rounded text-xs font-mono text-white/30 space-y-2">
-                            <span className="block uppercase tracking-widest text-white/20 mb-2">[ Dev Mode: Test Credentials ]</span>
-                            <div className="text-left space-y-1">
-                                <div><span className="text-white/20">Admin:</span> admin@etherealtechno.com / Admin123!</div>
-                                <div><span className="text-white/20">Artist:</span> artist@etherealtechno.com / Artist123!</div>
-                                <div><span className="text-white/20">User:</span> user@etherealtechno.com / User123!</div>
-                            </div>
-                        </div>
-                    )}
-
                 </motion.div>
             </div>
         </div>
@@ -282,16 +243,16 @@ function SignInContent() {
 export const dynamic = 'force-dynamic';
 
 export default function SignInPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-black">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-          <span className="text-xs font-mono tracking-widest text-white/50">LOADING...</span>
-        </div>
-      </div>
-    }>
-      <SignInContent />
-    </Suspense>
-  );
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-black">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                    <span className="text-xs font-mono tracking-widest text-white/50">LOADING...</span>
+                </div>
+            </div>
+        }>
+            <SignInContent />
+        </Suspense>
+    );
 }

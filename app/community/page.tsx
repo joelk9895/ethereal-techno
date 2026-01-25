@@ -9,11 +9,11 @@ import {
     MessageCircle,
     Trophy,
     Quote,
-    Lock,
-    Radio
+    Lock
 } from "lucide-react";
-import { getAuthUser, AuthUser } from "@/lib/auth";
+import { getAuthUser, AuthUser, authenticatedFetch, logout } from "@/lib/auth";
 import { motion, useScroll, useTransform, MotionValue } from "framer-motion";
+import RightSidebar from "@/app/components/RightSidebar";
 
 // --- Types ---
 interface NewsItem {
@@ -21,16 +21,29 @@ interface NewsItem {
     title: string;
     createdAt: string;
     priority: number;
+    content?: string;
 }
 
-
-
-
-
-interface MinimalProducerProps {
+interface ProducerData {
+    id: string;
+    username: string;
+    email: string;
     name: string;
-    role: string;
+    surname: string;
+    type: string;
+    country: string | null;
+    createdAt: string;
+    approvedAt: string | null;
+    telegramUsername?: string | null;
 }
+
+interface VerifiedDashboardProps {
+    user: ProducerData | null;
+    authUser: AuthUser | null;
+    router: ReturnType<typeof useRouter>;
+    news: NewsItem[];
+}
+
 
 interface MinimalQuoteProps {
     quote: string;
@@ -57,15 +70,10 @@ interface ParallaxTileProps {
     index: string;
 }
 
-interface VerifiedDashboardProps {
-    user: AuthUser | null;
-    router: ReturnType<typeof useRouter>;
-    news: NewsItem[];
-}
-
-const fadeInUp = {
-    hidden: { opacity: 0, y: 60 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] as const } }
+// --- Animation Variants ---
+const fadeVar = {
+    hidden: { opacity: 0, scale: 0.98 },
+    visible: { opacity: 1, scale: 1, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const } }
 };
 
 const textReveal = {
@@ -79,6 +87,7 @@ const textReveal = {
 export default function CommunityPage() {
     const router = useRouter();
     const [user, setUser] = useState<AuthUser | null>(null);
+    const [producer, setProducer] = useState<ProducerData | null>(null);
     const [loading, setLoading] = useState(true);
     const [isVerified, setIsVerified] = useState(false);
     const [news, setNews] = useState<NewsItem[]>([]);
@@ -87,11 +96,26 @@ export default function CommunityPage() {
     useEffect(() => {
         const authUser = getAuthUser();
         setUser(authUser);
-        setIsVerified(authUser?.type === "ARTIST" || authUser?.type === "ADMIN");
+        const verified = authUser?.type === "ARTIST" || authUser?.type === "ADMIN";
+        setIsVerified(verified);
 
-        // Fetch live news
-        fetchNews();
-        setLoading(false);
+        const init = async () => {
+            if (verified) {
+                try {
+                    const profileRes = await authenticatedFetch("/api/producer/profile");
+                    if (profileRes.ok) {
+                        const data = await profileRes.json();
+                        setProducer(data.producer);
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch profile for sidebar", e);
+                }
+            }
+            await fetchNews();
+            setLoading(false);
+        };
+
+        init();
     }, []);
 
     const fetchNews = async () => {
@@ -108,7 +132,7 @@ export default function CommunityPage() {
 
     if (loading) return <LoadingScreen />;
 
-    if (isVerified) return <VerifiedDashboard user={user} router={router} news={news} />;
+    if (isVerified) return <VerifiedDashboard user={producer} authUser={user} router={router} news={news} />;
 
     return (
         <div ref={containerRef} className="bg-black min-h-screen text-white selection:bg-primary selection:text-black overflow-x-hidden font-sans">
@@ -145,11 +169,11 @@ export default function CommunityPage() {
                     viewport={{ once: true, margin: "-10%" }}
                     className="max-w-4xl space-y-12"
                 >
-                    <motion.p variants={fadeInUp} className="text-3xl md:text-5xl font-light leading-tight text-white/90">
+                    <motion.p variants={fadeVar} className="text-3xl md:text-5xl font-light leading-tight text-white/90">
                         Ethereal Techno is more than a genre — it&apos;s a <span className="font-main uppercase text-primary">movement</span> built on emotion, sound design, and artistic depth.
                     </motion.p>
-                    <motion.div variants={fadeInUp} className="w-px h-24 bg-white/10 mx-auto" />
-                    <motion.p variants={fadeInUp} className="text-xl md:text-2xl text-white/50 leading-relaxed max-w-2xl mx-auto">
+                    <motion.div variants={fadeVar} className="w-px h-24 bg-white/10 mx-auto" />
+                    <motion.p variants={fadeVar} className="text-xl md:text-2xl text-white/50 leading-relaxed max-w-2xl mx-auto">
                         Our community unites verified producers who share this vision.
                         To maintain quality, access is reserved strictly for <span className="text-white underline decoration-primary/30 underline-offset-4">verified producers</span>.
                     </motion.p>
@@ -197,206 +221,270 @@ export default function CommunityPage() {
     );
 }
 
-const VerifiedDashboard: React.FC<VerifiedDashboardProps> = ({ user, router, news }) => {
+// --- Verified Dashboard (Minimal Apple Music Style) ---
+const VerifiedDashboard: React.FC<VerifiedDashboardProps> = ({ user, authUser, router, news }) => {
+
+    const handleNavigation = (id: string) => {
+        if (id === "community") return;
+        switch (id) {
+            case "free-content": router.push("/free/content"); break;
+            case "overview": router.push("/dashboard/producer"); break;
+            case "profile": router.push("/dashboard/producer/profile"); break;
+            case "billing": router.push("/dashboard/producer/billing"); break;
+            case "orders": router.push("/dashboard/producer/orders"); break;
+            default: router.push("/dashboard/producer");
+        }
+    };
+
+    const displayUser = user || (authUser ? {
+        id: authUser.id,
+        username: authUser.username,
+        email: authUser.email,
+        name: authUser.name || "Artist",
+        surname: authUser.surname || "",
+        type: authUser.type,
+        country: null,
+        createdAt: new Date().toISOString(),
+        approvedAt: null
+    } : null);
+
+    if (!displayUser) return <LoadingScreen />;
+
+
+
     return (
-        <div className="flex bg-black text-white font-sans selection:bg-primary selection:text-black overflow-hidden h-screen">
+        <div className="flex h-screen bg-background text-white font-sans selection:bg-primary/30 overflow-hidden relative">
 
-            {/* Main Content Area */}
-            <div className="flex-1 overflow-y-auto relative no-scrollbar">
-                <BackgroundEffects />
+            <div className="flex flex-col lg:flex-row-reverse w-full h-full relative z-10">
 
-                <div className="relative z-10 w-full px-8 md:px-16 pt-24 pb-20">
+                <RightSidebar
+                    user={displayUser}
+                    activeTab="community"
+                    onNavigate={handleNavigation}
+                    onSignOut={() => logout().then(() => router.push("/signin"))}
+                />
 
-                    {/* Header for Main Area */}
-                    <div className="flex justify-between items-end mb-16 border-b border-white/10 pb-6">
-                        <div>
-                            <span className="text-xs font-mono text-primary uppercase tracking-widest block mb-2">Live Feed</span>
-                            <h2 className="font-main text-5xl uppercase leading-none">Community Hub</h2>
-                        </div>
-                        <div className="text-right hidden md:block">
-                            <div className="text-[10px] font-mono uppercase tracking-widest text-white/40 mb-1">Status</div>
-                            <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
-                                <span className="font-bold text-sm uppercase">Online</span>
+                <main className="flex-1 h-full overflow-y-auto no-scrollbar relative z-10 pt-20 pb-12 px-6 lg:px-12">
+                    <motion.div
+                        initial="hidden"
+                        animate="visible"
+                        variants={fadeVar}
+                        className="max-w-[1600px] mx-auto w-full space-y-12"
+                    >
+                        {/* Header */}
+                        <header className="flex flex-col gap-2 mb-8">
+                            <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-primary">The Circle</span>
+                            <h1 className="font-main text-5xl md:text-7xl uppercase text-white tracking-tight leading-[0.9]">
+                                Community<br /><span className="text-white/30">Hub</span>
+                            </h1>
+                        </header>
+
+                        {/* Bento Grid Layout */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                            {/* 1. Telegram Connect (Large Hero Card) */}
+                            <div className="md:col-span-2 relative group overflow-hidden rounded-[2.5rem] bg-[#2AABEE]/10 border border-[#2AABEE]/20 p-10 flex flex-col justify-between transition-all duration-500 min-h-[400px]">
+                                <TelegramCardSection user={displayUser} authUser={authUser} />
                             </div>
-                        </div>
-                    </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-                        {/* Left Column: Feed */}
-                        <div className="lg:col-span-8 space-y-12">
-                            <div>
-                                <div className="flex items-center gap-2 mb-6">
-                                    <Radio className="w-4 h-4 text-primary" />
-                                    <h3 className="font-main text-2xl uppercase">Latest Activity</h3>
-                                </div>
-                                <div className="space-y-4">
-                                    {news.length > 0 ? (
-                                        news.map((item) => (
-                                            <div key={item.id} className="p-6 bg-white/[0.02] border border-white/5 hover:border-primary/30 transition-colors rounded-lg group">
-                                                <div className="flex justify-between items-start mb-2">
-                                                    <span className="text-xs font-mono text-white/40">{new Date(item.createdAt).toLocaleDateString()}</span>
-                                                    {item.priority && item.priority > 0 && <span className="text-[10px] bg-primary/20 text-primary px-2 py-0.5 rounded uppercase font-bold">Priority</span>}
-                                                </div>
-                                                <h4 className="text-lg font-light group-hover:text-primary transition-colors">{item.title}</h4>
+                            {/* 2. Featured Events (Vertical Stack) */}
+                            <div className="flex flex-col gap-6 h-full">
+                                <div className="flex-1 rounded-[2.5rem] bg-zinc-900/50 border border-white/5 p-10 flex flex-col relative overflow-hidden group hover:bg-zinc-900/80 transition-colors">
+                                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-transparent" />
+                                    <div className="relative z-10 flex flex-col h-full justify-between">
+                                        <div>
+                                            <div className="flex justify-between items-start mb-4">
+                                                <span className="px-2 py-1 bg-white/10 rounded text-[10px] font-mono uppercase">Event</span>
+                                                <span className="text-[10px] font-mono text-white/40">Ends in 3d</span>
                                             </div>
-                                        ))
-                                    ) : (
-                                        <div className="text-white/30 text-sm font-mono">No recent updates.</div>
-                                    )}
+                                            <h3 className="font-main text-3xl uppercase mb-2">Remix Contest</h3>
+                                            <p className="text-white/50 text-sm">Download stems and submit your track.</p>
+                                        </div>
+                                        <button className="mt-8 self-start flex items-center gap-2 text-xs font-bold uppercase tracking-widest hover:text-primary transition-colors">
+                                            View Details <ArrowUpRight className="w-3 h-3" />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="flex-1 rounded-[2.5rem] bg-white/5 border border-white/5 p-10 flex flex-col justify-center relative overflow-hidden group hover:bg-white/10 transition-colors">
+                                    <div className="flex items-center gap-4 mb-4">
+                                        <Users className="w-6 h-6 text-white/50" />
+                                        <span className="text-xl font-main uppercase">Members</span>
+                                    </div>
+                                    <div className="flex -space-x-3">
+                                        {[1, 2, 3, 4].map(i => (
+                                            <div key={i} className="w-10 h-10 rounded-full bg-white/10 border-2 border-black flex items-center justify-center text-[10px] font-bold">
+                                                {["S", "K", "A", "N"][i - 1]}
+                                            </div>
+                                        ))}
+                                        <div className="w-10 h-10 rounded-full bg-primary/20 border-2 border-black flex items-center justify-center text-[10px] text-primary">
+                                            +42
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Right Column: Featured */}
-                        <div className="lg:col-span-4 space-y-12">
-                            <div>
-                                <div className="flex items-center gap-2 mb-6">
-                                    <Users className="w-4 h-4 text-primary" />
-                                    <h3 className="font-main text-2xl uppercase">Featured Producers</h3>
-                                </div>
-                                <div className="space-y-4">
-                                    <MinimalProducer name="Seismal D" role="Contributor" />
-                                    <MinimalProducer name="Kollektiv" role="Label Artist" />
-                                    <MinimalProducer name="Aeon" role="Verified" />
-                                </div>
+                        {/* 3. News Feed (List Style) */}
+                        <div className="mt-12">
+                            <div className="flex items-center justify-between mb-8 px-2">
+                                <h3 className="font-main text-2xl uppercase">Latest Updates</h3>
+                                <button className="text-xs font-mono uppercase tracking-widest text-primary hover:text-white transition-colors">View All</button>
                             </div>
 
-                            <div className="p-6 bg-primary/5 border border-primary/20 rounded-lg">
-                                <h4 className="font-mono text-xs uppercase text-primary mb-4 tracking-widest">Next Event</h4>
-                                <p className="font-main text-3xl uppercase mb-2">Remix Contest</p>
-                                <p className="text-white/50 text-sm mb-6">Submissions open in 3 days.</p>
-                                <button className="w-full py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold uppercase tracking-widest transition-colors">
-                                    View Details
-                                </button>
+                            <div className="w-full bg-zinc-900/30 rounded-[2rem] border border-white/5 overflow-hidden backdrop-blur-md">
+                                {news.length > 0 ? (
+                                    news.map((item, index) => (
+                                        <div key={item.id} className={`group flex flex-col md:flex-row md:items-center gap-6 p-6 hover:bg-white/5 transition-colors cursor-default ${index !== news.length - 1 ? 'border-b border-white/5' : ''}`}>
+
+                                            {/* Priority Indicator */}
+                                            {/* <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-white/30 group-hover:bg-primary/20 group-hover:text-primary transition-colors">
+                                                {item.priority > 0 ? <Zap className="w-5 h-5" /> : <Bell className="w-5 h-5" />}
+                                            </div> */}
+
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-3 mb-1">
+                                                    <h4 className="font-bold text-lg text-white group-hover:text-primary transition-colors">{item.title}</h4>
+                                                    {item.priority > 0 && <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />}
+                                                </div>
+                                                {item.content && <p className="text-white/40 text-sm line-clamp-1">{item.content}</p>}
+                                            </div>
+
+                                            <div className="text-xs font-mono text-white/30 uppercase tracking-wider">
+                                                {new Date(item.createdAt).toLocaleDateString()}
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="p-12 text-center text-white/30 font-mono text-sm uppercase">No updates available.</div>
+                                )}
                             </div>
                         </div>
-                    </div>
-                </div>
+
+                    </motion.div>
+                </main>
             </div>
-
-            {/* Sidebar (Right) */}
-            <DashboardSidebar router={router} username={user?.username} />
         </div>
     );
 };
 
-// --- Sidebar Component ---
-const DashboardSidebar: React.FC<{ router: ReturnType<typeof useRouter>, username?: string }> = ({ router, username }) => {
-    return (
-        <div className="hidden md:flex flex-col w-80 h-full border-l border-white/10 bg-black z-20 sticky top-0">
-            {/* Brand */}
-            <div className="p-8 border-b border-white/10">
-                <div className="flex items-center gap-3 mb-1">
-                    <div className="w-3 h-3 bg-primary rounded-full" />
-                    <span className="font-bold text-xs tracking-[0.2em] uppercase">Ethereal</span>
-                </div>
-                <div className="text-[10px] font-mono text-white/40 tracking-widest pl-6">VERIFIED SESSION</div>
-            </div>
+// --- Sub-Components (Telegram Logic Encapsulated) ---
 
-            {/* Navigation */}
-            <div className="flex-1 py-8 px-6 space-y-2">
-                <SidebarLink
-                    icon={Download}
-                    label="The Vault"
-                    desc="Assets & Downloads"
-                    onClick={() => router.push("/free/content")}
-                />
-                <SidebarLink
-                    icon={MessageCircle}
-                    label="The Wire"
-                    desc="Community Chat"
-                    onClick={() => window.open("https://t.me/etherealtechno", "_blank")}
-                />
-                <SidebarLink
-                    icon={Trophy}
-                    label="The Arena"
-                    desc="Contests"
-                    active={false}
-                />
-            </div>
-
-            {/* User Footer */}
-            <div className="p-8 border-t border-white/10 bg-white/[0.02]">
-                <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center font-main text-lg text-primary">
-                        {username?.[0] || "A"}
-                    </div>
-                    <div>
-                        <div className="text-sm font-bold uppercase">{username || "Artist"}</div>
-                        <div className="text-[10px] font-mono text-white/40 tracking-wider">VERIFIED MEMBER</div>
-                    </div>
-                </div>
-            </div>
-        </div>
+const TelegramCardSection: React.FC<{ user: ProducerData | null, authUser: AuthUser | null }> = ({ user, authUser }) => {
+    const [status, setStatus] = useState<"idle" | "connecting" | "connected">(() =>
+        user?.telegramUsername ? "connected" : "idle"
     );
-}
+    const [loading, setLoading] = useState(false);
 
-const SidebarLink: React.FC<{ icon: React.ComponentType<{ className?: string }>, label: string, desc: string, onClick?: () => void, active?: boolean }> = ({ icon: Icon, label, desc, onClick, active = true }) => (
-    <button
-        onClick={onClick}
-        className={`w-full flex items-center gap-4 p-4 rounded-lg border border-transparent transition-all duration-300 text-left group
-        ${active ? "hover:bg-white/5 hover:border-white/10 cursor-pointer" : "opacity-50 cursor-not-allowed"}`}
-    >
-        <div className={`p-2 rounded bg-white/5 text-white/50 group-hover:text-primary group-hover:bg-primary/10 transition-colors`}>
-            <Icon className="w-5 h-5" />
-        </div>
-        <div>
-            <div className="font-main text-lg uppercase leading-none mb-1 group-hover:text-white transition-colors">{label}</div>
-            <div className="text-[10px] font-mono text-white/30 uppercase tracking-widest">{desc}</div>
-        </div>
-    </button>
+    useEffect(() => {
+        if (user?.telegramUsername) setStatus("connected");
+    }, [user]);
+
+    const handleConnect = async () => {
+        setLoading(true);
+        try {
+            const uid = user?.id || authUser?.id;
+            const res = await fetch("/api/telegram/connect", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId: uid })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.deepLink) {
+                    window.open(data.deepLink, "_blank");
+                    setStatus("connecting");
+                }
+            }
+        } catch (e) {
+            console.error("Connect error", e);
+        }
+        setLoading(false);
+    };
+
+    const handleDisconnect = async () => {
+        setLoading(true);
+        try {
+            const uid = user?.id || authUser?.id;
+            await fetch("/api/telegram/disconnect", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId: uid })
+            });
+            setStatus("idle");
+        } catch { }
+    };
+
+    const isConnected = status === "connected";
+
+    return (
+        <>
+            <div className="relative z-10 max-w-xl">
+                <div className="w-16 h-16 rounded-full bg-[#2AABEE]/20 flex items-center justify-center text-[#2AABEE] mb-8 group-hover:scale-110 transition-transform duration-500">
+                    <MessageCircle className="w-8 h-8" />
+                </div>
+
+                <h3 className="font-main text-4xl uppercase mb-4 text-white">
+                    {isConnected ? "Access Granted" : "Private Circle"}
+                </h3>
+
+                <p className="text-[#2AABEE]/80 text-lg leading-relaxed mb-6">
+                    {isConnected
+                        ? `You are connected securely as @${user?.telegramUsername}. Welcome to the inner circle.`
+                        : "Connect your Telegram account to join the verified producer group chat."
+                    }
+                </p>
+
+                {status === "connecting" && (
+                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#2AABEE]/10 rounded-full text-[#2AABEE] text-xs font-mono mb-6 animate-pulse">
+                        <Loader2 className="w-3 h-3 animate-spin" /> Waiting for bot...
+                    </div>
+                )}
+            </div>
+
+            <div className="relative z-10 mt-auto">
+                {isConnected ? (
+                    <div className="flex items-center gap-4">
+                        <button onClick={() => window.open("https://t.me/etherealtechno", "_blank")} className="px-8 py-4 bg-[#2AABEE] text-black text-xs font-bold uppercase tracking-widest rounded-xl hover:scale-105 transition-transform">
+                            Open Telegram
+                        </button>
+                        <button onClick={handleDisconnect} disabled={loading} className="px-6 py-4 bg-[#2AABEE]/10 text-[#2AABEE] border border-[#2AABEE]/20 text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-[#2AABEE]/20 transition-colors">
+                            Disconnect
+                        </button>
+                    </div>
+                ) : (
+                    <button
+                        onClick={handleConnect}
+                        disabled={loading || status === "connecting"}
+                        className="inline-flex items-center gap-3 text-sm font-mono uppercase tracking-widest text-white/60 group-hover:text-white transition-colors hover:translate-x-2 duration-300"
+                    >
+                        {loading ? "Processing..." : "Initiate Connection"} <span className="text-[#2AABEE]">-&gt;</span>
+                    </button>
+                )}
+            </div>
+
+            {/* Background Decor */}
+            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#2AABEE]/10 blur-[100px] rounded-full translate-x-1/3 -translate-y-1/3 pointer-events-none"></div>
+            <div className="absolute bottom-0 right-0 p-10 opacity-10 group-hover:opacity-20 transition-opacity">
+                <MessageCircle className="w-[300px] h-[300px]" />
+            </div>
+        </>
+    );
+};
+
+// --- Utils ---
+const Loader2: React.FC<{ className?: string }> = ({ className }) => (
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
 );
 
-
-
-
-
-
-const MinimalProducer: React.FC<MinimalProducerProps> = ({ name, role }) => (
-    <div className="flex justify-between items-baseline group cursor-default">
-        <span className="font-bold text-lg uppercase text-white/80 group-hover:text-primary transition-colors">{name}</span>
-        <span className="font-mono text-[10px] uppercase tracking-widest text-white/30">{role}</span>
+const MaskedText: React.FC<MaskedTextProps> = ({ lines, className }) => (
+    <div className="flex flex-col items-start">
+        {lines.map((line, i) => (
+            <div key={i} className="overflow-hidden">
+                <motion.h1 custom={i} variants={textReveal} initial="hidden" animate="visible" className={className}>{line}</motion.h1>
+            </div>
+        ))}
     </div>
-);
-
-
-const FeaturesSection: React.FC = () => {
-    const containerRef = useRef(null);
-    const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start end", "center start"] });
-    const yLeft = useTransform(scrollYProgress, [0, 1], [0, -100]);
-    const yMiddle = useTransform(scrollYProgress, [0, 1], [150, -150]);
-    const yRight = useTransform(scrollYProgress, [0, 1], [300, -200]);
-
-    return (
-        <section ref={containerRef} className="relative py-32 px-6 md:px-12 min-h-[120vh] flex items-center">
-            <div className="max-w-7xl mx-auto w-full">
-                <div className="mb-24">
-                    <span className="text-xs font-mono text-primary uppercase tracking-widest">02 // Inside The Circle</span>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-8">
-                    <ParallaxTile y={yLeft} icon={Download} title="Exclusive Free Packs" desc="Verified-only resources." index="01" />
-                    <ParallaxTile y={yMiddle} icon={MessageCircle} title="Private Telegram" desc="Direct line to the core." index="02" />
-                    <ParallaxTile y={yRight} icon={Trophy} title="Contests & Collabs" desc="Shape the future." index="03" />
-                </div>
-            </div>
-        </section>
-    );
-};
-
-const ParallaxTile: React.FC<ParallaxTileProps> = ({ y, icon: Icon, title, desc, index }) => (
-    <motion.div style={{ y }} className="w-full">
-        <div className="border-t border-white/20 pt-6 group hover:border-primary transition-colors duration-500 h-[300px] flex flex-col justify-between">
-            <div className="flex justify-between items-start">
-                <span className="font-mono text-xs text-primary">/{index}</span>
-                <Icon className="w-6 h-6 text-white/40 group-hover:text-white transition-colors" />
-            </div>
-            <div>
-                <h3 className="font-main text-5xl uppercase text-white mb-4 leading-[0.9]">{title}</h3>
-                <p className="text-white/50 text-sm font-light max-w-[200px]">{desc}</p>
-            </div>
-        </div>
-    </motion.div>
 );
 
 const MinimalQuote: React.FC<MinimalQuoteProps> = ({ quote, author }) => (
@@ -423,24 +511,52 @@ const BigLink: React.FC<BigLinkProps> = ({ href, title, sub, router }) => (
     </motion.button>
 );
 
-const MaskedText: React.FC<MaskedTextProps> = ({ lines, className }) => (
-    <div className="flex flex-col items-start">
-        {lines.map((line, i) => (
-            <div key={i} className="overflow-hidden">
-                <motion.h1 custom={i} variants={textReveal} initial="hidden" animate="visible" className={className}>{line}</motion.h1>
-            </div>
-        ))}
-    </div>
+const ScrollIndicator: React.FC = () => (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5 }} className="absolute bottom-8 right-8 md:right-12 flex flex-col items-center gap-4 mix-blend-difference">
+        <span className="text-[9px] uppercase tracking-[0.2em] -rotate-90 origin-center translate-y-4 text-white">Scroll</span>
+        <div className="w-px h-24 bg-white/10 overflow-hidden">
+            <motion.div animate={{ y: ["-100%", "100%"] }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }} className="w-full h-1/2 bg-primary" />
+        </div>
+    </motion.div>
 );
 
-const LoadingScreen: React.FC = () => (
-    <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-            <div className="w-12 h-12 border-t-2 border-primary rounded-full animate-spin"></div>
-            <span className="text-xs font-mono tracking-widest text-white/50">LOADING...</span>
+const ParallaxTile: React.FC<ParallaxTileProps> = ({ y, icon: Icon, title, desc, index }) => (
+    <motion.div style={{ y }} className="w-full">
+        <div className="border-t border-white/20 pt-6 group hover:border-primary transition-colors duration-500 h-[300px] flex flex-col justify-between">
+            <div className="flex justify-between items-start">
+                <span className="font-mono text-xs text-primary">/{index}</span>
+                <Icon className="w-6 h-6 text-white/40 group-hover:text-white transition-colors" />
+            </div>
+            <div>
+                <h3 className="font-main text-5xl uppercase text-white mb-4 leading-[0.9]">{title}</h3>
+                <p className="text-white/50 text-sm font-light max-w-[200px]">{desc}</p>
+            </div>
         </div>
-    </div>
+    </motion.div>
 );
+
+const FeaturesSection: React.FC = () => {
+    const containerRef = useRef(null);
+    const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start end", "center start"] });
+    const yLeft = useTransform(scrollYProgress, [0, 1], [0, -100]);
+    const yMiddle = useTransform(scrollYProgress, [0, 1], [150, -150]);
+    const yRight = useTransform(scrollYProgress, [0, 1], [300, -200]);
+
+    return (
+        <section ref={containerRef} className="relative py-32 px-6 md:px-12 min-h-[120vh] flex items-center">
+            <div className="max-w-7xl mx-auto w-full">
+                <div className="mb-24">
+                    <span className="text-xs font-mono text-primary uppercase tracking-widest">02 // Inside The Circle</span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-8">
+                    <ParallaxTile y={yLeft} icon={Download} title="Exclusive Free Packs" desc="Verified-only resources." index="01" />
+                    <ParallaxTile y={yMiddle} icon={MessageCircle} title="Private Telegram" desc="Direct line to the core." index="02" />
+                    <ParallaxTile y={yRight} icon={Trophy} title="Contests & Collabs" desc="Shape the future." index="03" />
+                </div>
+            </div>
+        </section>
+    );
+};
 
 const BackgroundEffects: React.FC = () => (
     <div className="fixed inset-0 pointer-events-none z-[0]">
@@ -466,11 +582,11 @@ const Footer: React.FC = () => (
     </footer>
 );
 
-const ScrollIndicator: React.FC = () => (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5 }} className="absolute bottom-8 right-8 md:right-12 flex flex-col items-center gap-4 mix-blend-difference">
-        <span className="text-[9px] uppercase tracking-[0.2em] -rotate-90 origin-center translate-y-4 text-white">Scroll</span>
-        <div className="w-px h-24 bg-white/10 overflow-hidden">
-            <motion.div animate={{ y: ["-100%", "100%"] }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }} className="w-full h-1/2 bg-primary" />
+const LoadingScreen: React.FC = () => (
+    <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+            <div className="w-12 h-12 border-t-2 border-primary rounded-full animate-spin"></div>
+            <span className="text-xs font-mono tracking-widest text-white/50">LOADING...</span>
         </div>
-    </motion.div>
+    </div>
 );

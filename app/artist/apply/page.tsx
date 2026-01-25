@@ -976,7 +976,7 @@ const MinimalInput: React.FC<MinimalInputProps> = ({
     );
 };
 
-const SectionHeader: React.FC<SectionHeaderProps> = ({ number, title }) => (
+const SectionHeader: React.FC<SectionHeaderProps> = ({ number: _number, title }) => (
     <div className="flex items-baseline gap-4 mb-8 border-b border-white/5 pb-4">
         <h2 className="text-xs font-sans text-white/40 uppercase tracking-widest">{title}</h2>
     </div>

@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
         try {
             const data = JSON.parse(text);
             return NextResponse.json(data);
-        } catch (jsonError) {
+        } catch {
             console.error("Failed to parse SoundCloud response:", text);
             return NextResponse.json({ error: "Invalid response from SoundCloud" }, { status: 502 });
         }

@@ -2,9 +2,33 @@ import { NextResponse } from "next/server";
 import prisma from "@/app/lib/database";
 import { v4 as uuidv4 } from "uuid";
 import { getStreamUrl } from "@/app/services/getStreamUrl";
+import jwt from "jsonwebtoken";
+
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
+
+interface JWTPayload {
+  userId: string;
+  iat?: number;
+  exp?: number;
+}
 
 export async function POST(req: Request) {
   try {
+    const authHeader = req.headers.get("authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const token = authHeader.substring(7);
+    let userId: string;
+
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
+      userId = decoded.userId;
+    } catch {
+      return NextResponse.json({ error: "Invalid or expired token" }, { status: 401 });
+    }
+
     const formData = await req.formData();
     const awsKeysStr = formData.get("awsKeys") as string;
     const awsKeys = JSON.parse(awsKeysStr);
@@ -49,6 +73,8 @@ export async function POST(req: Request) {
               contentType: "Sample Loop",
               soundGroup,
               subGroup,
+              status: "PENDING",
+              user: { connect: { id: userId } },
               file: {
                 create: {
                   id: uuidv4(),
@@ -71,6 +97,8 @@ export async function POST(req: Request) {
               contentType: "MIDI",
               soundGroup,
               subGroup,
+              status: "PENDING",
+              user: { connect: { id: userId } },
               file: {
                 create: {
                   id: uuidv4(),
@@ -91,6 +119,8 @@ export async function POST(req: Request) {
               name: contentName,
               subGroup: loopContent.subGroup,
               soundGroup: loopContent.soundGroup,
+              status: "PENDING",
+              user: { connect: { id: userId } },
               loopContent: {
                 connect: {
                   id: loopContent.id,
@@ -135,6 +165,8 @@ export async function POST(req: Request) {
               contentType: "Sample Loop",
               soundGroup,
               subGroup,
+              status: "PENDING",
+              user: { connect: { id: userId } },
               file: {
                 create: {
                   id: uuidv4(),
@@ -157,6 +189,8 @@ export async function POST(req: Request) {
               contentType: "MIDI",
               soundGroup,
               subGroup,
+              status: "PENDING",
+              user: { connect: { id: userId } },
               file: {
                 create: {
                   id: uuidv4(),
@@ -179,6 +213,8 @@ export async function POST(req: Request) {
               contentType: "Preset File",
               soundGroup,
               subGroup,
+              status: "PENDING",
+              user: { connect: { id: userId } },
               file: {
                 create: {
                   id: uuidv4(),
@@ -199,6 +235,8 @@ export async function POST(req: Request) {
               name: contentName,
               subGroup: loopContent.subGroup,
               soundGroup: loopContent.soundGroup,
+              status: "PENDING",
+              user: { connect: { id: userId } },
               loopContent: {
                 connect: {
                   id: loopContent.id,
@@ -229,6 +267,8 @@ export async function POST(req: Request) {
               contentType,
               soundGroup,
               subGroup,
+              status: "PENDING",
+              user: { connect: { id: userId } },
               file: {
                 create: {
                   id: uuidv4(),

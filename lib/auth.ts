@@ -98,7 +98,9 @@ export async function authenticatedFetch(
       headers: {
         ...options.headers,
         Authorization: `Bearer ${t}`,
-        "Content-Type": "application/json",
+        ...(options.body instanceof FormData
+          ? {}
+          : { "Content-Type": "application/json" }),
       },
     });
   };

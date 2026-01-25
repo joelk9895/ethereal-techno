@@ -4,6 +4,9 @@ import { RiskEngine } from "@/lib/risk-engine";
 import { v4 as uuidv4 } from 'uuid';
 import { cookies } from "next/headers";
 import crypto from 'crypto';
+import jwt from "jsonwebtoken";
+
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
 const hashToken = (token: string) => crypto.createHash('sha256').update(token).digest('hex');
 
@@ -19,10 +22,11 @@ export async function POST(request: Request) {
         const refreshTokenHash = hashToken(refreshToken);
 
         const session = await prisma.session.findFirst({
-            where: { refreshTokenHash }
+            where: { refreshTokenHash },
+            include: { user: true } // Include user to get details for JWT
         });
 
-        if (!session) {
+        if (!session || !session.user) {
             return NextResponse.json({ error: "Invalid or expired session" }, { status: 401 });
         }
 
@@ -66,7 +70,15 @@ export async function POST(request: Request) {
             path: '/'
         });
 
-        const newAccessToken = uuidv4();
+        const newAccessToken = jwt.sign(
+            {
+                userId: session.user.id,
+                email: session.user.email,
+                type: session.user.type,
+            },
+            JWT_SECRET,
+            { expiresIn: "15m" }
+        );
 
         return NextResponse.json({
             message: "Session refreshed",

@@ -63,12 +63,7 @@ interface ApplicationStatusItemProps {
   color: "yellow" | "green" | "red";
 }
 
-interface HealthMetricProps {
-  label: string;
-  status: string;
-  uptime: string;
-  healthy: boolean;
-}
+
 
 const fadeInUp: Variants = {
   hidden: { opacity: 0, y: 20 },

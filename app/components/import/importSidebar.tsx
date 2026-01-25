@@ -252,7 +252,7 @@ export default function ImportSidebar() {
     : sideData;
 
   return (
-    <aside className="flex flex-col fixed right-0 top-0 h-screen w-1/4 bg-black border-l border-white/5 overflow-hidden pt-12">
+    <aside className="flex flex-col fixed right-0 top-0 h-screen w-1/4 bg-black/50 backdrop-blur-xl border-l border-white/10 overflow-hidden pt-12">
       <div className="p-4 border-b border-white/10">
         <h2 className=" uppercase font-main text-4xl mb-8 tracking-wide">Imported Contents</h2>
 
@@ -440,7 +440,6 @@ export default function ImportSidebar() {
                         <Edit3 className="h-3.5 w-3.5 text-white/40 hover:text-white/60" />
                       </button>
                       <button className="p-1.5 hover:bg-white/10 rounded-full transition-colors">
-                        <Trash2 className="h-3.5 w-3.5 text-white/40 hover:text-white/60" />
                         <Trash2 className="h-3.5 w-3.5 text-white/40 hover:text-white/60" />
                       </button>
                     </div>

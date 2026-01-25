@@ -10,15 +10,73 @@ import {
     Clock,
     AlertCircle,
     ArrowRight,
-    LayoutDashboard,
     User,
-    FileText,
-    ArrowUpRight,
-    LogOut,
-    LucideIcon
+    History as HistoryIcon,
+    Download
 } from "lucide-react";
-import { getAuthUser } from "@/lib/auth";
+import Image from "next/image";
+import RightSidebar from "@/app/components/RightSidebar";
+import MarketplaceHome from "@/app/dashboard/components/MarketplaceHome";
+import { getAuthUser, logout } from "@/lib/auth";
 import { motion, AnimatePresence } from "framer-motion";
+
+// Mock Data for Library
+const mockLibraryItems = [
+    { id: 1, title: "Ethereal Echoes", artist: "Lunar Systems", image: "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=600&fit=crop", type: "Sample Loop", size: "1.2 GB", format: "WAV" },
+    { id: 2, title: "Midnight Frequencies", artist: "Voidwalker", image: "https://images.unsplash.com/photo-1558507652-2d9626c4e67a?q=80&w=600&fit=crop", type: "Preset", size: "45 MB", format: "FXP" },
+    { id: 3, title: "Synthetic Dreams", artist: "Analog Soul", image: "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?q=80&w=600&fit=crop", type: "Construction Kit", size: "850 MB", format: "WAV" },
+    { id: 4, title: "Deep Space Signals", artist: "Nebula", image: "https://images.unsplash.com/photo-1511379938547-c1f69419868d?q=80&w=600&fit=crop", type: "MIDI", size: "15 KB", format: "MID" },
+    { id: 5, title: "Glitch Patterns", artist: "Err0r", image: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=600&fit=crop", type: "One-Shot", size: "320 MB", format: "WAV" },
+    { id: 6, title: "Ambient Works Vol. 1", artist: "Cloud 9", image: "https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?q=80&w=600&fit=crop", type: "Sample Loop", size: "2.1 GB", format: "WAV" },
+    { id: 7, title: "Bass Theory", artist: "Low Frequency", image: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=600&fit=crop", type: "Preset", size: "12 MB", format: "FXP" },
+    { id: 8, title: "Industrial Noise", artist: "Factory", image: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=600&fit=crop", type: "Sample Loop+MIDI", size: "640 MB", format: "WAV" },
+];
+
+interface LibraryItem {
+    id: number;
+    title: string;
+    artist: string;
+    image: string;
+    type: string;
+    size: string;
+    format: string;
+}
+
+const LibraryCard = ({ item }: { item: LibraryItem }) => (
+    <div className="group cursor-pointer">
+        <div className="relative aspect-square rounded-xl overflow-hidden bg-[#1E1E1E] mb-4 border border-white/5 shadow-2xl group-hover:shadow-[0_0_30px_rgba(255,255,255,0.05)] transition-all duration-300">
+            {/* Format Badge */}
+            <div className="absolute top-3 left-3 z-20 flex gap-2">
+                <div className="px-2 py-1 rounded bg-black/60 backdrop-blur-md border border-white/10 text-[10px] font-bold text-white uppercase tracking-wider">
+                    {item.format}
+                </div>
+            </div>
+
+            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 flex flex-col items-center justify-center gap-4">
+                <button className="flex items-center gap-2 px-6 py-2.5 bg-white text-black rounded-full font-bold uppercase tracking-widest text-xs hover:bg-primary transition-colors transform translate-y-4 group-hover:translate-y-0 duration-300">
+                    <Download className="w-3.5 h-3.5" />
+                    Download
+                </button>
+                <span className="text-white/60 text-xs font-mono uppercase tracking-widest transform translate-y-4 group-hover:translate-y-0 duration-300 delay-75">
+                    {item.size}
+                </span>
+            </div>
+            <Image
+                src={item.image}
+                alt={item.title}
+                fill
+                className="object-cover group-hover:scale-105 transition-transform duration-700"
+            />
+        </div>
+        <div>
+            <h3 className="text-white font-bold text-base truncate mb-1 group-hover:text-primary transition-colors">{item.title}</h3>
+            <div className="flex items-center justify-between">
+                <p className="text-white/40 text-xs font-medium uppercase tracking-wider truncate">{item.artist}</p>
+                <p className="hidden md:block text-white/20 text-[10px] font-mono uppercase tracking-widest">{item.type}</p>
+            </div>
+        </div>
+    </div>
+);
 
 interface UserData {
     id: string;
@@ -52,14 +110,7 @@ interface ApplicationRowProps {
     app: Application;
 }
 
-interface NavItemProps {
-    id: string;
-    label: string;
-    icon: LucideIcon;
-    active: boolean;
-    onClick: () => void;
-    external?: boolean;
-}
+
 
 interface StatBoxProps {
     label: string;
@@ -78,7 +129,6 @@ interface ProfileFieldProps {
     options?: string[];
 }
 
-// --- Animation Variants ---
 const fadeVar = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] } },
@@ -87,7 +137,7 @@ const fadeVar = {
 
 export default function DashboardPage() {
     const router = useRouter();
-    const [activeTab, setActiveTab] = useState("overview");
+    const [activeTab, setActiveTab] = useState("home");
     const [user, setUser] = useState<UserData | null>(null);
     const [applications, setApplications] = useState<Application[]>([]);
     const [loading, setLoading] = useState(true);
@@ -226,6 +276,11 @@ export default function DashboardPage() {
         setActiveTab(id);
     };
 
+    const handleSignOut = useCallback(() => {
+        logout();
+        router.push("/signin");
+    }, [router]);
+
     if (loading) {
         return (
             <div className="min-h-screen bg-black flex items-center justify-center">
@@ -240,9 +295,8 @@ export default function DashboardPage() {
     if (!user) return null;
 
     return (
-        <div className="flex h-screen bg-black text-white font-sans selection:bg-primary selection:text-black overflow-hidden relative">
+        <div className="flex h-screen bg-background text-white font-sans selection:bg-primary selection:text-black overflow-hidden relative">
 
-            {/* Background Effects */}
             <div className="fixed inset-0 pointer-events-none z-0">
                 <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03]"></div>
                 <div className="absolute top-[-20%] left-[-20%] w-[50vw] h-[50vw] bg-primary/5 blur-[150px] rounded-full opacity-50" />
@@ -250,126 +304,22 @@ export default function DashboardPage() {
 
             <div className="relative z-10 flex flex-col lg:flex-row-reverse w-full h-full">
 
-                {/* --- RIGHT SIDEBAR (Navigation) --- */}
-                <aside className="w-full lg:w-80 lg:h-full border-l border-white/10 bg-black/50 backdrop-blur-xl z-20 pt-24 pb-12 px-8 flex flex-col justify-between overflow-y-auto no-scrollbar">
-                    <div>
-                        <div className="mb-12">
-                            <div className="text-[10px] font-mono text-white/40 uppercase tracking-widest mb-2">My Account</div>
-                            <h1 className="font-main text-3xl text-white uppercase leading-none break-words">
-                                {user.name} <span className="text-white/30">{user.surname}</span>
-                            </h1>
-                            <div className="flex items-center gap-2 mt-2">
-                                <span className="text-xs font-mono text-primary uppercase tracking-widest">@{user.username}</span>
-                                <span className="w-1 h-1 rounded-full bg-white/20" />
-                                <span className="text-xs font-mono text-white/40 uppercase tracking-widest">{user.type}</span>
-                            </div>
-                        </div>
+                <RightSidebar
+                    user={user}
+                    activeTab={activeTab}
+                    onNavigate={handleNavigation}
+                    onSignOut={handleSignOut}
+                />
 
-                        <nav className="space-y-1">
-                            <NavItem
-                                id="overview"
-                                label="Overview"
-                                icon={LayoutDashboard}
-                                active={activeTab === "overview"}
-                                onClick={() => handleNavigation("overview")}
-                            />
-                            <NavItem
-                                id="profile"
-                                label="Edit Profile"
-                                icon={User}
-                                active={activeTab === "profile"}
-                                onClick={() => handleNavigation("profile")}
-                            />
-                            <NavItem
-                                id="applications"
-                                label="Applications"
-                                icon={FileText}
-                                active={activeTab === "applications"}
-                                onClick={() => handleNavigation("applications")}
-                            />
-
-                            <div className="h-px bg-white/10 my-6" />
-
-                            <NavItem
-                                id="community"
-                                label="Community Hub"
-                                icon={ArrowUpRight}
-                                active={false}
-                                onClick={() => handleNavigation("community")}
-                                external
-                            />
-                            <NavItem
-                                id="shop"
-                                label="Browse Shop"
-                                icon={ArrowUpRight}
-                                active={false}
-                                onClick={() => handleNavigation("shop")}
-                                external
-                            />
-                        </nav>
-                    </div>
-
-                    <div className="mt-12">
-                        <button className="flex items-center gap-3 text-xs font-mono text-white/40 hover:text-red-400 transition-colors uppercase tracking-widest">
-                            <LogOut className="w-4 h-4" />
-                            Sign Out
-                        </button>
-                    </div>
-                </aside>
-
-                {/* --- LEFT CONTENT AREA --- */}
-                <main className="flex-1 lg:overflow-y-auto pt-24 px-6 lg:px-20 pb-24 relative no-scrollbar">
+                <main className="flex-1 lg:overflow-y-auto pt-24 px-6 lg:px-8 pb-24 relative no-scrollbar">
                     <AnimatePresence mode="wait">
 
-                        {/* 1. OVERVIEW TAB */}
-                        {activeTab === "overview" && (
-                            <motion.div
-                                key="overview"
-                                variants={fadeVar}
-                                initial="hidden"
-                                animate="visible"
-                                exit="exit"
-                                className="max-w-4xl"
-                            >
-                                <h2 className="font-main text-6xl md:text-8xl uppercase text-white mb-2">Welcome</h2>
-                                <p className="text-white/50 text-xl font-light mb-16">Your personal dashboard.</p>
-
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-8 mb-20">
-                                    <StatBox label="Joined" value={Math.floor((Date.now() - new Date(user.createdAt).getTime()) / (1000 * 60 * 60 * 24)) + " Days"} />
-                                    <StatBox label="Status" value="Active" highlight />
-                                    <StatBox label="Applications" value={applications.length.toString()} />
-                                </div>
-
-                                <div className="border-t border-white/10 pt-12">
-                                    <div className="flex items-center gap-4 mb-8">
-                                        <AlertCircle className="w-6 h-6 text-white" />
-                                        <h3 className="font-main text-3xl uppercase">Quick Actions</h3>
-                                    </div>
-                                    <div className="grid gap-4 max-w-md">
-                                        {user.type === "USER" && applications.length === 0 && (
-                                            <ActionButton
-                                                label="Apply to Join Circle"
-                                                href="/artist/apply"
-                                                primary
-                                                router={router}
-                                            />
-                                        )}
-                                        <ActionButton
-                                            label="Browse Shop"
-                                            href="/shop"
-                                            router={router}
-                                        />
-                                        <ActionButton
-                                            label="Free Content"
-                                            href="/free/content"
-                                            router={router}
-                                        />
-                                    </div>
-                                </div>
-                            </motion.div>
+                        {activeTab === "home" && (
+                            <div className="w-full">
+                                <MarketplaceHome />
+                            </div>
                         )}
 
-                        {/* 2. PROFILE TAB */}
                         {activeTab === "profile" && (
                             <motion.div
                                 key="profile"
@@ -377,7 +327,7 @@ export default function DashboardPage() {
                                 initial="hidden"
                                 animate="visible"
                                 exit="exit"
-                                className="max-w-3xl"
+                                className="w-full max-w-none"
                             >
                                 <div className="flex items-end justify-between mb-12">
                                     <div>
@@ -446,7 +396,6 @@ export default function DashboardPage() {
                                     </div>
                                 </div>
 
-                                {/* Mobile Action Buttons */}
                                 {editing && (
                                     <div className="grid grid-cols-2 gap-4 mt-8 md:hidden">
                                         <button
@@ -476,7 +425,74 @@ export default function DashboardPage() {
                             </motion.div>
                         )}
 
-                        {/* 3. APPLICATIONS TAB */}
+
+
+
+
+                        {activeTab === "library" && (
+                            <motion.div
+                                key="library"
+                                variants={fadeVar}
+                                initial="hidden"
+                                animate="visible"
+                                exit="exit"
+                                className="w-full max-w-none"
+                            >
+                                <div className="space-y-6">
+                                    <h2 className="font-main text-4xl md:text-5xl font-bold text-white">Library</h2>
+
+                                    {/* Filters */}
+                                    <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
+                                        {["All", "One-Shot", "Sample Loop", "Sample Loop+MIDI", "MIDI", "Preset", "Construction Kit"].map((filter, i) => (
+                                            <button
+                                                key={filter}
+                                                className={`px-4 py-2 rounded-full border text-xs font-bold uppercase tracking-widest transition-all whitespace-nowrap ${i === 0 ? 'bg-white text-black border-white' : 'bg-transparent text-white/40 border-white/10 hover:text-white hover:border-white/40'}`}
+                                            >
+                                                {filter}
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    <hr className="border-white/5" />
+
+                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                                        {mockLibraryItems.map((item) => (
+                                            <LibraryCard key={item.id} item={item} />
+                                        ))}
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+
+                        {activeTab === "orders" && (
+                            <motion.div
+                                key="orders"
+                                variants={fadeVar}
+                                initial="hidden"
+                                animate="visible"
+                                exit="exit"
+                                className="w-full max-w-none"
+                            >
+                                <div className="flex items-end justify-between mb-12">
+                                    <div>
+                                        <h2 className="font-main text-5xl md:text-7xl uppercase text-white mb-2">Order History</h2>
+                                        <p className="text-white/50 text-lg font-light">View your past transactions.</p>
+                                    </div>
+                                </div>
+                                <div className="bg-[#1E1E1E] rounded-3xl p-12 border border-white/5 text-center flex flex-col items-center justify-center gap-6">
+                                    <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-2">
+                                        <HistoryIcon className="w-8 h-8 text-white/20" />
+                                    </div>
+                                    <div className="max-w-md space-y-2">
+                                        <h3 className="text-xl text-white font-medium uppercase tracking-wide">No past orders</h3>
+                                        <p className="text-white/40 text-sm font-light leading-relaxed">
+                                            Your transaction history will appear here once you make a purchase.
+                                        </p>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+
                         {activeTab === "applications" && (
                             <motion.div
                                 key="applications"
@@ -484,7 +500,7 @@ export default function DashboardPage() {
                                 initial="hidden"
                                 animate="visible"
                                 exit="exit"
-                                className="max-w-4xl"
+                                className="w-full max-w-none"
                             >
                                 <div className="flex items-end justify-between mb-12">
                                     <div>
@@ -518,50 +534,21 @@ export default function DashboardPage() {
                                         ))}
                                     </div>
                                 )}
+
+
                             </motion.div>
                         )}
 
                     </AnimatePresence>
                 </main>
             </div>
-        </div>
+        </div >
     );
 }
 
-// --- Icons & Minimal Components ---
 const Save: React.FC<{ className?: string }> = ({ className }) => (
     <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
 )
-
-const NavItem: React.FC<NavItemProps> = ({ id, label, active, onClick, external }) => (
-    <button
-        onClick={onClick}
-        className={`
-            group w-full flex items-center justify-between py-4 px-4 rounded-none border-l-2 transition-all duration-300
-            ${active
-                ? "border-primary bg-white/[0.03]"
-                : "border-transparent hover:border-white/20 hover:bg-white/[0.02]"
-            }
-        `}
-    >
-        <div className="flex items-center gap-4">
-            <span className={`text-xs font-mono transition-colors ${active ? "text-primary" : "text-white/30 group-hover:text-white/60"}`}>
-                {id === 'overview' ? '01' : id === 'profile' ? '02' : id === 'applications' ? '03' : '->'}
-            </span>
-            <span className={`text-sm font-medium uppercase tracking-wider transition-colors ${active ? "text-white" : "text-white/60 group-hover:text-white"}`}>
-                {label}
-            </span>
-        </div>
-        {external && <ArrowUpRight className="w-3 h-3 text-white/20 group-hover:text-primary" />}
-    </button>
-);
-
-const StatBox: React.FC<StatBoxProps> = ({ label, value, highlight }) => (
-    <div className="flex flex-col">
-        <span className="text-[10px] font-mono uppercase tracking-widest text-white/30 mb-2">{label}</span>
-        <span className={`font-main text-4xl ${highlight ? "text-primary" : "text-white"}`}>{value}</span>
-    </div>
-);
 
 const ProfileField: React.FC<ProfileFieldProps> = ({ label, value, editing, onChange, readOnly, icon: Icon, isSelect, options }) => (
     <div className="group">
@@ -599,22 +586,6 @@ const ProfileField: React.FC<ProfileFieldProps> = ({ label, value, editing, onCh
             </div>
         )}
     </div>
-);
-
-const ActionButton: React.FC<ActionButtonProps> = ({ label, href, primary, router }) => (
-    <button
-        onClick={() => router.push(href)}
-        className={`
-            w-full flex items-center justify-between px-6 py-4 border transition-all duration-300 group
-            ${primary
-                ? "bg-white text-black border-white hover:bg-primary hover:border-primary"
-                : "bg-transparent border-white/10 text-white hover:border-primary/50 hover:bg-white/[0.02]"
-            }
-        `}
-    >
-        <span className="font-bold uppercase tracking-wide text-xs">{label}</span>
-        <ArrowRight className={`w-4 h-4 ${primary ? "text-black" : "text-white/40 group-hover:text-primary"} transition-colors`} />
-    </button>
 );
 
 const ApplicationRow: React.FC<ApplicationRowProps> = ({ app }) => {

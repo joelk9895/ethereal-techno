@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import prisma from "@/app/lib/database";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-
+import { v4 as uuidv4 } from "uuid";
+import crypto from "crypto";
 
 const JWT_SECRET =
   process.env.JWT_SECRET || "your-secret-key-change-in-production";
+
+const hashToken = (token: string) =>
+  crypto.createHash("sha256").update(token).digest("hex");
 
 export async function POST(request: NextRequest) {
   try {
@@ -45,7 +50,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate tokens
+    // --- SESSION & TOKEN LOGIC ---
+
+    // 1. Generate Access Token (JWT) - Short Lived (e.g., 15m)
     const accessToken = jwt.sign(
       {
         userId: user.id,
@@ -53,11 +60,38 @@ export async function POST(request: NextRequest) {
         type: user.type,
       },
       JWT_SECRET,
-      { expiresIn: "1h" }
+      { expiresIn: "15m" } // Short expiry for security
     );
 
-    const refreshToken = jwt.sign({ userId: user.id }, JWT_SECRET, {
-      expiresIn: "7d",
+    // 2. Generate Refresh Token (Opaque UUID) - Long Lived (e.g., 7d)
+    const refreshToken = uuidv4();
+    const refreshTokenHash = hashToken(refreshToken);
+    const refreshExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+    // 3. Create Session in Database
+    const userAgent = request.headers.get("user-agent") || "unknown";
+    const ipAddress =
+      request.headers.get("x-forwarded-for")?.split(",")[0] || "unknown";
+
+    await prisma.session.create({
+      data: {
+        userId: user.id,
+        refreshTokenHash,
+        expiresAt: refreshExpiresAt,
+        deviceFingerprint: "unknown", // You might want to implement client-side fingerprinting later
+        userAgent,
+        ipAddress,
+      },
+    });
+
+    // 4. Set HttpOnly Cookie
+    const cookieStore = await cookies();
+    cookieStore.set("refresh_token", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      expires: refreshExpiresAt,
+      path: "/",
     });
 
     // Prepare user data for response
@@ -82,7 +116,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       message: "Sign in successful",
       accessToken,
-      refreshToken,
+      // refreshToken is NOT returned in body, only cookie
       user: userData,
     });
   } catch (error) {
@@ -92,6 +126,5 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   } finally {
-
   }
 }

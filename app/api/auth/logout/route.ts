@@ -5,7 +5,7 @@ import crypto from 'crypto';
 
 const hashToken = (token: string) => crypto.createHash('sha256').update(token).digest('hex');
 
-export async function POST(_request: Request) {
+export async function POST() {
     try {
         const cookieStore = await cookies(); // Await cookies()
         const refreshToken = cookieStore.get("refresh_token")?.value;

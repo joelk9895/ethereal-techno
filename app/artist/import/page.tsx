@@ -420,7 +420,7 @@ export default function ImportPage() {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-black text-white">
+      <div className="min-h-screen bg-background text-white">
         <UploadProgressModal
           isOpen={isModalOpen}
           onClose={handleModalClose}
@@ -429,11 +429,18 @@ export default function ImportPage() {
           loading={loading}
         />
 
-        <div className="max-w-screen px-8 py-12">
+        {/* Background Effects */}
+        <div className="fixed inset-0 pointer-events-none z-0">
+          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03]"></div>
+          <div className="absolute top-[-20%] left-[-20%] w-[50vw] h-[50vw] bg-primary/5 blur-[150px] rounded-full opacity-50" />
+          <div className="absolute bottom-[-20%] right-[-20%] w-[50vw] h-[50vw] bg-blue-500/5 blur-[150px] rounded-full opacity-50" />
+        </div>
+
+        <div className="relative z-10 max-w-screen px-8 py-12">
           <div className="flex max-w-2/3 gap-16">
             <div className="space-y-4">
               <div>
-                <h1 className="uppercase font-main text-4xl mb-12 tracking-wide">
+                <h1 className="uppercase font-main text-2xl md:text-4xl mb-12 mt-8 tracking-tight text-white leading-none">
                   Import Content
                 </h1>
               </div>
@@ -466,7 +473,7 @@ export default function ImportPage() {
                     type="text"
                     value={contentName}
                     onChange={(e) => setContentName(e.target.value)}
-                    className="w-full rounded-xl bg-white/5 border border-gray-700 px-4 py-3 text-white focus:outline-none focus:border-primary focus:bg-white/10 transition-all"
+                    className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-white placeholder:text-white/20 focus:outline-none focus:border-primary focus:bg-white/10 transition-all duration-300"
                   />
                 </div>
                 {!(selectedContentType === "One-Shot" || selectedContentType === "MIDI" || selectedContentType === "Preset") && (
@@ -484,7 +491,7 @@ export default function ImportPage() {
                         }
                       }}
                       min="1"
-                      className="w-full rounded-xl bg-white/5 border border-gray-700 px-4 py-3 text-white focus:outline-none focus:border-primary focus:bg-white/10 transition-all"
+                      className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-white placeholder:text-white/20 focus:outline-none focus:border-primary focus:bg-white/10 transition-all duration-300"
                       onKeyDown={(e) => {
                         if (
                           e.key === "Backspace" ||
@@ -513,13 +520,13 @@ export default function ImportPage() {
                       value={selectedKey}
                       onValueChange={(value) => setSelectedKey(value)}
                     >
-                      <SelectTrigger className="w-full py-3 text-md bg-white/5 border rounded-xl border-gray-700 px-4 text-white focus:outline-none focus:border-primary focus:bg-white/10 transition-all">
+                      <SelectTrigger className="w-full py-3 text-md bg-white/5 border border-white/10 rounded-xl px-4 text-white focus:outline-none focus:border-primary focus:bg-white/10 transition-all duration-300">
                         <SelectValue placeholder="Select key" />
                       </SelectTrigger>
-                      <SelectContent className="rounded-2xl border border-gray-700 bg-black/95 text-white shadow-lg backdrop-blur-md">
+                      <SelectContent className="rounded-xl border border-white/10 bg-black/90 text-white shadow-2xl backdrop-blur-xl">
                         <SelectGroup>
                           {keys.map((key) => (
-                            <SelectItem key={key} value={key} className="bg-black">
+                            <SelectItem key={key} value={key} className="focus:bg-white/10 focus:text-white cursor-pointer">
                               {key}
                             </SelectItem>
                           ))}

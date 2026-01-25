@@ -342,7 +342,7 @@ export default function AudioDropZone({
   return (
     <>
       {type !== "" && (
-        <div className="h-fit transition-all bg-black text-white p-6 mb-6">
+        <div className="h-fit transition-all text-white p-6 mb-6">
           <div className="max-w-2xl mx-auto space-y-6">
             {(isMidiMode || isPreset) && (
               <RequiredFiles
@@ -353,13 +353,12 @@ export default function AudioDropZone({
             )}
 
             <div
-              className={`border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-300 cursor-pointer ${
-                isDragging
-                  ? "border-primary bg-primary/10"
-                  : isCalculatingBPM
+              className={`border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-300 cursor-pointer ${isDragging
+                ? "border-primary bg-primary/10"
+                : isCalculatingBPM
                   ? "border-yellow-400 bg-yellow-400/10"
                   : "border-white/20 hover:border-white/40"
-              }`}
+                }`}
               onDrop={handleDrop}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
@@ -380,12 +379,11 @@ export default function AudioDropZone({
                   <p className="text-sm text-white/60">
                     {isCalculatingBPM
                       ? "Please wait while we analyze the audio file..."
-                      : `or click to browse${
-                          audioFiles.length > 0 &&
-                          getMissingFileTypes().length > 0
-                            ? " the missing files"
-                            : " files"
-                        }`}
+                      : `or click to browse${audioFiles.length > 0 &&
+                        getMissingFileTypes().length > 0
+                        ? " the missing files"
+                        : " files"
+                      }`}
                   </p>
                 </div>
               </div>
