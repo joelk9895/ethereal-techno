@@ -108,8 +108,8 @@ export default function ProducerLayout({ children }: { children: React.ReactNode
                     onSignOut={() => logout().then(() => router.push("/signin"))}
                 />
 
-                <main className="flex-1 h-full overflow-y-auto overflow-x-hidden pb-32 lg:pb-12 no-scrollbar relative z-10">
-                    <div className="max-w-7xl mx-auto w-full min-h-full flex flex-col">
+                <main className="flex-1 h-full overflow-y-auto overflow-x-hidden pb-32 lg:pb-12 no-scrollbar relative z-10 px-16">
+                    <div className="mx-auto w-full min-h-full flex flex-col">
                         {children}
                     </div>
                 </main>

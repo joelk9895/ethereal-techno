@@ -183,6 +183,8 @@ model User {
   telegramChatId          String? @unique
   telegramUsername        String?
   telegramConnectionToken String? @unique
+  profileViews            Int     @default(0)
+  messageClicks           Int     @default(0)
 }
 
 model Session {

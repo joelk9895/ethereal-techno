@@ -49,41 +49,41 @@ const NavItem: React.FC<NavItemProps> = ({ label, icon: Icon, active, onClick, e
             whileHover={{ x: 4, backgroundColor: "rgba(255, 255, 255, 0.05)" }}
             onClick={onClick}
             className={`
-                group w-full flex items-center justify-between py-3 px-4 rounded-xl border transition-all duration-300
+                group w-full flex items-center justify-between py-4 px-5 rounded-xl border transition-all duration-300
                 ${active
-                    ? "bg-white/[0.08] text-white border-white/10 shadow-[0_0_15px_rgba(255,255,255,0.05)]"
-                    : "border-transparent text-white/40 hover:text-white hover:border-white/5"
+                    ? "bg-white/[0.1] text-white border-white/20 shadow-[0_0_20px_rgba(255,255,255,0.05)]"
+                    : "border-transparent text-white/50 hover:text-white hover:border-white/10 hover:bg-white/5"
                 }
             `}
         >
             <div className="flex items-center gap-4">
-                <Icon className={`w-4 h-4 transition-colors ${active ? "text-primary" : "text-white/40 group-hover:text-white"}`} />
-                <span className={`text-xs font-sans uppercase tracking-widest transition-colors ${active ? "text-white font-semibold" : "text-white/40 group-hover:text-white"}`}>
+                <Icon className={`w-5 h-5 transition-colors ${active ? "text-primary" : "text-white/40 group-hover:text-white"}`} />
+                <span className={`text-sm font-sans uppercase tracking-widest font-medium transition-colors ${active ? "text-white" : "text-white/40 group-hover:text-white"}`}>
                     {label}
                 </span>
             </div>
-            {external && <ArrowUpRight className="w-3 h-3 text-white/20 group-hover:text-primary transition-colors" />}
+            {external && <ArrowUpRight className="w-4 h-4 text-white/20 group-hover:text-primary transition-colors" />}
         </motion.button>
     </div>
 );
 
 export default function RightSidebar({ user, activeTab, onNavigate, onSignOut }: RightSidebarProps) {
     return (
-        <aside className="w-full lg:w-80 lg:h-full border-l border-white/5 bg-black/50 backdrop-blur-xl z-20 pt-24 pb-12 px-8 flex flex-col justify-between overflow-y-auto no-scrollbar">
+        <aside className="w-full lg:w-80 lg:h-full border-l border-white/10 bg-black/80 backdrop-blur-2xl z-20 pt-24 pb-12 px-8 flex flex-col justify-between overflow-y-auto no-scrollbar shadow-2xl">
             <div>
-                <div className="mb-8 px-4">
-                    <div className="text-xs font-sans text-white/40 uppercase tracking-widest mb-4">My Account</div>
-                    <h1 className="font-main text-3xl text-white uppercase leading-none break-words tracking-wide mb-3">
+                <div className="mb-10 px-2">
+                    <div className="text-sm font-sans text-white/60 uppercase tracking-widest mb-6">My Account</div>
+                    <h1 className="font-main text-4xl text-white uppercase leading-none break-words tracking-wide mb-4">
                         {user.name}
                     </h1>
                     <div className="flex items-center gap-2">
-                        <span className="text-xs font-sans text-primary uppercase tracking-widest">@{user.username}</span>
-                        <span className="w-1 h-1 rounded-full bg-white/20" />
-                        <span className="text-xs font-sans text-white/40 uppercase tracking-widest font-medium">{user.type}</span>
+                        <span className="text-sm font-sans text-primary uppercase tracking-widest font-medium">@{user.username}</span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-white/20" />
+                        <span className="text-sm font-sans text-white/40 uppercase tracking-widest font-medium">{user.type}</span>
                     </div>
                 </div>
 
-                <nav className="space-y-1">
+                <nav className="space-y-2">
                     {user.type === "ARTIST" ? (
                         <>
                             <NavItem
@@ -157,7 +157,7 @@ export default function RightSidebar({ user, activeTab, onNavigate, onSignOut }:
                 </nav>
 
                 <div className="mt-12">
-                    <div className="space-y-1">
+                    <div className="space-y-2">
                         {user.type === "ARTIST" && (
                             <NavItem
                                 id="free-content"
@@ -191,10 +191,10 @@ export default function RightSidebar({ user, activeTab, onNavigate, onSignOut }:
             <div className="mt-12">
                 <button
                     onClick={onSignOut}
-                    className="group w-full flex items-center justify-start gap-4 py-3 px-4 rounded-xl border border-transparent transition-all duration-300 text-white/40 hover:text-red-400 hover:bg-white/5"
+                    className="group w-full flex items-center justify-start gap-4 py-4 px-5 rounded-xl border border-transparent transition-all duration-300 text-white/40 hover:text-red-400 hover:bg-white/5"
                 >
-                    <LogOut className="w-4 h-4 transition-colors" />
-                    <span className="text-xs font-sans uppercase tracking-widest">Sign Out</span>
+                    <LogOut className="w-5 h-5 transition-colors" />
+                    <span className="text-sm font-sans uppercase tracking-widest font-medium">Sign Out</span>
                 </button>
             </div>
         </aside>
