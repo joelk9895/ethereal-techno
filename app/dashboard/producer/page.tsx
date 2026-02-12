@@ -25,6 +25,15 @@ export default function ProducerOverviewPage() {
     const [producer, setProducer] = useState<ProducerData | null>(null);
     const [loading, setLoading] = useState(true);
 
+    const [greeting, setGreeting] = useState("");
+
+    useEffect(() => {
+        const hour = new Date().getHours();
+        if (hour >= 5 && hour < 12) setGreeting("Good Morning");
+        else if (hour >= 12 && hour < 18) setGreeting("Good Afternoon");
+        else setGreeting("Good Evening");
+    }, []);
+
     useEffect(() => {
         const fetchProfile = async () => {
             const profileRes = await authenticatedFetch("/api/producer/profile");
@@ -54,24 +63,20 @@ export default function ProducerOverviewPage() {
             className="w-full max-w-none space-y-12 pt-16"
         >
             {/* HERO SECTION */}
-            <div className="flex flex-col gap-2">
-                <h2 className="font-main text-5xl md:text-7xl uppercase text-white tracking-tight">
-                    Good {new Date().getHours() < 12 ? "Morning" : new Date().getHours() < 18 ? "Afternoon" : "Evening"},<br />
-                    <span className="text-white/40">{producer?.artistName || producer?.name || "Producer"}</span>.
+            <div className="flex flex-col gap-3">
+                <h2 className="font-main text-6xl md:text-8xl uppercase text-white tracking-tight">
+                    {greeting}, <span className="text-white/40">{producer?.artistName || producer?.name || "Producer"}</span>.
                 </h2>
+            </div>
+
+            {/* News Feed */}
+            <div className="w-full">
+                <NewsFeed />
             </div>
 
             {/* Verified Producers (Apple Music Style) */}
             <div className="w-full">
                 <ProducerList />
-            </div>
-
-            {/* Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* News Feed */}
-                <div className="lg:col-span-3">
-                    <NewsFeed />
-                </div>
             </div>
         </motion.div>
     );

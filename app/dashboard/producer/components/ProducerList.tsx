@@ -94,8 +94,8 @@ export default function ProducerList() {
     return (
         <div className="relative group/container">
             <div className="flex items-center justify-between mb-6 px-2">
-                <div className="flex items-center gap-4 text-white/40 uppercase tracking-widest text-sm font-mono">
-                    <User className="w-4 h-4" />
+                <div className="flex items-center gap-4 text-white/50 uppercase tracking-widest text-base font-mono">
+                    <User className="w-5 h-5" />
                     <span>Verified Producers</span>
                 </div>
                 <div className="flex gap-2 opacity-0 group-hover/container:opacity-100 transition-opacity">
