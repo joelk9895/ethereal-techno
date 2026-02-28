@@ -139,23 +139,20 @@ export default function CommunityPage() {
             <BackgroundEffects />
             <Navigation />
 
-            <section className="relative min-h-screen flex flex-col justify-center px-6 md:px-12 pt-20">
+            <section className="relative min-h-[90vh] flex flex-col justify-center px-6 md:px-12 pt-16">
                 <div className="w-full max-w-[90vw]">
-                    <MaskedText
-                        lines={["THE ETHEREAL", "TECHNO COMMUNITY"]}
-                        className="font-main text-[14vw] leading-[0.9] uppercase text-white tracking-tight"
-                    />
+                    <h1 className="font-main font-light text-[12vw] md:text-[12vw] leading-[0.9] uppercase text-white tracking-relaxed mb-4 md:mb-6">
+                        THE ETHEREAL<br />TECHNO COMMUNITY
+                    </h1>
 
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        transition={{ delay: 1, duration: 1 }}
-                        className="mt-12 md:mt-16 flex flex-col items-start gap-6"
+                        transition={{ delay: 0.5, duration: 1 }}
+                        className="flex flex-col items-start"
                     >
-                        <div className="w-12 h-1 bg-primary" />
-                        <p className="text-lg md:text-2xl text-white/60 font-light max-w-xl leading-relaxed">
-                            A circle of producers <br />
-                            <span className="text-white">shaping a deeper sound.</span>
+                        <p className="text-xl md:text-3xl text-[#E8D124] font-main uppercase tracking-wide max-w-2xl leading-tight">
+                            A circle of producers shaping a deeper sound.
                         </p>
                     </motion.div>
                 </div>
@@ -174,8 +171,7 @@ export default function CommunityPage() {
                     </motion.p>
                     <motion.div variants={fadeVar} className="w-px h-24 bg-white/10 mx-auto" />
                     <motion.p variants={fadeVar} className="text-xl md:text-2xl text-white/50 leading-relaxed max-w-2xl mx-auto">
-                        Our community unites verified producers who share this vision.
-                        To maintain quality, access is reserved strictly for <span className="text-white underline decoration-primary/30 underline-offset-4">verified producers</span>.
+                        The <span className="text-white">Ethereal Techno Circle</span> is a curated space for verified producers who share this vision and contribute to its evolution. Access is reserved to preserve quality and authenticity.
                     </motion.p>
                 </motion.div>
             </section>
@@ -200,7 +196,7 @@ export default function CommunityPage() {
             <section className="relative min-h-[80vh] flex items-center justify-center px-6">
                 <div className="w-full text-center space-y-12">
                     <p className="text-xl text-white/50 font-light max-w-xl mx-auto">
-                        If you create music that reflects this spirit, apply to join.
+                        If your music reflects the Ethereal Techno spirit, apply to join the Circle.
                     </p>
                     {user ? (
                         user.type === "USER" ? (
@@ -225,7 +221,11 @@ export default function CommunityPage() {
 const VerifiedDashboard: React.FC<VerifiedDashboardProps> = ({ user, authUser, router, news }) => {
 
     const handleNavigation = (id: string) => {
-        if (id === "community") return;
+        if (id === "sounds") return router.push("/libraries");
+        if (id === "bundles") return router.push("/bundles");
+        if (id === "merch") return router.push("/merch");
+        if (id === "free-content") return router.push("/free/content");
+
         switch (id) {
             case "free-content": router.push("/free/content"); break;
             case "overview": router.push("/dashboard/producer"); break;
@@ -546,12 +546,12 @@ const FeaturesSection: React.FC = () => {
         <section ref={containerRef} className="relative py-32 px-6 md:px-12 min-h-[120vh] flex items-center">
             <div className="max-w-7xl mx-auto w-full">
                 <div className="mb-24">
-                    <span className="text-xs font-mono text-primary uppercase tracking-widest">02 // Inside The Circle</span>
+                    <span className="text-xs font-mono text-primary uppercase tracking-widest">02 // INSIDE THE ETHEREAL TECHNO CIRCLE</span>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-8">
-                    <ParallaxTile y={yLeft} icon={Download} title="Exclusive Free Packs" desc="Verified-only resources." index="01" />
-                    <ParallaxTile y={yMiddle} icon={MessageCircle} title="Private Telegram" desc="Direct line to the core." index="02" />
-                    <ParallaxTile y={yRight} icon={Trophy} title="Contests & Collabs" desc="Shape the future." index="03" />
+                    <ParallaxTile y={yLeft} icon={Download} title="EXCLUSIVE FREE PACKS" desc="Curated sounds reserved for verified members." index="01" />
+                    <ParallaxTile y={yMiddle} icon={MessageCircle} title="PRIVATE TELEGRAM" desc="A private space for dialogue, feedback, and collaboration." index="02" />
+                    <ParallaxTile y={yRight} icon={Trophy} title="CONTESTS & COLLABS" desc="Creative challenges that shape the evolution of Ethereal Techno." index="03" />
                 </div>
             </div>
         </section>
@@ -578,7 +578,7 @@ const Navigation: React.FC = () => (
 const Footer: React.FC = () => (
     <footer className="w-full py-10 px-8 md:px-12 border-t border-white/5 flex flex-col md:flex-row justify-between items-end text-white/20 text-[10px] uppercase tracking-[0.2em]">
         <div className="mb-4 md:mb-0">Ethereal Techno<br />Community</div>
-        <div className="text-right font-mono">&copy; 2025</div>
+        <div className="text-right font-mono">&copy; {new Date().getFullYear()}</div>
     </footer>
 );
 

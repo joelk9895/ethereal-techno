@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import {
     Loader2,
     Upload,
@@ -137,7 +138,7 @@ export default function ApplyPage() {
         canCreateSerum: false,
         canCreateDiva: false,
         agreedToTerms: false,
-        allowContact: false
+        allowContact: true
     });
 
     const URL_PATTERNS: Record<string, RegExp> = {
@@ -525,12 +526,11 @@ export default function ApplyPage() {
                             </p>
                         </motion.div>
 
-                        <form className="space-y-40" onSubmit={handleSubmit}>
+                        <form className="space-y-12" onSubmit={handleSubmit}>
 
                             {!user && (
                                 <motion.section variants={fadeInUp} initial="hidden" animate="visible">
                                     <div className="bg-[#1E1E1E] rounded-3xl p-8 border border-white/5 space-y-8">
-                                        <SectionHeader number="00" title="APPLICATION SETUP" />
                                         <div className="grid md:grid-cols-2 gap-8">
                                             <MinimalInput
                                                 label="First Name"
@@ -575,10 +575,12 @@ export default function ApplyPage() {
                                                 </div>
                                                 <div className="space-y-2">
                                                     <span className="text-sm text-white font-medium group-hover:text-white transition-colors select-none block">
-                                                        Allow other verified producers to contact me via the Ethereal Techno platform.
+                                                        Connect with fellow Verified Producers.
                                                     </span>
                                                     <p className="text-white/60 text-xs font-light">
-                                                        Your email address will not be shared. Messages are sent through a private contact form.
+                                                        Only verified Ethereal Techno producers can message you.
+                                                        <br />
+                                                        Your email is never shared. All communication stays inside the platform.
                                                     </p>
                                                 </div>
                                             </div>
@@ -589,9 +591,7 @@ export default function ApplyPage() {
 
                             {/* 01. ARTIST IDENTITY */}
                             <motion.section variants={fadeInUp} initial="hidden" animate="visible" transition={{ delay: 0.1 }}>
-                                <div className="bg-[#1E1E1E] rounded-3xl p-8 border border-white/5 space-y-12">
-                                    <SectionHeader number={!user ? "01" : "01"} title="ARTIST IDENTITY" />
-
+                                <div className="bg-[#1E1E1E] rounded-3xl p-8 border border-white/5 space-y-8">
                                     {/* Artist Name */}
                                     <MinimalInput
                                         label="ARTIST NAME"
@@ -613,7 +613,7 @@ export default function ApplyPage() {
                                             <input type="file" accept="image/*" onChange={handlePhotoUpload} className="absolute inset-0 opacity-0 cursor-pointer" />
                                         </div>
                                         <div className="flex-1 space-y-2 pt-2">
-                                            <h3 className="font-main text-xl uppercase text-white tracking-wide">Artist Avatar</h3>
+                                            <p className="text-white text-xl font-light">Artist Avatar</p>
                                             <p className="text-white/60 font-light text-sm">Upload a high-resolution image. This will represent you within the Circle.</p>
                                         </div>
                                     </div>
@@ -623,7 +623,6 @@ export default function ApplyPage() {
                             {/* 02. SOCIAL PRESENCE */}
                             <motion.section variants={fadeInUp} initial="hidden" animate="visible" transition={{ delay: 0.2 }}>
                                 <div className="bg-[#1E1E1E] rounded-3xl p-8 border border-white/5 space-y-8">
-                                    <SectionHeader number={!user ? "02" : "02"} title="SOCIAL PRESENCE" />
                                     <div className="grid md:grid-cols-2 gap-8">
                                         <MinimalInput
                                             label="Instagram"
@@ -692,7 +691,6 @@ export default function ApplyPage() {
                             {/* 03. MUSIC PLATFORMS */}
                             <motion.section variants={fadeInUp} initial="hidden" animate="visible" transition={{ delay: 0.3 }}>
                                 <div className="bg-[#1E1E1E] rounded-3xl p-8 border border-white/5 space-y-8">
-                                    <SectionHeader number={!user ? "03" : "03"} title="MUSIC PLATFORMS" />
                                     <div className="grid md:grid-cols-1 gap-8">
                                         <MinimalInput
                                             label="Spotify"
@@ -751,7 +749,6 @@ export default function ApplyPage() {
                             {/* 04. EVIDENCE */}
                             <motion.section variants={fadeInUp} initial="hidden" animate="visible" transition={{ delay: 0.4 }}>
                                 <div className="bg-[#1E1E1E] rounded-3xl p-8 border border-white/5 space-y-8">
-                                    <SectionHeader number={!user ? "04" : "04"} title="Evidence" />
                                     <div className="space-y-8">
                                         <p className="text-white text-xl font-light">
                                             Provide links to up to three of your strongest tracks.
@@ -779,13 +776,11 @@ export default function ApplyPage() {
                             {/* 05. CONTRIBUTION */}
                             <motion.section variants={fadeInUp} initial="hidden" animate="visible" transition={{ delay: 0.5 }}>
                                 <div className="bg-[#1E1E1E] rounded-3xl p-8 border border-white/5 space-y-12">
-                                    <SectionHeader number={!user ? "05" : "05"} title="CONTRIBUTION" />
-                                    <div className="space-y-6">
-                                        <label className="font-main text-xl uppercase text-white tracking-wide block mb-4">Production Capabilities</label>
-                                        <p className="text-white/60 leading-relaxed font-light text-sm mb-8">
-                                            What can you contribute to the Ethereal Techno vault?
+                                    <div className="space-y-8">
+                                        <p className="text-white text-xl font-light">
+                                            If we collaborate in the future, what would you enjoy creating for the Ethereal Techno sound library?
                                             <br />
-                                            This information helps us understand your skills. Contribution opportunities are optional and may be explored in the future.
+                                            This is optional and simply helps us understand your creative strengths.
                                         </p>
                                         <div className="grid md:grid-cols-3 gap-4 mb-16">
                                             <CapabilityCheckbox
@@ -809,12 +804,11 @@ export default function ApplyPage() {
                                         </div>
                                     </div>
 
-                                    <div className="space-y-6">
-                                        <label className="font-main text-xl uppercase text-white tracking-wide block mb-4">The Vision</label>
-                                        <p className="text-white/60 leading-relaxed font-light text-sm mb-4">
-                                            Complete the sentence below in your own words.
+                                    <div className="space-y-8 mt-12 pt-12 border-t border-white/5">
+                                        <p className="text-white text-xl font-light mb-4">
+                                            In your own words, what is Ethereal Techno to you?
                                             <br />
-                                            We’re interested in how you perceive Ethereal Techno - think about emotion, atmosphere, intention, or what draws you to this sound.
+                                            Think about emotion, atmosphere, and intention.
                                         </p>
                                         <div className="relative group border-b border-white/20 focus-within:border-primary transition-colors">
                                             <textarea
@@ -862,7 +856,7 @@ export default function ApplyPage() {
                                         {formData.agreedToTerms && <Check size={14} color="white" strokeWidth={3} />}
                                     </div>
                                     <span className="text-sm text-white font-medium group-hover:text-white transition-colors select-none">
-                                        I have read and agree to the Community Rules and Membership Policy.
+                                        I have read and agree to the <Link href="/community-rules" target="_blank" className="underline hover:text-primary transition-colors cursor-pointer" onClick={(e: React.MouseEvent) => e.stopPropagation()}>Ethereal Techno Community Rules and Membership Policy</Link>.
                                     </span>
                                 </div>
 
@@ -975,12 +969,6 @@ const MinimalInput: React.FC<MinimalInputProps> = ({
         </div>
     );
 };
-
-const SectionHeader: React.FC<SectionHeaderProps> = ({ number: _number, title }) => (
-    <div className="flex items-baseline gap-4 mb-8 border-b border-white/5 pb-4">
-        <h2 className="text-xs font-sans text-white/40 uppercase tracking-widest">{title}</h2>
-    </div>
-);
 
 const CapabilityCheckbox: React.FC<CapabilityCheckboxProps> = ({ label, active, onClick, icon: Icon }) => (
     <motion.div

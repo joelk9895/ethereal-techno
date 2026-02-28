@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { User, Camera, Save, Loader2, Link2, ExternalLink, Globe, MapPin, Edit2, Instagram, Facebook, Youtube } from "lucide-react";
-import { authenticatedFetch } from "@/lib/auth";
+import { User, Camera, Save, Loader2, Link2, ExternalLink, Globe, MapPin, Edit2, Instagram, Facebook, Youtube, Shield, Mail, Key, Trash2, CheckSquare, Square, Music, Lock, KeyRound, ChevronRight } from "lucide-react";
+import { authenticatedFetch, logout } from "@/lib/auth";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence, useTransform, useMotionValue, useSpring } from "framer-motion";
 import Loading from "@/app/components/general/loading";
 import { cn } from "@/lib/utils";
@@ -24,6 +26,16 @@ interface ProfileFormData {
     beatport?: string | null;
     bandcamp?: string | null;
     appleMusic?: string | null;
+    track1?: string | null;
+    track2?: string | null;
+    track3?: string | null;
+    username?: string;
+    email?: string;
+    password?: string;
+    allowContact?: boolean;
+    canCreateSamples?: boolean;
+    canCreateSerum?: boolean;
+    canCreateDiva?: boolean;
 }
 
 // Custom Icons
@@ -121,6 +133,9 @@ export default function ProducerProfilePage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const router = useRouter();
 
     const scrollY = useMotionValue(0);
     const smoothScrollY = useSpring(scrollY, { stiffness: 100, damping: 10, mass: 0.5 });
@@ -192,6 +207,27 @@ export default function ProducerProfilePage() {
         }
     };
 
+    const handleDeleteAccount = async () => {
+        setIsDeleting(true);
+        try {
+            const res = await authenticatedFetch("/api/producer/profile", {
+                method: "DELETE",
+            });
+            if (res.ok) {
+                await logout();
+                router.push("/");
+            } else {
+                console.error("Failed to delete account");
+                setIsDeleting(false);
+                setShowDeleteConfirm(false);
+            }
+        } catch (err) {
+            console.error(err);
+            setIsDeleting(false);
+            setShowDeleteConfirm(false);
+        }
+    };
+
     if (loading) {
         return (
             <div className="h-[calc(100vh-12rem)] flex items-center justify-center">
@@ -228,12 +264,12 @@ export default function ProducerProfilePage() {
                     disabled={saving}
                     className={cn(
                         "flex items-center gap-2 px-6 py-2.5 font-bold uppercase tracking-widest text-[10px] transition-colors disabled:opacity-50 active:scale-95 duration-200 rounded-full shadow-lg shadow-white/10 overflow-hidden",
-                        isEditing ? "bg-white text-black hover:bg-primary" : "bg-white/10 text-white hover:bg-white/20"
+                        isEditing ? "bg-white text-black hover:bg-neutral-200" : "bg-primary text-black hover:bg-primary/90 shadow-primary/20"
                     )}
                     initial={false}
                     style={{ y: headerY }}
                     animate={{
-                        width: isEditing ? 160 : 140,
+                        width: isEditing ? 160 : 150,
                     }}
                 >
                     <AnimatePresence mode="wait">
@@ -314,18 +350,18 @@ export default function ProducerProfilePage() {
                             )}
                         </div>
                         <div className="space-y-2 group/input">
-                            <label className="text-[10px] font-mono uppercase tracking-widest text-white/30 pl-1 group-focus-within/input:text-primary transition-colors">Tagline / Bio</label>
+                            <label className="text-[10px] font-mono uppercase tracking-widest text-white/30 pl-1 group-focus-within/input:text-primary transition-colors">VISION</label>
                             {isEditing ? (
                                 <textarea
                                     value={profileForm.quote || ""}
                                     onChange={(e) => setProfileForm({ ...profileForm, quote: e.target.value })}
-                                    placeholder="Short bio or tagline..."
+                                    placeholder="Ethereal Techno is..."
                                     rows={2}
                                     className="w-full bg-black/20 border border-white/10 rounded-2xl px-6 py-4 text-lg md:text-xl text-white/80 focus:text-white focus:outline-none focus:border-primary/50 placeholder:text-white/10 resize-none font-light leading-relaxed transition-all"
                                 />
                             ) : (
                                 <div className="px-6 py-4 text-lg md:text-xl text-white/80 font-light leading-relaxed min-h-[5rem] flex items-center justify-center md:justify-start">
-                                    {profileForm.quote || <span className="text-white/20 italic">No bio set</span>}
+                                    {profileForm.quote || <span className="text-white/20 italic">No vision set</span>}
                                 </div>
                             )}
                         </div>
@@ -355,6 +391,65 @@ export default function ProducerProfilePage() {
                                 last
                                 isEditing={isEditing}
                             />
+                        </div>
+                    </div>
+
+                    <div>
+                        <SectionHeader title="Account" />
+                        <div className="bg-zinc-900/30 border border-white/5 rounded-3xl overflow-hidden backdrop-blur-sm">
+                            <InputRow
+                                label="Username"
+                                value={profileForm.username}
+                                onChange={(v) => setProfileForm({ ...profileForm, username: v })}
+                                icon={<User className="w-5 h-5" />}
+                                isEditing={isEditing}
+                            />
+                            <InputRow
+                                label="Email"
+                                value={profileForm.email}
+                                onChange={(v) => setProfileForm({ ...profileForm, email: v })}
+                                icon={<Mail className="w-5 h-5" />}
+                                last
+                                isEditing={isEditing}
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <SectionHeader title="Security" />
+                        <div className="bg-zinc-900/30 border border-white/5 rounded-3xl overflow-hidden backdrop-blur-sm">
+                            <Link href="/dashboard/producer/profile/password" className="flex items-center gap-4 py-4 px-4 bg-white/5 transition-colors border-b border-white/5 hover:bg-white/10 group">
+                                <div className="w-8 flex items-center justify-center text-white/40 group-hover:text-primary transition-colors">
+                                    <KeyRound className="w-5 h-5" />
+                                </div>
+                                <div className="flex-1 space-y-1">
+                                    <span className="block text-[10px] font-mono uppercase tracking-widest text-white/50">
+                                        Credentials
+                                    </span>
+                                    <span className="block text-sm text-white font-medium">
+                                        Change Password
+                                    </span>
+                                </div>
+                                <div className="text-white/20 group-hover:text-white/50 transition-colors">
+                                    <ChevronRight className="w-4 h-4" />
+                                </div>
+                            </Link>
+                            <div
+                                onClick={() => setShowDeleteConfirm(true)}
+                                className="flex items-center gap-4 py-4 px-4 bg-white/5 transition-colors hover:bg-red-500/10 cursor-pointer"
+                            >
+                                <div className="w-8 flex items-center justify-center text-red-500/70">
+                                    <Trash2 className="w-5 h-5" />
+                                </div>
+                                <div className="flex-1 space-y-1">
+                                    <span className="block text-[10px] font-mono uppercase tracking-widest text-red-500">
+                                        Danger Zone
+                                    </span>
+                                    <span className="block text-sm text-red-400 font-medium">
+                                        Delete Account
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -456,14 +551,156 @@ export default function ProducerProfilePage() {
                                 value={profileForm.bandcamp}
                                 onChange={(v) => setProfileForm({ ...profileForm, bandcamp: v })}
                                 placeholder="Bandcamp URL"
-                                last
                                 icon={<BandcampIcon className="w-5 h-5" />}
+                                isEditing={isEditing}
+                            />
+                            <InputRow
+                                label="SoundCloud Track 1"
+                                value={profileForm.track1}
+                                onChange={(v) => setProfileForm({ ...profileForm, track1: v })}
+                                placeholder="SoundCloud Track URL"
+                                icon={<Music className="w-5 h-5" />}
+                                isEditing={isEditing}
+                            />
+                            <InputRow
+                                label="SoundCloud Track 2"
+                                value={profileForm.track2}
+                                onChange={(v) => setProfileForm({ ...profileForm, track2: v })}
+                                placeholder="SoundCloud Track URL"
+                                icon={<Music className="w-5 h-5" />}
+                                isEditing={isEditing}
+                            />
+                            <InputRow
+                                label="SoundCloud Track 3"
+                                value={profileForm.track3}
+                                onChange={(v) => setProfileForm({ ...profileForm, track3: v })}
+                                placeholder="SoundCloud Track URL"
+                                last
+                                icon={<Music className="w-5 h-5" />}
                                 isEditing={isEditing}
                             />
                         </div>
                     </div>
+
+                    <div>
+                        <SectionHeader title="Producer Capabilities" />
+                        <div className="bg-zinc-900/30 border border-white/5 rounded-3xl overflow-hidden backdrop-blur-sm flex flex-col">
+                            {[
+                                { id: 'canCreateSamples', label: "Produce Audio Loops", val: profileForm.canCreateSamples },
+                                { id: 'canCreateSerum', label: "Design Serum Presets", val: profileForm.canCreateSerum },
+                                { id: 'canCreateDiva', label: "Design Diva Presets", val: profileForm.canCreateDiva }
+                            ].map((cap, i) => (
+                                <div key={cap.id} className={`flex items-center gap-4 py-4 px-4 bg-white/5 transition-colors ${i < 2 ? 'border-b border-white/5' : ''}`}>
+                                    <div className="w-8 flex items-center justify-center text-white/40">
+                                        {cap.val ? <CheckSquare className="w-5 h-5" /> : <Square className="w-5 h-5" />}
+                                    </div>
+                                    <div className="flex-1 flex justify-between items-center">
+                                        <div className="space-y-1">
+                                            <span className="block text-[10px] font-mono uppercase tracking-widest text-white/50">
+                                                Skillset
+                                            </span>
+                                            <span className="block text-sm text-white font-medium">
+                                                {cap.label}
+                                            </span>
+                                        </div>
+                                        {isEditing ? (
+                                            <button
+                                                onClick={() => setProfileForm({ ...profileForm, [cap.id]: !cap.val })}
+                                                className={`w-12 h-6 rounded-full transition-colors flex items-center px-1 ${cap.val ? 'bg-primary' : 'bg-white/10'}`}
+                                            >
+                                                <div className={`w-4 h-4 rounded-full bg-white transition-transform ${cap.val ? 'translate-x-6' : 'translate-x-0'}`} />
+                                            </button>
+                                        ) : (
+                                            <span className="text-xs font-mono uppercase text-white/40" style={{ color: cap.val ? '#A3E635' : 'inherit' }}>
+                                                {cap.val ? 'YES' : 'NO'}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div>
+                        <SectionHeader title="Privacy Options" />
+                        <div className="bg-zinc-900/30 border border-white/5 rounded-3xl overflow-hidden backdrop-blur-sm">
+                            <div className="flex items-center gap-4 py-4 px-4 bg-white/5 transition-colors">
+                                <div className="w-8 flex items-center justify-center text-white/40">
+                                    <Lock className="w-5 h-5" />
+                                </div>
+                                <div className="flex-1 flex justify-between items-center">
+                                    <div className="space-y-1">
+                                        <span className="block text-[10px] font-mono uppercase tracking-widest text-white/50">
+                                            Platform Messages
+                                        </span>
+                                        <span className="block text-sm text-white font-medium">
+                                            Allow Verified Producers to Message Me
+                                        </span>
+                                    </div>
+                                    {isEditing ? (
+                                        <button
+                                            onClick={() => setProfileForm({ ...profileForm, allowContact: !profileForm.allowContact })}
+                                            className={`w-12 h-6 rounded-full transition-colors flex items-center px-1 ${profileForm.allowContact ? 'bg-primary' : 'bg-white/10'}`}
+                                        >
+                                            <div className={`w-4 h-4 rounded-full bg-white transition-transform ${profileForm.allowContact ? 'translate-x-6' : 'translate-x-0'}`} />
+                                        </button>
+                                    ) : (
+                                        <span className="text-xs font-mono uppercase text-white/40" style={{ color: profileForm.allowContact ? '#A3E635' : 'inherit' }}>
+                                            {profileForm.allowContact ? 'YES' : 'NO'}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
+
+            {/* Delete Confirmation Modal */}
+            <AnimatePresence>
+                {showDeleteConfirm && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.95, opacity: 0 }}
+                            className="bg-zinc-900 border border-red-500/20 p-8 rounded-3xl max-w-md w-full shadow-2xl space-y-6"
+                        >
+                            <div className="flex items-center gap-4 text-red-500">
+                                <div className="p-3 bg-red-500/10 rounded-full">
+                                    <Trash2 className="w-6 h-6" />
+                                </div>
+                                <h3 className="text-xl font-bold uppercase tracking-wide">Delete Account</h3>
+                            </div>
+                            <p className="text-white/60 text-sm leading-relaxed">
+                                Are you sure you want to permanently delete your account? This action cannot be undone and you will lose all access, profile data, and associated items.
+                            </p>
+                            <div className="flex justify-end gap-3 pt-4">
+                                <button
+                                    onClick={() => setShowDeleteConfirm(false)}
+                                    disabled={isDeleting}
+                                    className="px-6 py-3 rounded-xl font-semibold text-xs tracking-widest uppercase transition-colors text-white/60 hover:text-white hover:bg-white/5 disabled:opacity-50"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleDeleteAccount}
+                                    disabled={isDeleting}
+                                    className="px-6 py-3 rounded-xl font-semibold text-xs tracking-widest uppercase transition-all bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white disabled:opacity-50 flex items-center gap-2 border border-red-500/20 text-nowrap"
+                                >
+                                    {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                                    {isDeleting ? "Deleting..." : "Yes, Delete"}
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </motion.div>
     );
 }

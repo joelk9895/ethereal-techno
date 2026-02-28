@@ -49,14 +49,10 @@ export default function ProducerLayout({ children }: { children: React.ReactNode
     }, [router]);
 
     const handleNavigation = (id: string) => {
-        if (id === "free-content") {
-            router.push("/free/content");
-            return;
-        }
-        if (id === "community") {
-            router.push("/community");
-            return;
-        }
+        if (id === "sounds") return router.push("/libraries");
+        if (id === "bundles") return router.push("/bundles");
+        if (id === "merch") return router.push("/merch");
+        if (id === "free-content") return router.push("/free/content");
 
         switch (id) {
             case "overview":

@@ -265,14 +265,11 @@ export default function DashboardPage() {
     };
 
     const handleNavigation = (id: string) => {
-        if (id === "community") {
-            router.push("/community");
-            return;
-        }
-        if (id === "shop") {
-            router.push("/shop");
-            return;
-        }
+        if (id === "sounds") return router.push("/libraries");
+        if (id === "bundles") return router.push("/bundles");
+        if (id === "merch") return router.push("/merch");
+        if (id === "free-content") return router.push("/free/content");
+
         setActiveTab(id);
     };
 

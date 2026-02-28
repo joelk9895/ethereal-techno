@@ -75,7 +75,7 @@ export default function ProducerOrdersPage() {
                                 {order.product}
                             </div>
                             <div className="col-span-2 font-mono text-sm text-white/60">
-                                ${order.amount.toFixed(2)}
+                                €{order.amount.toFixed(2)}
                             </div>
                             <div className="col-span-2 text-right">
                                 {order.downloadUrl ? (

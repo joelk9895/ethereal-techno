@@ -92,14 +92,18 @@ model Preset {
 }
 
 model Constructionkit {
-  id          String        @id @default(uuid()) @map("_id")
-  kitName     String
-  description String?
-  createdAt   DateTime      @default(now())
-  price       Float         @default(0)
-  status      ContentStatus @default(PENDING)
+  id                String        @id @default(uuid()) @map("_id")
+  kitName           String
+  description       String?
+  createdAt         DateTime      @default(now())
+  price             Float         @default(0)
+  status            ContentStatus @default(PENDING)
+  isFreeForVerified Boolean       @default(false)
+  category          String?
+  artworkUrl        String?
+  shortDescription  String?
 
-  userId String
+  userId String @db.ObjectId
   user   User   @relation(fields: [userId], references: [id])
 
   metadataId String
@@ -170,6 +174,7 @@ model User {
   canCreateSamples   Boolean             @default(false)
   canCreateSerum     Boolean             @default(false)
   canCreateDiva      Boolean             @default(false)
+  allowContact       Boolean             @default(true)
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
   artistApplications ArtistApplication[]
@@ -180,9 +185,9 @@ model User {
   loopandmidis       Loopandmidi[]
   presets            Preset[]
 
-  telegramChatId          String? @unique
+  telegramChatId          String?
   telegramUsername        String?
-  telegramConnectionToken String? @unique
+  telegramConnectionToken String?
   profileViews            Int     @default(0)
   messageClicks           Int     @default(0)
 }

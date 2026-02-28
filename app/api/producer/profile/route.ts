@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/app/lib/database";
 import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
 
 const JWT_SECRET =
   process.env.JWT_SECRET || "your-secret-key-change-in-production";
@@ -12,10 +13,17 @@ interface JWTPayload {
 }
 
 interface UpdateProfileBody {
+  username?: string;
+  email?: string;
+  password?: string;
   artistName?: string;
   city?: string | null;
   country?: string | null;
   quote?: string | null;
+  allowContact?: boolean;
+  canCreateSamples?: boolean;
+  canCreateSerum?: boolean;
+  canCreateDiva?: boolean;
   instagram?: string | null;
   tiktok?: string | null;
   facebook?: string | null;
@@ -111,6 +119,7 @@ export async function GET(request: NextRequest) {
       canCreateSamples: user.canCreateSamples,
       canCreateSerum: user.canCreateSerum,
       canCreateDiva: user.canCreateDiva,
+      allowContact: user.allowContact,
 
       createdAt: user.createdAt,
       approvedAt: user.approvedAt,
@@ -153,36 +162,103 @@ export async function PATCH(request: NextRequest) {
 
     const body = (await request.json()) as UpdateProfileBody;
 
+    // Build update data
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const updateData: any = {
+      ...(body.username !== undefined && { username: body.username }),
+      ...(body.email !== undefined && { email: body.email }),
+      ...(body.artistName !== undefined && { artistName: body.artistName }),
+      ...(body.city !== undefined && { city: body.city }),
+      ...(body.country !== undefined && { country: body.country }),
+      ...(body.quote !== undefined && { quote: body.quote }),
+      ...(body.instagram !== undefined && { instagram: body.instagram }),
+      ...(body.tiktok !== undefined && { tiktok: body.tiktok }),
+      ...(body.facebook !== undefined && { facebook: body.facebook }),
+      ...(body.youtube !== undefined && { youtube: body.youtube }),
+      ...(body.x !== undefined && { x: body.x }),
+      ...(body.linktree !== undefined && { linktree: body.linktree }),
+      ...(body.soundcloud !== undefined && { soundcloud: body.soundcloud }),
+      ...(body.spotify !== undefined && { spotify: body.spotify }),
+      ...(body.beatport !== undefined && { beatport: body.beatport }),
+      ...(body.bandcamp !== undefined && { bandcamp: body.bandcamp }),
+      ...(body.appleMusic !== undefined && { appleMusic: body.appleMusic }),
+      ...(body.track1 !== undefined && { track1: body.track1 }),
+      ...(body.track2 !== undefined && { track2: body.track2 }),
+      ...(body.track3 !== undefined && { track3: body.track3 }),
+      ...(body.billing !== undefined && { billing: body.billing }),
+      ...(body.allowContact !== undefined && { allowContact: body.allowContact }),
+      ...(body.canCreateSamples !== undefined && { canCreateSamples: body.canCreateSamples }),
+      ...(body.canCreateSerum !== undefined && { canCreateSerum: body.canCreateSerum }),
+      ...(body.canCreateDiva !== undefined && { canCreateDiva: body.canCreateDiva }),
+    };
+
+    if (body.password) {
+      updateData.password = await bcrypt.hash(body.password, 10);
+    }
+
+    // Check for unique constraint conflicts if email or username is updated
+    if (updateData.email || updateData.username) {
+      const existingUser = await prisma.user.findFirst({
+        where: {
+          OR: [
+            ...(updateData.email ? [{ email: updateData.email }] : []),
+            ...(updateData.username ? [{ username: updateData.username }] : [])
+          ],
+          NOT: { id: decoded.userId }
+        }
+      });
+
+      if (existingUser) {
+        return NextResponse.json({ error: "Username or Email already in use." }, { status: 400 });
+      }
+    }
+
     // Update User model directly
     const updatedUser = await prisma.user.update({
       where: { id: decoded.userId },
-      data: {
-        ...(body.artistName !== undefined && { artistName: body.artistName }),
-        ...(body.city !== undefined && { city: body.city }),
-        ...(body.country !== undefined && { country: body.country }),
-        ...(body.quote !== undefined && { quote: body.quote }),
-        ...(body.instagram !== undefined && { instagram: body.instagram }),
-        ...(body.tiktok !== undefined && { tiktok: body.tiktok }),
-        ...(body.facebook !== undefined && { facebook: body.facebook }),
-        ...(body.youtube !== undefined && { youtube: body.youtube }),
-        ...(body.x !== undefined && { x: body.x }),
-        ...(body.linktree !== undefined && { linktree: body.linktree }),
-        ...(body.soundcloud !== undefined && { soundcloud: body.soundcloud }),
-        ...(body.spotify !== undefined && { spotify: body.spotify }),
-        ...(body.beatport !== undefined && { beatport: body.beatport }),
-        ...(body.bandcamp !== undefined && { bandcamp: body.bandcamp }),
-        ...(body.appleMusic !== undefined && { appleMusic: body.appleMusic }),
-        ...(body.track1 !== undefined && { track1: body.track1 }),
-        ...(body.track2 !== undefined && { track2: body.track2 }),
-        ...(body.track3 !== undefined && { track3: body.track3 }),
-        ...(body.billing !== undefined && { billing: body.billing }),
-      },
+      data: updateData,
     });
 
     // Return the updated shape (simplified for PATCH response)
     return NextResponse.json({ producer: updatedUser });
   } catch (error) {
     console.error("Profile PATCH Error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const authHeader = request.headers.get("authorization");
+
+    if (!authHeader?.startsWith("Bearer ")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const token = authHeader.substring(7);
+    let decoded: JWTPayload;
+
+    try {
+      decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid or expired token" },
+        { status: 401 }
+      );
+    }
+
+    // Delete the user from the database
+    // Prisma's onDelete: Cascade will handle related ArtistApplications, Sessions, RiskLogs
+    await prisma.user.delete({
+      where: { id: decoded.userId },
+    });
+
+    return NextResponse.json({ success: true, message: "Account deleted successfully." });
+  } catch (error) {
+    console.error("Profile DELETE Error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

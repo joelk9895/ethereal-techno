@@ -11,7 +11,9 @@ import {
     ShoppingBag,
     History,
     Library,
-    CreditCard
+    CreditCard,
+    Music,
+    Package
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -73,14 +75,9 @@ export default function RightSidebar({ user, activeTab, onNavigate, onSignOut }:
             <div>
                 <div className="mb-10 px-2">
                     <div className="text-sm font-sans text-white/60 uppercase tracking-widest mb-6">My Account</div>
-                    <h1 className="font-main text-4xl text-white uppercase leading-none break-words tracking-wide mb-4">
+                    <h1 className="font-main text-4xl text-white uppercase leading-none break-words tracking-wide mb-2">
                         {user.name}
                     </h1>
-                    <div className="flex items-center gap-2">
-                        <span className="text-sm font-sans text-primary uppercase tracking-widest font-medium">@{user.username}</span>
-                        <span className="w-1.5 h-1.5 rounded-full bg-white/20" />
-                        <span className="text-sm font-sans text-white/40 uppercase tracking-widest font-medium">{user.type}</span>
-                    </div>
                 </div>
 
                 <nav className="space-y-2">
@@ -88,14 +85,14 @@ export default function RightSidebar({ user, activeTab, onNavigate, onSignOut }:
                         <>
                             <NavItem
                                 id="overview"
-                                label="Overview"
+                                label="Dashboard"
                                 icon={LayoutDashboard}
                                 active={activeTab === "overview"}
                                 onClick={() => onNavigate("overview")}
                             />
                             <NavItem
                                 id="profile"
-                                label="Profile & Socials"
+                                label="Profile"
                                 icon={User}
                                 active={activeTab === "profile"}
                                 onClick={() => onNavigate("profile")}
@@ -119,7 +116,7 @@ export default function RightSidebar({ user, activeTab, onNavigate, onSignOut }:
                         <>
                             <NavItem
                                 id="home"
-                                label="Overview"
+                                label="Dashboard"
                                 icon={LayoutDashboard}
                                 active={activeTab === "home"}
                                 onClick={() => onNavigate("home")}
@@ -158,30 +155,36 @@ export default function RightSidebar({ user, activeTab, onNavigate, onSignOut }:
 
                 <div className="mt-12">
                     <div className="space-y-2">
-                        {user.type === "ARTIST" && (
-                            <NavItem
-                                id="free-content"
-                                label="Free Packs Zone"
-                                icon={ArrowUpRight}
-                                active={false}
-                                onClick={() => onNavigate("free-content")}
-                                external
-                            />
-                        )}
                         <NavItem
-                            id="community"
-                            label="Community Hub"
-                            icon={Users}
+                            id="sounds"
+                            label="Browse Sounds"
+                            icon={Music}
                             active={false}
-                            onClick={() => onNavigate("community")}
+                            onClick={() => onNavigate("sounds")}
                             external
                         />
                         <NavItem
-                            id="shop"
-                            label="Browse Shop"
+                            id="bundles"
+                            label="Browse Bundles"
+                            icon={Package}
+                            active={false}
+                            onClick={() => onNavigate("bundles")}
+                            external
+                        />
+                        <NavItem
+                            id="merch"
+                            label="Browse Merch"
                             icon={ShoppingBag}
                             active={false}
-                            onClick={() => onNavigate("shop")}
+                            onClick={() => onNavigate("merch")}
+                            external
+                        />
+                        <NavItem
+                            id="free-content"
+                            label="Free Packs"
+                            icon={ArrowUpRight}
+                            active={false}
+                            onClick={() => onNavigate("free-content")}
                             external
                         />
                     </div>

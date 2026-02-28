@@ -11,7 +11,14 @@ export async function POST(
     const paramsResolved = await params;
     const { id } = paramsResolved;
     const body = await req.json();
-    const { files, defaultFullLoopFileName } = body;
+    const {
+      files,
+      defaultFullLoopFileName,
+      isFreeForVerified,
+      category,
+      artworkUrl,
+      shortDescription
+    } = body;
 
     if (!Array.isArray(files) || files.length === 0) {
       return NextResponse.json(
@@ -41,9 +48,9 @@ export async function POST(
     // Single transaction for all files
     const result = await prisma.$transaction(
       async (tx) => {
-        // Ensure construction kit exists or will be created
-        let kit = await tx.constructionkit.findUnique({
-          where: { id },
+        // Ensure construction kit exists or will be created (lookup by kitName since id is auto-generated)
+        let kit = await tx.constructionkit.findFirst({
+          where: { kitName: id },
         });
 
         // First, ensure a default user exists
@@ -139,10 +146,14 @@ export async function POST(
 
         if (!kit) {
           // This can only be reached if defaultFullLoopId is set
+          // Let Prisma auto-generate a MongoDB-compatible id
           kit = await tx.constructionkit.create({
             data: {
-              id,
               kitName: id,
+              isFreeForVerified: isFreeForVerified ?? false,
+              category: category || null,
+              artworkUrl: artworkUrl || null,
+              shortDescription: shortDescription || null,
               defaultFullLoop: {
                 connect: { id: defaultFullLoopId! }, // Non-null assertion is safe here
               },
@@ -160,8 +171,12 @@ export async function POST(
         } else {
           // Update existing kit by connecting the new content
           kit = await tx.constructionkit.update({
-            where: { id },
+            where: { id: kit.id },
             data: {
+              ...(isFreeForVerified !== undefined && { isFreeForVerified }),
+              ...(category !== undefined && { category }),
+              ...(artworkUrl !== undefined && { artworkUrl }),
+              ...(shortDescription !== undefined && { shortDescription }),
               // Only update the default loop if a new one is being set
               ...(defaultFullLoopId && {
                 defaultFullLoop: {
@@ -208,8 +223,8 @@ export async function GET(
   try {
     const { id } = await params;
 
-    const constructionKit = await prisma.constructionkit.findUnique({
-      where: { id },
+    const constructionKit = await prisma.constructionkit.findFirst({
+      where: { kitName: id },
       include: { contents: true },
     });
 
@@ -239,7 +254,13 @@ export async function PUT(
     const paramsResolved = await params;
     const { id } = paramsResolved;
     const body = await req.json();
-    const { defaultFullLoopIdentifier } = body;
+    const {
+      defaultFullLoopIdentifier,
+      isFreeForVerified,
+      category,
+      artworkUrl,
+      shortDescription
+    } = body;
 
     if (!defaultFullLoopIdentifier) {
       return NextResponse.json(
@@ -250,42 +271,55 @@ export async function PUT(
 
     // Update the construction kit with the new default full loop
     const result = await prisma.$transaction(async (tx) => {
+      // Find the kit first
+      const kit = await tx.constructionkit.findFirst({
+        where: { kitName: id },
+        include: { contents: true },
+      });
+
+      if (!kit) {
+        throw new Error("Construction kit not found");
+      }
+
       // Check if identifier is a content ID or filename
       let defaultFullLoopContent;
 
-      if (
-        defaultFullLoopIdentifier.includes("-") &&
-        defaultFullLoopIdentifier.length === 36
-      ) {
-        // It's a UUID (content ID)
-        defaultFullLoopContent = await tx.content.findUnique({
-          where: { id: defaultFullLoopIdentifier },
-        });
-      } else {
-        // It's a filename, find by name in this construction kit
-        const kit = await tx.constructionkit.findUnique({
-          where: { id },
-          include: { contents: true },
-        });
+      if (defaultFullLoopIdentifier) {
+        if (
+          defaultFullLoopIdentifier.includes("-") &&
+          defaultFullLoopIdentifier.length === 36
+        ) {
+          // It's a UUID (content ID)
+          defaultFullLoopContent = await tx.content.findUnique({
+            where: { id: defaultFullLoopIdentifier },
+          });
+        } else {
+          // It's a filename, find by name in this construction kit
+          defaultFullLoopContent = kit.contents.find(
+            (c) =>
+              c.contentName === defaultFullLoopIdentifier &&
+              c.contentType === "Full Loop"
+          );
+        }
 
-        defaultFullLoopContent = kit?.contents.find(
-          (c) =>
-            c.contentName === defaultFullLoopIdentifier &&
-            c.contentType === "Full Loop"
-        );
-      }
-
-      if (!defaultFullLoopContent) {
-        throw new Error("Default full loop not found");
+        if (!defaultFullLoopContent) {
+          throw new Error("Default full loop not found");
+        }
       }
 
       // Update the construction kit
       const updatedKit = await tx.constructionkit.update({
-        where: { id },
+        where: { id: kit.id },
         data: {
-          defaultFullLoop: {
-            connect: { id: defaultFullLoopContent.id },
-          },
+          ...(isFreeForVerified !== undefined && { isFreeForVerified }),
+          ...(category !== undefined && { category }),
+          ...(artworkUrl !== undefined && { artworkUrl }),
+          ...(shortDescription !== undefined && { shortDescription }),
+          ...(defaultFullLoopContent && {
+            defaultFullLoop: {
+              connect: { id: defaultFullLoopContent.id },
+            },
+          }),
         },
       });
 
@@ -317,8 +351,8 @@ export async function DELETE(
     const paramsResolved = await params;
     const { id } = paramsResolved;
 
-    const existingKit = await prisma.constructionkit.findUnique({
-      where: { id },
+    const existingKit = await prisma.constructionkit.findFirst({
+      where: { kitName: id },
       include: {
         contents: {
           include: {
@@ -352,7 +386,7 @@ export async function DELETE(
         // Now, delete the construction kit itself. This removes the foreign key
         // constraint on the Content model for the 'defaultFullLoop'.
         await tx.constructionkit.delete({
-          where: { id },
+          where: { id: existingKit.id },
         });
 
         // With the construction kit gone, we can safely delete the content and files.
