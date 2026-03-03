@@ -6,9 +6,6 @@ import {
     Loader2,
     Mail,
     Globe,
-    CheckCircle,
-    Clock,
-    AlertCircle,
     ArrowRight,
     User,
     History as HistoryIcon,
@@ -99,24 +96,6 @@ interface Application {
     reviewedAt: string | null;
 }
 
-interface ActionButtonProps {
-    label: string;
-    href: string;
-    primary?: boolean;
-    router: ReturnType<typeof useRouter>;
-}
-
-interface ApplicationRowProps {
-    app: Application;
-}
-
-
-
-interface StatBoxProps {
-    label: string;
-    value: string;
-    highlight?: boolean;
-}
 
 interface ProfileFieldProps {
     label: string;
@@ -492,7 +471,7 @@ export default function DashboardPage() {
 
                         {activeTab === "applications" && (
                             <motion.div
-                                key="applications"
+                                key="circle-status"
                                 variants={fadeVar}
                                 initial="hidden"
                                 animate="visible"
@@ -501,37 +480,97 @@ export default function DashboardPage() {
                             >
                                 <div className="flex items-end justify-between mb-12">
                                     <div>
-                                        <h2 className="font-main text-5xl md:text-7xl uppercase text-white mb-2">Applications</h2>
-                                        <p className="text-white/50 text-lg font-light">Status of your requests.</p>
+                                        <h2 className="font-main text-5xl md:text-7xl uppercase text-white mb-2">Circle Status</h2>
+                                        <p className="text-white/50 text-lg font-light">Track your application and membership status within the Circle.</p>
                                     </div>
                                     {user.type === "USER" && (
                                         <button
                                             onClick={() => router.push("/artist/apply")}
                                             className="hidden md:flex items-center gap-2 bg-white text-black px-6 py-3 font-bold uppercase tracking-widest text-xs hover:bg-primary transition-colors"
                                         >
-                                            New Application
+                                            Apply to Join
                                         </button>
                                     )}
                                 </div>
 
-                                {applications.length === 0 ? (
-                                    <div className="py-20 border-y border-white/10 text-center">
-                                        <p className="font-mono text-white/40 uppercase tracking-widest mb-6">No applications found</p>
-                                        <button
-                                            onClick={() => router.push("/artist/apply")}
-                                            className="inline-flex items-center gap-2 text-primary font-bold uppercase tracking-widest text-xs hover:text-white transition-colors"
-                                        >
-                                            Apply Now <ArrowRight className="w-4 h-4" />
-                                        </button>
+                                {/* Case 4: APPROVED — user is already an ARTIST */}
+                                {user.type === "ARTIST" ? (
+                                    <div className="py-16 border-y border-white/10">
+                                        <div className="max-w-2xl">
+                                            <div className="flex items-center gap-3 mb-6">
+                                                <div className="w-3 h-3 rounded-full bg-green-400" />
+                                                <span className="text-xs font-mono uppercase tracking-widest text-green-400">Approved</span>
+                                            </div>
+                                            <h3 className="font-main text-3xl md:text-4xl uppercase text-white mb-6">Welcome to the Circle</h3>
+                                            <div className="space-y-4 text-white/60 text-base font-light leading-relaxed">
+                                                <p>Your application has been approved.</p>
+                                                <p>You are now a verified member of the Ethereal Techno Circle.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : applications.length === 0 ? (
+                                    /* Case 1: NO APPLICATION */
+                                    <div className="py-16 border-y border-white/10">
+                                        <div className="max-w-2xl">
+                                            <p className="text-white/60 text-lg font-light mb-8">You have not applied to join the Circle yet.</p>
+                                            <button
+                                                onClick={() => router.push("/artist/apply")}
+                                                className="inline-flex items-center gap-2 text-primary font-bold uppercase tracking-widest text-xs hover:text-white transition-colors"
+                                            >
+                                                Apply to Join <ArrowRight className="w-4 h-4" />
+                                            </button>
+                                        </div>
                                     </div>
                                 ) : (
-                                    <div className="space-y-4">
-                                        {applications.map((app) => (
-                                            <ApplicationRow key={app.id} app={app} />
-                                        ))}
+                                    /* Case 2 & 3: PENDING or REFUSED */
+                                    <div className="space-y-6">
+                                        {applications.map((app) => {
+                                            if (app.status === "REJECTED") {
+                                                /* Case 3: REFUSED */
+                                                return (
+                                                    <div key={app.id} className="py-16 border-y border-white/10">
+                                                        <div className="max-w-2xl">
+                                                            <div className="flex items-center gap-3 mb-6">
+                                                                <div className="w-3 h-3 rounded-full bg-red-400" />
+                                                                <span className="text-xs font-mono uppercase tracking-widest text-red-400">Not Approved</span>
+                                                            </div>
+                                                            <h3 className="font-main text-3xl md:text-4xl uppercase text-white mb-6">Application Not Approved</h3>
+                                                            <div className="space-y-4 text-white/60 text-base font-light leading-relaxed">
+                                                                <p>Thank you for your interest in joining the Ethereal Techno Circle.</p>
+                                                                <p>After careful review, your application was not approved at this time.</p>
+                                                                <p>We encourage you to continue developing your artistic direction and apply again when you feel your work aligns closely with the Ethereal Techno aesthetic.</p>
+                                                            </div>
+                                                            <button
+                                                                onClick={() => router.push("/artist/apply")}
+                                                                className="mt-8 inline-flex items-center gap-2 text-primary font-bold uppercase tracking-widest text-xs hover:text-white transition-colors"
+                                                            >
+                                                                Apply Again <ArrowRight className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            }
+                                            /* Case 2: PENDING / UNDER_REVIEW */
+                                            return (
+                                                <div key={app.id} className="py-16 border-y border-white/10">
+                                                    <div className="max-w-2xl">
+                                                        <div className="flex items-center gap-3 mb-6">
+                                                            <div className="w-3 h-3 rounded-full bg-yellow-400 animate-pulse" />
+                                                            <span className="text-xs font-mono uppercase tracking-widest text-yellow-400">Under Review</span>
+                                                        </div>
+                                                        <h3 className="font-main text-3xl md:text-4xl uppercase text-white mb-6">Application Under Review</h3>
+                                                        <div className="space-y-4 text-white/60 text-base font-light leading-relaxed">
+                                                            <p>Your application to join the Ethereal Techno Circle is currently under review.</p>
+                                                            <p>Our team carefully evaluates each submission to ensure alignment with the Circle&apos;s artistic vision.</p>
+                                                            <p>You will be notified by email once a decision has been made.</p>
+                                                            <p>Thank you for your patience.</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 )}
-
 
                             </motion.div>
                         )}
@@ -584,37 +623,3 @@ const ProfileField: React.FC<ProfileFieldProps> = ({ label, value, editing, onCh
         )}
     </div>
 );
-
-const ApplicationRow: React.FC<ApplicationRowProps> = ({ app }) => {
-    const getStatusConfig = (status: string) => {
-        switch (status) {
-            case "APPROVED": return { color: "text-green-400", icon: CheckCircle, label: "Approved" };
-            case "REJECTED": return { color: "text-red-400", icon: AlertCircle, label: "Declined" };
-            case "UNDER_REVIEW": return { color: "text-yellow-400", icon: AlertCircle, label: "Reviewing" };
-            default: return { color: "text-blue-400", icon: Clock, label: "Pending" };
-        }
-    };
-
-    const status = getStatusConfig(app.status);
-    const StatusIcon = status.icon;
-
-    return (
-        <div className="border border-white/10 bg-white/[0.02] p-6 hover:border-white/20 transition-colors">
-            <div className="flex items-center justify-between mb-2">
-                <h4 className="font-main text-xl uppercase">{app.artistName}</h4>
-                <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/5 border border-white/10 ${status.color}`}>
-                    <StatusIcon className="w-3 h-3" />
-                    <span className="text-[10px] font-bold uppercase tracking-wider">{status.label}</span>
-                </div>
-            </div>
-            <p className="text-xs font-mono text-white/40 mb-4">Submitted: {new Date(app.createdAt).toLocaleDateString()}</p>
-
-            {app.reviewNotes && (
-                <div className="p-4 bg-black/40 border-l-2 border-white/20 text-sm text-white/70">
-                    <p className="text-[10px] font-mono text-white/30 uppercase tracking-widest mb-2">Admin Feedback:</p>
-                    &ldquo;{app.reviewNotes}&rdquo;
-                </div>
-            )}
-        </div>
-    );
-};

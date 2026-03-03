@@ -13,7 +13,9 @@ import {
     Library,
     CreditCard,
     Music,
-    Package
+    Package,
+    Radio,
+    FileCheck
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -81,7 +83,45 @@ export default function RightSidebar({ user, activeTab, onNavigate, onSignOut }:
                 </div>
 
                 <nav className="space-y-2">
-                    {user.type === "ARTIST" ? (
+                    {user.type === "ADMIN" ? (
+                        <>
+                            <NavItem
+                                id="admin-dashboard"
+                                label="Admin Home"
+                                icon={LayoutDashboard}
+                                active={activeTab === "admin-dashboard"}
+                                onClick={() => onNavigate("admin-dashboard")}
+                            />
+                            <NavItem
+                                id="applications"
+                                label="Applications"
+                                icon={FileCheck}
+                                active={activeTab === "applications"}
+                                onClick={() => onNavigate("applications")}
+                            />
+                            <NavItem
+                                id="producers"
+                                label="Producers"
+                                icon={Music}
+                                active={activeTab === "producers"}
+                                onClick={() => onNavigate("producers")}
+                            />
+                            <NavItem
+                                id="users"
+                                label="Users"
+                                icon={Users}
+                                active={activeTab === "users"}
+                                onClick={() => onNavigate("users")}
+                            />
+                            <NavItem
+                                id="news"
+                                label="News & Updates"
+                                icon={Radio}
+                                active={activeTab === "news"}
+                                onClick={() => onNavigate("news")}
+                            />
+                        </>
+                    ) : user.type === "ARTIST" ? (
                         <>
                             <NavItem
                                 id="overview"
@@ -144,7 +184,7 @@ export default function RightSidebar({ user, activeTab, onNavigate, onSignOut }:
                             />
                             <NavItem
                                 id="applications"
-                                label="Applications"
+                                label="Circle Status"
                                 icon={FileText}
                                 active={activeTab === "applications"}
                                 onClick={() => onNavigate("applications")}

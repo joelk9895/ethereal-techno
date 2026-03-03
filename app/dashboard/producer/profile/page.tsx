@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { User, Camera, Save, Loader2, Link2, ExternalLink, Globe, MapPin, Edit2, Instagram, Facebook, Youtube, Shield, Mail, Key, Trash2, CheckSquare, Square, Music, Lock, KeyRound, ChevronRight } from "lucide-react";
+import { User, Camera, Save, Loader2, Link2, ExternalLink, Globe, MapPin, Edit2, Instagram, Facebook, Youtube, Mail, Trash2, CheckSquare, Square, Music, Lock, KeyRound, ChevronRight } from "lucide-react";
 import { authenticatedFetch, logout } from "@/lib/auth";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -98,8 +98,10 @@ const InputRow: React.FC<{
     placeholder?: string,
     icon?: React.ReactNode,
     last?: boolean,
-    isEditing: boolean
-}> = ({ label, value, onChange, placeholder, icon, last, isEditing }) => (
+    isEditing: boolean,
+    error?: string | null,
+    onBlur?: () => void
+}> = ({ label, value, onChange, placeholder, icon, last, isEditing, error, onBlur }) => (
     <div className={`flex items-center gap-4 py-4 px-4 bg-white/5 transition-colors ${!last ? 'border-b border-white/5' : ''}`}>
         <div className="w-8 flex items-center justify-center text-white/40">
             {icon || <Link2 className="w-5 h-5" />}
@@ -114,9 +116,14 @@ const InputRow: React.FC<{
                         type="text"
                         value={value || ""}
                         onChange={(e) => onChange(e.target.value)}
+                        onBlur={onBlur}
                         placeholder={placeholder}
-                        className="w-full bg-black/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary/50 placeholder:text-white/20 transition-all font-medium border border-white/5 focus:border-white/10"
+                        className={`w-full bg-black/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 placeholder:text-white/20 transition-all font-medium border ${error ? 'border-red-500/50 focus:ring-red-500/50' : 'border-white/5 focus:ring-primary/50 focus:border-white/10'
+                            }`}
                     />
+                    {error && (
+                        <p className="text-red-400 text-[10px] font-mono mt-1 tracking-wide">{error}</p>
+                    )}
                 </motion.div>
             ) : (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-9 flex items-center text-white font-medium text-sm">
@@ -129,10 +136,12 @@ const InputRow: React.FC<{
 
 export default function ProducerProfilePage() {
     const [profileForm, setProfileForm] = useState<ProfileFormData>({});
+    const [originalForm, setOriginalForm] = useState<ProfileFormData>({});
     const [artistPhoto, setArtistPhoto] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+    const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const router = useRouter();
@@ -169,6 +178,21 @@ export default function ProducerProfilePage() {
     }, []);
 
     const handleSaveProfile = async () => {
+        // Validate all link fields before saving
+        const linkFields = ['instagram', 'tiktok', 'youtube', 'facebook', 'x', 'linktree',
+            'spotify', 'soundcloud', 'beatport', 'bandcamp', 'appleMusic',
+            'track1', 'track2', 'track3'];
+        const newErrors: Record<string, string> = {};
+        for (const field of linkFields) {
+            const value = (profileForm as Record<string, string | null | undefined>)[field];
+            if (value && value.trim()) {
+                const err = validateLinkField(field, value);
+                if (err) newErrors[field] = err;
+            }
+        }
+        setFieldErrors(newErrors);
+        if (Object.keys(newErrors).length > 0) return;
+
         setSaving(true);
         try {
             const res = await authenticatedFetch("/api/producer/profile", {
@@ -183,6 +207,66 @@ export default function ProducerProfilePage() {
         } finally {
             setSaving(false);
             setIsEditing(false);
+        }
+    };
+
+    const validateLinkField = (field: string, value: string): string | null => {
+        if (!value || !value.trim()) return null;
+        switch (field) {
+            case 'instagram':
+                if (!value.includes('instagram.com/')) return 'Expected: instagram.com/yourprofile';
+                break;
+            case 'tiktok':
+                if (!value.includes('tiktok.com/@')) return 'Expected: tiktok.com/@yourprofile';
+                break;
+            case 'facebook':
+                if (!value.includes('facebook.com/')) return 'Expected: facebook.com/yourpage';
+                break;
+            case 'youtube':
+                if (!value.includes('youtube.com/@')) return 'Expected: youtube.com/@yourchannel';
+                break;
+            case 'x':
+                if (!value.includes('x.com/')) return 'Expected: x.com/yourprofile';
+                break;
+            case 'linktree':
+                if (!value.includes('.')) return 'Expected: a valid URL (yourwebsite.com)';
+                break;
+            case 'spotify':
+                if (!value.includes('spotify.com/')) return 'Expected: open.spotify.com/artist/...';
+                break;
+            case 'soundcloud':
+                if (!value.includes('soundcloud.com/')) return 'Expected: soundcloud.com/yourprofile';
+                break;
+            case 'beatport':
+                if (!value.includes('beatport.com/artist/')) return 'Expected: beatport.com/artist/yourname';
+                break;
+            case 'bandcamp':
+                if (!value.includes('.bandcamp.com')) return 'Expected: yourname.bandcamp.com';
+                break;
+            case 'appleMusic':
+                if (!value.includes('music.apple.com/') || !value.includes('/artist/')) return 'Expected: music.apple.com/.../artist/...';
+                break;
+            case 'track1':
+            case 'track2':
+            case 'track3':
+                if (!value.includes('soundcloud.com/')) return 'Only SoundCloud track links are accepted.';
+                if (value.includes('/sets/')) return 'Individual tracks only. Playlists/sets not accepted.';
+                break;
+        }
+        return null;
+    };
+
+    const handleFieldBlur = (field: string, value: string | null | undefined) => {
+        const v = value?.trim() || '';
+        if (!v) {
+            setFieldErrors(prev => { const n = { ...prev }; delete n[field]; return n; });
+            return;
+        }
+        const err = validateLinkField(field, v);
+        if (err) {
+            setFieldErrors(prev => ({ ...prev, [field]: err }));
+        } else {
+            setFieldErrors(prev => { const n = { ...prev }; delete n[field]; return n; });
         }
     };
 
@@ -258,46 +342,69 @@ export default function ProducerProfilePage() {
                     </motion.h2>
                 </div>
 
-                <motion.button
-                    layout
-                    onClick={() => isEditing ? handleSaveProfile() : setIsEditing(true)}
-                    disabled={saving}
-                    className={cn(
-                        "flex items-center gap-2 px-6 py-2.5 font-bold uppercase tracking-widest text-[10px] transition-colors disabled:opacity-50 active:scale-95 duration-200 rounded-full shadow-lg shadow-white/10 overflow-hidden",
-                        isEditing ? "bg-white text-black hover:bg-neutral-200" : "bg-primary text-black hover:bg-primary/90 shadow-primary/20"
+                <div className="flex items-center gap-3" style={{ transform: `translateY(${headerY}px)` }}>
+                    {isEditing && (
+                        <motion.button
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            onClick={() => {
+                                setProfileForm({ ...originalForm });
+                                setFieldErrors({});
+                                setIsEditing(false);
+                            }}
+                            className="flex items-center gap-2 px-6 py-2.5 font-bold uppercase tracking-widest text-[10px] transition-colors rounded-full border border-white/20 text-white/60 hover:text-white hover:border-white/40"
+                        >
+                            Cancel
+                        </motion.button>
                     )}
-                    initial={false}
-                    style={{ y: headerY }}
-                    animate={{
-                        width: isEditing ? 160 : 150,
-                    }}
-                >
-                    <AnimatePresence mode="wait">
-                        {isEditing ? (
-                            <motion.span
-                                key="save"
-                                initial={{ opacity: 0, x: 10 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -10 }}
-                                className="flex items-center justify-center gap-2 w-full text-nowrap"
-                            >
-                                {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
-                                Save Changes
-                            </motion.span>
-                        ) : (
-                            <motion.span
-                                key="edit"
-                                initial={{ opacity: 0, x: -10 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: 10 }}
-                                className="flex items-center justify-center gap-2 w-full text-nowrap"
-                            >
-                                <Edit2 className="w-3 h-3" />
-                                Edit Profile
-                            </motion.span>
+                    <motion.button
+                        layout
+                        onClick={() => {
+                            if (isEditing) {
+                                handleSaveProfile();
+                            } else {
+                                setOriginalForm({ ...profileForm });
+                                setIsEditing(true);
+                            }
+                        }}
+                        disabled={saving}
+                        className={cn(
+                            "flex items-center gap-2 px-6 py-2.5 font-bold uppercase tracking-widest text-[10px] transition-colors disabled:opacity-50 active:scale-95 duration-200 rounded-full shadow-lg shadow-white/10 overflow-hidden",
+                            isEditing ? "bg-white text-black hover:bg-neutral-200" : "bg-primary text-black hover:bg-primary/90 shadow-primary/20"
                         )}
-                    </AnimatePresence>
-                </motion.button>
+                        initial={false}
+                        animate={{
+                            width: isEditing ? 160 : 150,
+                        }}
+                    >
+                        <AnimatePresence mode="wait">
+                            {isEditing ? (
+                                <motion.span
+                                    key="save"
+                                    initial={{ opacity: 0, x: 10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -10 }}
+                                    className="flex items-center justify-center gap-2 w-full text-nowrap"
+                                >
+                                    {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+                                    Save Changes
+                                </motion.span>
+                            ) : (
+                                <motion.span
+                                    key="edit"
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: 10 }}
+                                    className="flex items-center justify-center gap-2 w-full text-nowrap"
+                                >
+                                    <Edit2 className="w-3 h-3" />
+                                    Edit Profile
+                                </motion.span>
+                            )}
+                        </AnimatePresence>
+                    </motion.button>
+                </div>
             </div>
 
             <div className="relative mb-12 group">
@@ -350,7 +457,7 @@ export default function ProducerProfilePage() {
                             )}
                         </div>
                         <div className="space-y-2 group/input">
-                            <label className="text-[10px] font-mono uppercase tracking-widest text-white/30 pl-1 group-focus-within/input:text-primary transition-colors">VISION</label>
+                            <label className="text-[10px] font-mono uppercase tracking-widest text-white/30 pl-1 group-focus-within/input:text-primary transition-colors">Artist Statement</label>
                             {isEditing ? (
                                 <textarea
                                     value={profileForm.quote || ""}
@@ -361,7 +468,9 @@ export default function ProducerProfilePage() {
                                 />
                             ) : (
                                 <div className="px-6 py-4 text-lg md:text-xl text-white/80 font-light leading-relaxed min-h-[5rem] flex items-center justify-center md:justify-start">
-                                    {profileForm.quote || <span className="text-white/20 italic">No vision set</span>}
+                                    {profileForm.quote
+                                        ? (profileForm.quote.startsWith("Ethereal Techno is ") ? profileForm.quote : `Ethereal Techno is ${profileForm.quote}`)
+                                        : <span className="text-white/20 italic">No vision set</span>}
                                 </div>
                             )}
                         </div>
@@ -454,13 +563,15 @@ export default function ProducerProfilePage() {
                     </div>
 
                     <div>
-                        <SectionHeader title="Connect" />
+                        <SectionHeader title="Social Profiles" />
                         <div className="bg-zinc-900/30 border border-white/5 rounded-3xl overflow-hidden backdrop-blur-sm">
                             <InputRow
                                 label="Instagram"
                                 value={profileForm.instagram}
                                 onChange={(v) => setProfileForm({ ...profileForm, instagram: v })}
-                                placeholder="@username"
+                                onBlur={() => handleFieldBlur('instagram', profileForm.instagram)}
+                                error={fieldErrors.instagram}
+                                placeholder="instagram.com/yourprofile"
                                 icon={<Instagram className="w-5 h-5" />}
                                 isEditing={isEditing}
                             />
@@ -468,7 +579,9 @@ export default function ProducerProfilePage() {
                                 label="TikTok"
                                 value={profileForm.tiktok}
                                 onChange={(v) => setProfileForm({ ...profileForm, tiktok: v })}
-                                placeholder="@username"
+                                onBlur={() => handleFieldBlur('tiktok', profileForm.tiktok)}
+                                error={fieldErrors.tiktok}
+                                placeholder="tiktok.com/@yourprofile"
                                 icon={<TikTokIcon className="w-5 h-5" />}
                                 isEditing={isEditing}
                             />
@@ -476,7 +589,9 @@ export default function ProducerProfilePage() {
                                 label="YouTube"
                                 value={profileForm.youtube}
                                 onChange={(v) => setProfileForm({ ...profileForm, youtube: v })}
-                                placeholder="Channel URL"
+                                onBlur={() => handleFieldBlur('youtube', profileForm.youtube)}
+                                error={fieldErrors.youtube}
+                                placeholder="youtube.com/@yourchannel"
                                 icon={<Youtube className="w-5 h-5" />}
                                 isEditing={isEditing}
                             />
@@ -484,7 +599,9 @@ export default function ProducerProfilePage() {
                                 label="Facebook"
                                 value={profileForm.facebook}
                                 onChange={(v) => setProfileForm({ ...profileForm, facebook: v })}
-                                placeholder="Page URL"
+                                onBlur={() => handleFieldBlur('facebook', profileForm.facebook)}
+                                error={fieldErrors.facebook}
+                                placeholder="facebook.com/yourpage"
                                 icon={<Facebook className="w-5 h-5" />}
                                 isEditing={isEditing}
                             />
@@ -492,7 +609,9 @@ export default function ProducerProfilePage() {
                                 label="X (Twitter)"
                                 value={profileForm.x}
                                 onChange={(v) => setProfileForm({ ...profileForm, x: v })}
-                                placeholder="@username"
+                                onBlur={() => handleFieldBlur('x', profileForm.x)}
+                                error={fieldErrors.x}
+                                placeholder="x.com/yourprofile"
                                 icon={<XIcon className="w-5 h-5" />}
                                 isEditing={isEditing}
                             />
@@ -500,7 +619,9 @@ export default function ProducerProfilePage() {
                                 label="Linktree / Website"
                                 value={profileForm.linktree}
                                 onChange={(v) => setProfileForm({ ...profileForm, linktree: v })}
-                                placeholder="https://..."
+                                onBlur={() => handleFieldBlur('linktree', profileForm.linktree)}
+                                error={fieldErrors.linktree}
+                                placeholder="yourwebsite.com"
                                 last
                                 icon={<ExternalLink className="w-5 h-5" />}
                                 isEditing={isEditing}
@@ -512,13 +633,15 @@ export default function ProducerProfilePage() {
                 {/* RIGHT COL: PLATFORMS */}
                 <div className="space-y-8">
                     <div>
-                        <SectionHeader title="Music Platforms" />
+                        <SectionHeader title="Artist Platforms" />
                         <div className="bg-zinc-900/30 border border-white/5 rounded-3xl overflow-hidden backdrop-blur-sm">
                             <InputRow
                                 label="Spotify"
                                 value={profileForm.spotify}
                                 onChange={(v) => setProfileForm({ ...profileForm, spotify: v })}
-                                placeholder="Spotify Artist URL"
+                                onBlur={() => handleFieldBlur('spotify', profileForm.spotify)}
+                                error={fieldErrors.spotify}
+                                placeholder="open.spotify.com/artist/..."
                                 icon={<SpotifyIcon className="w-5 h-5" />}
                                 isEditing={isEditing}
                             />
@@ -526,7 +649,9 @@ export default function ProducerProfilePage() {
                                 label="SoundCloud"
                                 value={profileForm.soundcloud}
                                 onChange={(v) => setProfileForm({ ...profileForm, soundcloud: v })}
-                                placeholder="SoundCloud Profile URL"
+                                onBlur={() => handleFieldBlur('soundcloud', profileForm.soundcloud)}
+                                error={fieldErrors.soundcloud}
+                                placeholder="soundcloud.com/yourprofile"
                                 icon={<SoundCloudIcon className="w-5 h-5" />}
                                 isEditing={isEditing}
                             />
@@ -534,7 +659,9 @@ export default function ProducerProfilePage() {
                                 label="Apple Music"
                                 value={profileForm.appleMusic}
                                 onChange={(v) => setProfileForm({ ...profileForm, appleMusic: v })}
-                                placeholder="Apple Music Artist URL"
+                                onBlur={() => handleFieldBlur('appleMusic', profileForm.appleMusic)}
+                                error={fieldErrors.appleMusic}
+                                placeholder="music.apple.com/.../artist/..."
                                 icon={<AppleMusicIcon className="w-5 h-5" />}
                                 isEditing={isEditing}
                             />
@@ -542,7 +669,9 @@ export default function ProducerProfilePage() {
                                 label="Beatport"
                                 value={profileForm.beatport}
                                 onChange={(v) => setProfileForm({ ...profileForm, beatport: v })}
-                                placeholder="Beatport Artist URL"
+                                onBlur={() => handleFieldBlur('beatport', profileForm.beatport)}
+                                error={fieldErrors.beatport}
+                                placeholder="beatport.com/artist/yourname"
                                 icon={<BeatportIcon className="w-5 h-5" />}
                                 isEditing={isEditing}
                             />
@@ -550,31 +679,46 @@ export default function ProducerProfilePage() {
                                 label="Bandcamp"
                                 value={profileForm.bandcamp}
                                 onChange={(v) => setProfileForm({ ...profileForm, bandcamp: v })}
-                                placeholder="Bandcamp URL"
+                                onBlur={() => handleFieldBlur('bandcamp', profileForm.bandcamp)}
+                                error={fieldErrors.bandcamp}
+                                placeholder="yourname.bandcamp.com"
+                                last
                                 icon={<BandcampIcon className="w-5 h-5" />}
                                 isEditing={isEditing}
                             />
+                        </div>
+                    </div>
+
+                    <div>
+                        <SectionHeader title="Featured Tracks" />
+                        <div className="bg-zinc-900/30 border border-white/5 rounded-3xl overflow-hidden backdrop-blur-sm">
                             <InputRow
-                                label="SoundCloud Track 1"
+                                label="Track 1"
                                 value={profileForm.track1}
                                 onChange={(v) => setProfileForm({ ...profileForm, track1: v })}
-                                placeholder="SoundCloud Track URL"
+                                onBlur={() => handleFieldBlur('track1', profileForm.track1)}
+                                error={fieldErrors.track1}
+                                placeholder="soundcloud.com/artist/track"
                                 icon={<Music className="w-5 h-5" />}
                                 isEditing={isEditing}
                             />
                             <InputRow
-                                label="SoundCloud Track 2"
+                                label="Track 2"
                                 value={profileForm.track2}
                                 onChange={(v) => setProfileForm({ ...profileForm, track2: v })}
-                                placeholder="SoundCloud Track URL"
+                                onBlur={() => handleFieldBlur('track2', profileForm.track2)}
+                                error={fieldErrors.track2}
+                                placeholder="soundcloud.com/artist/track"
                                 icon={<Music className="w-5 h-5" />}
                                 isEditing={isEditing}
                             />
                             <InputRow
-                                label="SoundCloud Track 3"
+                                label="Track 3"
                                 value={profileForm.track3}
                                 onChange={(v) => setProfileForm({ ...profileForm, track3: v })}
-                                placeholder="SoundCloud Track URL"
+                                onBlur={() => handleFieldBlur('track3', profileForm.track3)}
+                                error={fieldErrors.track3}
+                                placeholder="soundcloud.com/artist/track"
                                 last
                                 icon={<Music className="w-5 h-5" />}
                                 isEditing={isEditing}
@@ -583,7 +727,7 @@ export default function ProducerProfilePage() {
                     </div>
 
                     <div>
-                        <SectionHeader title="Producer Capabilities" />
+                        <SectionHeader title="Producer Skills" />
                         <div className="bg-zinc-900/30 border border-white/5 rounded-3xl overflow-hidden backdrop-blur-sm flex flex-col">
                             {[
                                 { id: 'canCreateSamples', label: "Produce Audio Loops", val: profileForm.canCreateSamples },
@@ -595,14 +739,9 @@ export default function ProducerProfilePage() {
                                         {cap.val ? <CheckSquare className="w-5 h-5" /> : <Square className="w-5 h-5" />}
                                     </div>
                                     <div className="flex-1 flex justify-between items-center">
-                                        <div className="space-y-1">
-                                            <span className="block text-[10px] font-mono uppercase tracking-widest text-white/50">
-                                                Skillset
-                                            </span>
-                                            <span className="block text-sm text-white font-medium">
-                                                {cap.label}
-                                            </span>
-                                        </div>
+                                        <span className="block text-sm text-white font-medium">
+                                            {cap.label}
+                                        </span>
                                         {isEditing ? (
                                             <button
                                                 onClick={() => setProfileForm({ ...profileForm, [cap.id]: !cap.val })}
@@ -622,21 +761,16 @@ export default function ProducerProfilePage() {
                     </div>
 
                     <div>
-                        <SectionHeader title="Privacy Options" />
+                        <SectionHeader title="Communication Settings" />
                         <div className="bg-zinc-900/30 border border-white/5 rounded-3xl overflow-hidden backdrop-blur-sm">
                             <div className="flex items-center gap-4 py-4 px-4 bg-white/5 transition-colors">
                                 <div className="w-8 flex items-center justify-center text-white/40">
                                     <Lock className="w-5 h-5" />
                                 </div>
                                 <div className="flex-1 flex justify-between items-center">
-                                    <div className="space-y-1">
-                                        <span className="block text-[10px] font-mono uppercase tracking-widest text-white/50">
-                                            Platform Messages
-                                        </span>
-                                        <span className="block text-sm text-white font-medium">
-                                            Allow Verified Producers to Message Me
-                                        </span>
-                                    </div>
+                                    <span className="block text-sm text-white font-medium">
+                                        Allow Verified Producers to Message Me
+                                    </span>
                                     {isEditing ? (
                                         <button
                                             onClick={() => setProfileForm({ ...profileForm, allowContact: !profileForm.allowContact })}

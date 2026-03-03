@@ -165,8 +165,11 @@ const SlotText = ({ text, className }: { text: string, className?: string }) => 
 
 export default function ArtistProfileContent({ profile, user, username }: ArtistProfileContentProps) {
     const artistName = profile?.artistName || user.name || username;
-    profile.quote = undefined
-    const bio = profile?.quote || "Music expresses that which cannot be said and on which it is impossible to be silent. The rhythm of the body, the melody of the mind and the harmony of the soul create the symphony of life.";
+    const VISION_PREFIX = "Ethereal Techno is ";
+    const rawQuote = profile?.quote;
+    const bio = rawQuote
+        ? (rawQuote.startsWith(VISION_PREFIX) ? rawQuote : `${VISION_PREFIX}${rawQuote}`)
+        : "Music expresses that which cannot be said and on which it is impossible to be silent. The rhythm of the body, the melody of the mind and the harmony of the soul create the symphony of life.";
     const photoUrl = profile?.photoUrl;
     const country = user.country || "Global";
     const memberSince = new Date(user.createdAt).getFullYear();

@@ -11,16 +11,11 @@ import {
     Disc,
     Mic2,
     Music,
-    LayoutDashboard,
-    User,
-    FileText,
-    ArrowUpRight,
-    LogOut,
-    LucideIcon,
     AlertCircle
 } from "lucide-react";
 import { getAuthUser, setAuthUser, logout, AuthUser } from "@/lib/auth";
 import { motion, AnimatePresence } from "framer-motion";
+import RightSidebar from "@/app/components/RightSidebar";
 
 
 
@@ -66,10 +61,6 @@ interface MinimalInputProps extends React.InputHTMLAttributes<HTMLInputElement> 
     verifiedData?: { title: string | null };
 }
 
-interface SectionHeaderProps {
-    number: string;
-    title: string;
-}
 
 interface CapabilityCheckboxProps {
     label: string;
@@ -78,14 +69,6 @@ interface CapabilityCheckboxProps {
     icon: React.ComponentType<{ size?: number }>;
 }
 
-interface NavItemProps {
-    id: string;
-    label: string;
-    icon: LucideIcon;
-    active: boolean;
-    onClick: () => void;
-    external?: boolean;
-}
 
 interface SoundCloudEmbedProps {
     url: string;
@@ -262,20 +245,26 @@ export default function ApplyPage() {
         setLoading(false);
     }, [router, checkExistingApplication]);
 
-    const handleNavigation = (id: string, external?: boolean) => {
-        if (external) {
-            if (id === "community") router.push("/community");
-            if (id === "shop") router.push("/shop");
-            return;
-        }
-        if (!user && (id === "overview" || id === "profile" || id === "applications")) {
+    const handleNavigation = (id: string) => {
+        if (id === "sounds") return router.push("/libraries");
+        if (id === "bundles") return router.push("/bundles");
+        if (id === "merch") return router.push("/merch");
+        if (id === "free-content") return router.push("/free/content");
+        if (id === "community") return router.push("/community");
+
+        if (!user) {
             router.push("/signin");
             return;
         }
 
-        if (id === "overview") router.push("/dashboard");
-        if (id === "profile") router.push("/dashboard");
-        if (id === "applications") router.push("/dashboard");
+        switch (id) {
+            case "overview": router.push("/dashboard/producer"); break;
+            case "profile": router.push("/dashboard/producer/profile"); break;
+            case "billing": router.push("/dashboard/producer/billing"); break;
+            case "orders": router.push("/dashboard/producer/orders"); break;
+            case "applications": break; // already here
+            default: router.push("/dashboard");
+        }
     };
 
     const handleInputChange = (field: keyof FormData, value: string | boolean | File | null) => {
@@ -443,35 +432,29 @@ export default function ApplyPage() {
             <div className="relative z-10 flex flex-col lg:flex-row-reverse w-full h-full">
 
                 {/* --- RIGHT SIDEBAR (Navigation) --- */}
-                <aside className="hidden lg:flex w-80 h-full border-l border-white/5 bg-black/50 backdrop-blur-xl z-20 pt-24 pb-12 px-8 flex-col justify-between overflow-y-auto no-scrollbar">
-                    {user ? (
-                        <>
-                            <div>
-                                <div className="mb-8 px-4">
-                                    <div className="text-xs font-sans text-white/40 uppercase tracking-widest mb-4">My Account</div>
-                                    <h1 className="font-main text-3xl text-white uppercase leading-none break-words tracking-wide mb-3">
-                                        {user.name}
-                                    </h1>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-xs font-sans text-primary uppercase tracking-widest">@{user.username}</span>
-                                        <span className="w-1 h-1 rounded-full bg-white/20" />
-                                        <span className="text-xs font-sans text-white/40 uppercase tracking-widest font-medium">{user.type}</span>
-                                    </div>
-                                </div>
-
-                                <nav className="space-y-1">
-                                    <NavItem id="overview" label="Overview" icon={LayoutDashboard} active={false} onClick={() => handleNavigation("overview")} />
-                                    <NavItem id="profile" label="Edit Profile" icon={User} active={false} onClick={() => handleNavigation("profile")} />
-                                    <NavItem id="applications" label="Applications" icon={FileText} active={true} onClick={() => handleNavigation("applications")} />
-                                </nav>
-                            </div>
-                        </>
-                    ) : (
-                        // Guest Sidebar Content
+                {user ? (
+                    <RightSidebar
+                        user={{
+                            id: user.id,
+                            username: user.username,
+                            email: user.email,
+                            name: user.name || "User",
+                            surname: user.surname || null,
+                            type: user.type,
+                            country: null,
+                            createdAt: new Date().toISOString(),
+                            approvedAt: null
+                        }}
+                        activeTab="applications"
+                        onNavigate={handleNavigation}
+                        onSignOut={() => { logout(); router.push("/signin"); }}
+                    />
+                ) : (
+                    <aside className="hidden lg:flex w-80 h-full border-l border-white/10 bg-black/80 backdrop-blur-2xl z-20 pt-24 pb-12 px-8 flex-col justify-between overflow-y-auto no-scrollbar shadow-2xl">
                         <div>
-                            <div className="mb-8 px-4">
-                                <div className="text-xs font-sans text-white/40 uppercase tracking-widest mb-4">Apply</div>
-                                <h1 className="font-main text-3xl text-white uppercase leading-none break-words tracking-wide">
+                            <div className="mb-8 px-2">
+                                <div className="text-sm font-sans text-white/60 uppercase tracking-widest mb-6">Apply</div>
+                                <h1 className="font-main text-4xl text-white uppercase leading-none break-words tracking-wide">
                                     Guest
                                 </h1>
                             </div>
@@ -483,27 +466,12 @@ export default function ApplyPage() {
                                     onClick={() => router.push("/signin")}
                                     className="group w-full flex items-center justify-start gap-4 py-3 px-4 rounded-xl border border-transparent transition-all duration-300 text-primary hover:text-white hover:bg-white/5"
                                 >
-                                    <span className="text-xs font-sans uppercase tracking-widest">Login</span>
+                                    <span className="text-sm font-sans uppercase tracking-widest">Login</span>
                                 </button>
                             </div>
                         </div>
-                    )}
-                    <div className="mt-12">
-                        {user && (
-                            <button
-                                onClick={() => logout()}
-                                className="group w-full flex items-center justify-start gap-4 py-3 px-4 rounded-xl border border-transparent transition-all duration-300 text-white/40 hover:text-red-400 hover:bg-white/5"
-                            >
-                                <LogOut className="w-4 h-4 transition-colors" />
-                                <span className="text-xs font-sans uppercase tracking-widest">Sign Out</span>
-                            </button>
-                        )}
-                        <div className="mt-8 space-y-1">
-                            <NavItem id="community" label="Community Hub" icon={ArrowUpRight} active={false} onClick={() => handleNavigation("community", true)} external />
-                            <NavItem id="shop" label="Browse Shop" icon={ArrowUpRight} active={false} onClick={() => handleNavigation("shop", true)} external />
-                        </div>
-                    </div>
-                </aside>
+                    </aside>
+                )}
 
                 {/* --- MAIN CONTENT --- */}
                 <main className="flex-1 lg:overflow-y-auto pt-24 px-6 lg:px-20 pb-24 relative no-scrollbar">
@@ -561,30 +529,6 @@ export default function ApplyPage() {
                                             value={formData.password}
                                             onChange={(e) => handleInputChange("password", e.target.value)}
                                         />
-
-
-                                        {/* CONTACT PREFERENCES */}
-                                        <div className="mt-12 pt-12 border-t border-white/10">
-                                            <label className="text-lg font-mono text-white  uppercase mb-8 block">Contact Preferences</label>
-                                            <div
-                                                className="flex items-start gap-4 cursor-pointer group"
-                                                onClick={() => handleInputChange("allowContact", !formData.allowContact)}
-                                            >
-                                                <div className={`w-6 h-6 border border-white/20 flex items-center justify-center transition-colors bg-transparent group-hover:border-white ${formData.allowContact ? "bg-black border-white" : ""}`}>
-                                                    {formData.allowContact && <Check size={14} color="white" strokeWidth={3} />}
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <span className="text-sm text-white font-medium group-hover:text-white transition-colors select-none block">
-                                                        Connect with fellow Verified Producers.
-                                                    </span>
-                                                    <p className="text-white/60 text-xs font-light">
-                                                        Only verified Ethereal Techno producers can message you.
-                                                        <br />
-                                                        Your email is never shared. All communication stays inside the platform.
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
                                     </div>
                                 </motion.section>
                             )}
@@ -751,9 +695,9 @@ export default function ApplyPage() {
                                 <div className="bg-[#1E1E1E] rounded-3xl p-8 border border-white/5 space-y-8">
                                     <div className="space-y-8">
                                         <p className="text-white text-xl font-light">
-                                            Provide links to up to three of your strongest tracks.
+                                            Provide up to three of your strongest original productions.
                                             <br />
-                                            Please share SoundCloud links only - no sets, playlists, podcasts, or DJ mixes.
+                                            SoundCloud track links only.
                                         </p>
                                         <div className="grid gap-6">
                                             <div>
@@ -846,8 +790,29 @@ export default function ApplyPage() {
                                 )
                             }
 
-                            {/* SUBMIT */}
+                            {/* CONTACT PREFERENCES & SUBMIT */}
                             <motion.section variants={fadeInUp} initial="hidden" animate="visible" transition={{ delay: 0.6 }} className="space-y-8">
+                                <div className="bg-[#1E1E1E] rounded-3xl p-8 border border-white/5 space-y-8 mb-8">
+                                    <label className="text-lg font-mono text-white uppercase mb-4 block">Contact Preferences</label>
+                                    <div
+                                        className="flex items-start gap-4 cursor-pointer group"
+                                        onClick={() => handleInputChange("allowContact", !formData.allowContact)}
+                                    >
+                                        <div className={`w-6 h-6 border border-white/20 flex items-center justify-center transition-colors bg-transparent group-hover:border-white ${formData.allowContact ? "bg-black border-white" : ""}`}>
+                                            {formData.allowContact && <Check size={14} color="white" strokeWidth={3} />}
+                                        </div>
+                                        <div className="space-y-2">
+                                            <span className="text-sm text-white font-medium group-hover:text-white transition-colors select-none block">
+                                                Connect with fellow Verified Producers.
+                                            </span>
+                                            <p className="text-white/60 text-xs font-light">
+                                                Only verified Ethereal Techno producers can message you.
+                                                <br />
+                                                Your email is never shared. All communication stays inside the platform.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div
                                     className="flex items-start gap-4 cursor-pointer group"
                                     onClick={() => handleInputChange("agreedToTerms", !formData.agreedToTerms)}
@@ -992,26 +957,6 @@ const CapabilityCheckbox: React.FC<CapabilityCheckboxProps> = ({ label, active, 
     </motion.div>
 );
 
-const NavItem: React.FC<NavItemProps> = ({ label, icon: Icon, active, onClick, external }) => (
-    <div className="relative w-full">
-        <motion.button
-            whileHover={{ x: 4, backgroundColor: "rgba(255, 255, 255, 0.05)" }}
-            onClick={onClick}
-            className={`
-                group w-full flex items-center justify-between py-3 px-4 rounded-xl border border-transparent transition-all duration-300
-                ${active ? "bg-white/[0.08] text-white border-white/5" : "text-white/40 hover:text-white hover:border-white/5"}
-            `}
-        >
-            <div className="flex items-center gap-4">
-                <Icon className={`w-4 h-4 transition-colors ${active ? "text-primary" : "text-white/40 group-hover:text-white"}`} />
-                <span className={`text-xs font-sans uppercase tracking-widest transition-colors ${active ? "text-white" : "text-white/40 group-hover:text-white"}`}>
-                    {label}
-                </span>
-            </div>
-            {external && <ArrowUpRight className="w-3 h-3 text-white/20 group-hover:text-primary transition-colors" />}
-        </motion.button>
-    </div>
-);
 
 const SoundCloudEmbed: React.FC<SoundCloudEmbedProps> = ({ url }) => {
     if (!url || !url.includes("soundcloud.com/") || url.includes("/sets/")) return null;

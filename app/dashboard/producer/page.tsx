@@ -139,10 +139,10 @@ export default function ProducerOverviewPage() {
                             </div>
 
                             <div>
-                                <h4 className="text-3xl font-main uppercase text-white tracking-wide mb-1">
+                                <h4 className="text-4xl font-main uppercase text-white tracking-wide mb-2">
                                     {telegramStatus === "connected" ? "Access Granted" : "Private Circle"}
                                 </h4>
-                                <p className="text-[#2AABEE] text-sm">
+                                <p className="text-[#2AABEE] text-base">
                                     {telegramStatus === "connected"
                                         ? `You are connected securely as @${producer?.username || producer?.name || "producer"}. Welcome to the inner circle.`
                                         : "Connect your Telegram account to join the verified producer group chat."}
@@ -154,7 +154,7 @@ export default function ProducerOverviewPage() {
                                     <Loader2 className="w-3 h-3 animate-spin" /> Waiting for bot...
                                 </div>
                             ) : (
-                                <p className="text-white/50 text-sm leading-relaxed max-w-[85%] mt-4">
+                                <p className="text-white/50 text-base leading-relaxed max-w-[85%] mt-4">
                                     The official private Telegram space for verified Ethereal Techno producers. Connect with verified producers, receive updates first, and participate in private discussions and challenges.
                                 </p>
                             )}
@@ -193,8 +193,8 @@ export default function ProducerOverviewPage() {
                         {/* Top gradient border effect */}
                         <div className="absolute top-0 left-0 w-[40%] h-[2px] bg-gradient-to-r from-yellow-500/50 via-yellow-500/20 to-transparent"></div>
 
-                        <div className="relative z-10 flex flex-col h-full justify-between">
-                            <div className="flex items-start justify-between">
+                        <div className="relative z-10 flex flex-col h-full flex-1">
+                            <div className="flex items-center justify-between h-12 mb-6">
                                 <div className="bg-white/10 text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-sm border border-white/5">
                                     Event
                                 </div>
@@ -203,15 +203,19 @@ export default function ProducerOverviewPage() {
                                 </div>
                             </div>
 
-                            <div className="space-y-4 pt-8 mt-auto">
-                                <h4 className="text-4xl lg:text-5xl font-main uppercase text-white tracking-wide">Remix Contest</h4>
-                                <p className="text-white/60 text-sm leading-relaxed max-w-[90%]">
-                                    High-value remix contests and creative missions are announced exclusively inside the Circle.
-                                    <br /><br />
-                                    The first official contest is coming soon. Stay connected via Telegram.
-                                </p>
+                            <div className="space-y-4 flex-1">
+                                <div>
+                                    <h4 className="text-4xl font-main uppercase text-white tracking-wide mb-2">Remix Contest</h4>
+                                    <p className="text-white/60 text-base leading-relaxed max-w-[90%]">
+                                        High-value remix contests and creative missions are announced exclusively inside the Circle.
+                                        <br /><br />
+                                        The first official contest is coming soon. Stay connected via Telegram.
+                                    </p>
+                                </div>
+                            </div>
 
-                                <button className="flex items-center gap-2 text-white font-bold uppercase text-[10px] tracking-widest pt-4 group/btn hover:text-primary transition-colors">
+                            <div className="relative z-10 flex flex-wrap items-center gap-3 pt-6 mt-auto">
+                                <button className="flex items-center gap-2 text-white font-bold uppercase text-[10px] tracking-widest group/btn hover:text-primary transition-colors">
                                     View Details
                                     <ArrowUpRight className="w-4 h-4 text-white/50 group-hover/btn:text-primary transition-colors" />
                                 </button>
@@ -233,7 +237,7 @@ export default function ProducerOverviewPage() {
                     <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] mix-blend-overlay"></div>
 
                     <div className="relative z-10 pr-4">
-                        <h4 className="text-[15px] text-white font-medium mb-10 opacity-90">
+                        <h4 className="text-sm text-white font-medium mb-10 opacity-90">
                             As a verified member, you receive:
                         </h4>
 
@@ -244,7 +248,7 @@ export default function ProducerOverviewPage() {
                                 </div>
                                 <div>
                                     <h5 className="text-white text-sm font-medium mb-1.5 opacity-90">Access to Circle Exclusives</h5>
-                                    <p className="text-white/50 text-[13px] leading-relaxed">
+                                    <p className="text-white/50 text-sm leading-relaxed">
                                         Small curated libraries available free as part of your membership.
                                     </p>
                                 </div>
@@ -256,7 +260,7 @@ export default function ProducerOverviewPage() {
                                 </div>
                                 <div>
                                     <h5 className="text-white text-sm font-medium mb-1.5 opacity-90">20% Privilege on Libraries & Merch</h5>
-                                    <p className="text-white/50 text-[13px] leading-relaxed">
+                                    <p className="text-white/50 text-sm leading-relaxed">
                                         Automatically applied at checkout. Personal and non-transferable.
                                     </p>
                                 </div>

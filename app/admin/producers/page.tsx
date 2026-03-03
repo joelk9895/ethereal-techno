@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
-    Loader2,
     Search,
     Clock,
     Globe,
@@ -11,9 +10,7 @@ import {
     UserCheck,
     MoreHorizontal,
 } from "lucide-react";
-import { getAuthUser } from "@/lib/auth";
 import { motion, AnimatePresence } from "framer-motion";
-import Layout from "@/components/Layout";
 
 // --- Types ---
 interface Producer {
@@ -78,7 +75,6 @@ const itemVar = {
 
 export default function ProducersPage() {
     const router = useRouter();
-    const [loading, setLoading] = useState(true);
     const [producers, setProducers] = useState<Producer[]>([]);
     const [filteredProducers, setFilteredProducers] = useState<Producer[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
@@ -110,13 +106,8 @@ export default function ProducersPage() {
     }, [producers, searchQuery, statusFilter, countryFilter]);
 
     useEffect(() => {
-        const authUser = getAuthUser();
-        if (!authUser || authUser.type !== "ADMIN") {
-            router.push("/dashboard");
-            return;
-        }
         fetchProducers();
-    }, [router]);
+    }, []);
 
     useEffect(() => {
         filterProducers();
@@ -133,8 +124,6 @@ export default function ProducersPage() {
             }
         } catch (error) {
             console.error("Error:", error);
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -167,117 +156,108 @@ export default function ProducersPage() {
         pending: producers.filter((p) => p.latestApplication?.status === "PENDING").length,
     };
 
-    if (loading) return <LoadingScreen />;
-
     return (
-        <Layout>
-            <div className="min-h-screen bg-black text-white font-sans selection:bg-primary selection:text-black">
-
-                <main className="relative z-10 pt-32 pb-20 px-6 md:px-12 w-full mx-auto">
-
-                    {/* Header & Stats */}
-                    <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
-                        <div>
-                            <h1 className="font-main text-6xl md:text-7xl uppercase leading-[0.85] mb-2">
-                                User Database
-                            </h1>
-                            <p className="text-white/40 font-light text-lg">Manage permissions and access.</p>
-                        </div>
-                        <div className="flex gap-8 border-l border-white/10 pl-8">
-                            <StatBlock label="Total Users" value={stats.total} />
-                            <StatBlock label="Producers" value={stats.verifiedProducers} active />
-                            <StatBlock label="Contributors" value={stats.verifiedContributors} />
-                            <StatBlock label="Pending" value={stats.pending} color="text-yellow-400" />
-                        </div>
-                    </div>
-
-                    {/* Controls */}
-                    <div className="flex flex-col lg:flex-row items-center justify-between gap-6 mb-8 border-b border-white/10 pb-8">
-
-                        {/* Filters */}
-                        <div className="flex items-center gap-2 overflow-x-auto w-full lg:w-auto no-scrollbar">
-                            <FilterPill label="All" active={statusFilter === 'all'} onClick={() => setStatusFilter('all')} />
-                            <FilterPill label="Verified Producers" active={statusFilter === 'verified_producer'} onClick={() => setStatusFilter('verified_producer')} />
-                            <FilterPill label="Contributors" active={statusFilter === 'verified_contributor'} onClick={() => setStatusFilter('verified_contributor')} />
-                            <FilterPill label="Pending" active={statusFilter === 'pending'} onClick={() => setStatusFilter('pending')} count={stats.pending} />
-                        </div>
-
-                        {/* Secondary Controls */}
-                        <div className="flex items-center gap-4 w-full lg:w-auto">
-                            <div className="relative flex-1 lg:w-64 group">
-                                <Search className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 group-focus-within:text-primary transition-colors" />
-                                <input
-                                    type="text"
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    placeholder="Find user..."
-                                    className="bg-transparent border-b border-white/10 pl-8 pr-4 py-2 w-full font-mono text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-primary transition-all"
-                                />
-                            </div>
-                            <div className="relative group">
-                                <Globe className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-                                <select
-                                    value={countryFilter}
-                                    onChange={(e) => setCountryFilter(e.target.value)}
-                                    className="bg-transparent border-b border-white/10 pl-8 pr-8 py-2 font-mono text-sm text-white focus:outline-none focus:border-primary transition-all appearance-none cursor-pointer min-w-[140px]"
-                                >
-                                    <option value="all" className="bg-black">Global</option>
-                                    {uniqueCountries.map((c) => <option key={c} value={c!} className="bg-black">{c}</option>)}
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* List Header */}
-                    <div className="hidden md:grid grid-cols-12 gap-4 px-6 pb-4 text-[10px] font-mono text-white/30 uppercase tracking-widest">
-                        <div className="col-span-3">User Identity</div>
-                        <div className="col-span-2">Location</div>
-                        <div className="col-span-2">Role & Status</div>
-                        <div className="col-span-2">Verified Date</div>
-                        <div className="col-span-2">Permissions</div>
-                        <div className="col-span-1 text-right"></div>
-                    </div>
-
-                    {/* Producer List */}
-                    <AnimatePresence mode="wait">
-                        <motion.div
-                            key={statusFilter + searchQuery + countryFilter}
-                            variants={containerVar}
-                            initial="hidden"
-                            animate="show"
-                            className="space-y-2"
-                        >
-                            {filteredProducers.length === 0 ? (
-                                <div className="py-24 text-center border border-dashed border-white/10 rounded-xl bg-white/[0.02]">
-                                    <p className="font-mono text-white/30 uppercase tracking-widest text-sm">No Users Found</p>
-                                </div>
-                            ) : (
-                                filteredProducers.map((producer) => (
-                                    <ProducerRow
-                                        key={producer.id}
-                                        producer={producer}
-                                        onToggle={toggleAbility}
-                                        router={router}
-                                    />
-                                ))
-                            )}
-                        </motion.div>
-                    </AnimatePresence>
-
-                </main>
+        <>
+            {/* Header & Stats */}
+            <div className="mb-16">
+                <div className="mb-8">
+                    <h1 className="font-main text-6xl md:text-8xl uppercase leading-[0.9] mb-4">
+                        User Data<span className="text-primary">base</span>
+                    </h1>
+                    <p className="text-white/50 text-xl font-light">Manage permissions and access.</p>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <StatBlock label="Total Users" value={stats.total} />
+                    <StatBlock label="Producers" value={stats.verifiedProducers} active />
+                    <StatBlock label="Contributors" value={stats.verifiedContributors} />
+                    <StatBlock label="Pending" value={stats.pending} color="text-yellow-400" />
+                </div>
             </div>
-        </Layout>
+
+            {/* Controls */}
+            <div className="flex flex-col lg:flex-row items-center justify-between gap-6 mb-8 border-b border-white/10 pb-8">
+
+                {/* Filters */}
+                <div className="flex items-center gap-2 overflow-x-auto w-full lg:w-auto no-scrollbar">
+                    <FilterPill label="All" active={statusFilter === 'all'} onClick={() => setStatusFilter('all')} />
+                    <FilterPill label="Verified Producers" active={statusFilter === 'verified_producer'} onClick={() => setStatusFilter('verified_producer')} />
+                    <FilterPill label="Contributors" active={statusFilter === 'verified_contributor'} onClick={() => setStatusFilter('verified_contributor')} />
+                    <FilterPill label="Pending" active={statusFilter === 'pending'} onClick={() => setStatusFilter('pending')} count={stats.pending} />
+                </div>
+
+                {/* Secondary Controls */}
+                <div className="flex items-center gap-4 w-full lg:w-auto">
+                    <div className="relative flex-1 lg:w-64 group">
+                        <Search className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 group-focus-within:text-primary transition-colors" />
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Find user..."
+                            className="bg-transparent border-b border-white/10 pl-8 pr-4 py-2 w-full font-mono text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-primary transition-all"
+                        />
+                    </div>
+                    <div className="relative group">
+                        <Globe className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                        <select
+                            value={countryFilter}
+                            onChange={(e) => setCountryFilter(e.target.value)}
+                            className="bg-transparent border-b border-white/10 pl-8 pr-8 py-2 font-mono text-sm text-white focus:outline-none focus:border-primary transition-all appearance-none cursor-pointer min-w-[140px]"
+                        >
+                            <option value="all" className="bg-black">Global</option>
+                            {uniqueCountries.map((c) => <option key={c} value={c!} className="bg-black">{c}</option>)}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            {/* List Header */}
+            <div className="hidden md:grid grid-cols-12 gap-4 px-6 pb-4 text-[10px] font-mono text-white/30 uppercase tracking-widest">
+                <div className="col-span-3">User Identity</div>
+                <div className="col-span-2">Location</div>
+                <div className="col-span-2">Role & Status</div>
+                <div className="col-span-2">Verified Date</div>
+                <div className="col-span-2">Permissions</div>
+                <div className="col-span-1 text-right"></div>
+            </div>
+
+            {/* Producer List */}
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key={statusFilter + searchQuery + countryFilter}
+                    variants={containerVar}
+                    initial="hidden"
+                    animate="show"
+                    className="space-y-2"
+                >
+                    {filteredProducers.length === 0 ? (
+                        <div className="py-24 text-center border border-dashed border-white/10 rounded-xl bg-white/[0.02]">
+                            <p className="font-mono text-white/30 uppercase tracking-widest text-sm">No Users Found</p>
+                        </div>
+                    ) : (
+                        filteredProducers.map((producer) => (
+                            <ProducerRow
+                                key={producer.id}
+                                producer={producer}
+                                onToggle={toggleAbility}
+                                router={router}
+                            />
+                        ))
+                    )}
+                </motion.div>
+            </AnimatePresence>
+        </>
     );
 }
 
 // --- Sub-Components ---
 
 const StatBlock: React.FC<StatBlockProps> = ({ label, value, active, color }) => (
-    <div>
-        <div className="text-[10px] font-mono uppercase tracking-widest text-white/30 mb-1">{label}</div>
-        <div className={`font-main text-3xl ${color ? color : active ? "text-primary" : "text-white"}`}>
+    <div className={`bg-zinc-900/40 border ${active ? 'border-primary/20' : 'border-white/5'} rounded-[2rem] p-8`}>
+        <div className={`text-3xl font-bold mb-2 ${color ? color : active ? "text-primary" : "text-white"}`}>
             {value.toString().padStart(2, '0')}
         </div>
+        <div className="text-xs font-mono uppercase tracking-widest text-white/40">{label}</div>
     </div>
 );
 
@@ -307,7 +287,7 @@ const ProducerRow: React.FC<ProducerRowProps> = ({ producer, onToggle, router })
     return (
         <motion.div
             variants={itemVar}
-            className="group grid grid-cols-1 md:grid-cols-12 gap-4 px-6 py-5 bg-white/[0.02] border border-transparent hover:border-primary/20 hover:bg-white/[0.04] transition-all items-center rounded-lg"
+            className="group grid grid-cols-1 md:grid-cols-12 gap-4 px-8 py-6 mb-2 bg-zinc-900/40 border border-white/5 hover:border-white/20 hover:bg-white/[0.04] transition-all items-center rounded-[2rem]"
         >
             {/* Identity */}
             <div className="col-span-12 md:col-span-3">
@@ -409,9 +389,3 @@ const getStatusBadge = (producer: Producer): StatusBadge => {
     }
     return { style: "bg-white/5 border-white/10 text-white/40", label: "User", icon: UserCheck };
 };
-
-const LoadingScreen: React.FC = () => (
-    <div className="min-h-screen bg-black flex items-center justify-center text-primary">
-        <Loader2 className="w-8 h-8 animate-spin" />
-    </div>
-);

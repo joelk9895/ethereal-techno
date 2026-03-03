@@ -57,10 +57,6 @@ interface BigLinkProps {
     router: ReturnType<typeof useRouter>;
 }
 
-interface MaskedTextProps {
-    lines: string[];
-    className: string;
-}
 
 interface ParallaxTileProps {
     y: MotionValue<number>;
@@ -282,12 +278,10 @@ const VerifiedDashboard: React.FC<VerifiedDashboardProps> = ({ user, authUser, r
                         {/* Bento Grid Layout */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-                            {/* 1. Telegram Connect (Large Hero Card) */}
                             <div className="md:col-span-2 relative group overflow-hidden rounded-[2.5rem] bg-[#2AABEE]/10 border border-[#2AABEE]/20 p-10 flex flex-col justify-between transition-all duration-500 min-h-[400px]">
                                 <TelegramCardSection user={displayUser} authUser={authUser} />
                             </div>
 
-                            {/* 2. Featured Events (Vertical Stack) */}
                             <div className="flex flex-col gap-6 h-full">
                                 <div className="flex-1 rounded-[2.5rem] bg-zinc-900/50 border border-white/5 p-10 flex flex-col relative overflow-hidden group hover:bg-zinc-900/80 transition-colors">
                                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-transparent" />
@@ -297,7 +291,7 @@ const VerifiedDashboard: React.FC<VerifiedDashboardProps> = ({ user, authUser, r
                                                 <span className="px-2 py-1 bg-white/10 rounded text-[10px] font-mono uppercase">Event</span>
                                                 <span className="text-[10px] font-mono text-white/40">Ends in 3d</span>
                                             </div>
-                                            <h3 className="font-main text-3xl uppercase mb-2">Remix Contest</h3>
+                                            <h3 className="font-main text-2xl uppercase mb-2">Remix Contest</h3>
                                             <p className="text-white/50 text-sm">Download stems and submit your track.</p>
                                         </div>
                                         <button className="mt-8 self-start flex items-center gap-2 text-xs font-bold uppercase tracking-widest hover:text-primary transition-colors">
@@ -309,7 +303,7 @@ const VerifiedDashboard: React.FC<VerifiedDashboardProps> = ({ user, authUser, r
                                 <div className="flex-1 rounded-[2.5rem] bg-white/5 border border-white/5 p-10 flex flex-col justify-center relative overflow-hidden group hover:bg-white/10 transition-colors">
                                     <div className="flex items-center gap-4 mb-4">
                                         <Users className="w-6 h-6 text-white/50" />
-                                        <span className="text-xl font-main uppercase">Members</span>
+                                        <span className="text-lg font-main uppercase">Members</span>
                                     </div>
                                     <div className="flex -space-x-3">
                                         {[1, 2, 3, 4].map(i => (
@@ -325,10 +319,9 @@ const VerifiedDashboard: React.FC<VerifiedDashboardProps> = ({ user, authUser, r
                             </div>
                         </div>
 
-                        {/* 3. News Feed (List Style) */}
                         <div className="mt-12">
                             <div className="flex items-center justify-between mb-8 px-2">
-                                <h3 className="font-main text-2xl uppercase">Latest Updates</h3>
+                                <h3 className="font-main text-2xl uppercase">Circle News</h3>
                                 <button className="text-xs font-mono uppercase tracking-widest text-primary hover:text-white transition-colors">View All</button>
                             </div>
 
@@ -344,7 +337,7 @@ const VerifiedDashboard: React.FC<VerifiedDashboardProps> = ({ user, authUser, r
 
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-3 mb-1">
-                                                    <h4 className="font-bold text-lg text-white group-hover:text-primary transition-colors">{item.title}</h4>
+                                                    <h4 className="font-bold text-sm text-white group-hover:text-primary transition-colors">{item.title}</h4>
                                                     {item.priority > 0 && <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />}
                                                 </div>
                                                 {item.content && <p className="text-white/40 text-sm line-clamp-1">{item.content}</p>}
@@ -424,11 +417,11 @@ const TelegramCardSection: React.FC<{ user: ProducerData | null, authUser: AuthU
                     <MessageCircle className="w-8 h-8" />
                 </div>
 
-                <h3 className="font-main text-4xl uppercase mb-4 text-white">
+                <h3 className="font-main text-2xl uppercase mb-4 text-white">
                     {isConnected ? "Access Granted" : "Private Circle"}
                 </h3>
 
-                <p className="text-[#2AABEE]/80 text-lg leading-relaxed mb-6">
+                <p className="text-[#2AABEE]/80 text-sm leading-relaxed mb-6">
                     {isConnected
                         ? `You are connected securely as @${user?.telegramUsername}. Welcome to the inner circle.`
                         : "Connect your Telegram account to join the verified producer group chat."
@@ -477,15 +470,6 @@ const Loader2: React.FC<{ className?: string }> = ({ className }) => (
     <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
 );
 
-const MaskedText: React.FC<MaskedTextProps> = ({ lines, className }) => (
-    <div className="flex flex-col items-start">
-        {lines.map((line, i) => (
-            <div key={i} className="overflow-hidden">
-                <motion.h1 custom={i} variants={textReveal} initial="hidden" animate="visible" className={className}>{line}</motion.h1>
-            </div>
-        ))}
-    </div>
-);
 
 const MinimalQuote: React.FC<MinimalQuoteProps> = ({ quote, author }) => (
     <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} transition={{ duration: 0.8 }} viewport={{ once: true }} className="flex flex-col gap-6">
@@ -546,7 +530,7 @@ const FeaturesSection: React.FC = () => {
         <section ref={containerRef} className="relative py-32 px-6 md:px-12 min-h-[120vh] flex items-center">
             <div className="max-w-7xl mx-auto w-full">
                 <div className="mb-24">
-                    <span className="text-xs font-mono text-primary uppercase tracking-widest">02 // INSIDE THE ETHEREAL TECHNO CIRCLE</span>
+                    <span className="text-xs font-mono text-primary uppercase tracking-widest">INSIDE THE ETHEREAL TECHNO CIRCLE</span>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-8">
                     <ParallaxTile y={yLeft} icon={Download} title="EXCLUSIVE FREE PACKS" desc="Curated sounds reserved for verified members." index="01" />
@@ -571,7 +555,7 @@ const Navigation: React.FC = () => (
             <div className="w-2 h-2 bg-white rounded-full" />
             <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-white">Community</span>
         </div>
-        <div className="hidden md:block text-[10px] font-mono opacity-50 tracking-widest text-white">[ ETHEREAL // CIRCLE ]</div>
+        <div className="hidden md:block text-[10px] font-mono opacity-50 tracking-widest text-white">[ ETHEREAL CIRCLE ]</div>
     </nav>
 );
 

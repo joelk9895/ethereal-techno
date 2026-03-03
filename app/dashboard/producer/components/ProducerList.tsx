@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { User, MessageSquare, Eye, MapPin, ChevronRight, ChevronLeft } from "lucide-react";
-// import Image from "next/image";
-import { useRef } from "react";
+import { User, MessageSquare, Eye, ChevronRight, ChevronLeft } from "lucide-react";
+import Image from "next/image";
 
 import { useRouter } from "next/navigation";
 
@@ -94,8 +93,8 @@ export default function ProducerList() {
     return (
         <div className="relative group/container">
             <div className="flex items-center justify-between mb-6 px-2">
-                <div className="flex items-center gap-4 text-white/50 uppercase tracking-widest text-base font-mono">
-                    <User className="w-5 h-5" />
+                <div className="flex items-center gap-2 text-white/50 uppercase tracking-widest text-[10px] font-mono">
+                    <User className="w-4 h-4" />
                     <span>Verified Producers</span>
                 </div>
                 <div className="flex gap-2 opacity-0 group-hover/container:opacity-100 transition-opacity">
@@ -130,10 +129,11 @@ export default function ProducerList() {
                             <div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                             <div className="relative w-full h-full rounded-full overflow-hidden bg-zinc-800 border border-white/5 group-hover:scale-105 transition-transform duration-500 shadow-2xl group-hover:border-primary/50">
                                 {producer.artistPhoto ? (
-                                    <img
+                                    <Image
                                         src={producer.artistPhoto}
                                         alt={producer.artistName || producer.username}
-                                        className="w-full h-full object-cover"
+                                        fill
+                                        className="object-cover"
                                     />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center text-white/20 font-bold text-3xl bg-gradient-to-br from-white/5 to-transparent">
