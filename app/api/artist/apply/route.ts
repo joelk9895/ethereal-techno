@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/app/lib/database";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
+import { sendApplicationConfirmation, sendAdminNotification } from "@/app/services/emailService";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
@@ -209,6 +210,14 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Send emails (fire-and-forget so they don't block the response)
+    const applicantEmail = body.email || user?.email || "";
+    const artistName = body.artistName || body.name || "";
+    if (applicantEmail) {
+      sendApplicationConfirmation(applicantEmail, artistName).catch(e => console.error("Failed to send applicant confirmation:", e));
+      sendAdminNotification(artistName, applicantEmail, application.id).catch(e => console.error("Failed to send admin notification:", e));
+    }
+
     return NextResponse.json({
       application,
       token, // Will be null if authenticated user
@@ -223,5 +232,63 @@ export async function POST(request: NextRequest) {
     );
   } finally {
 
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const authHeader = request.headers.get("authorization");
+
+    if (!authHeader?.startsWith("Bearer ")) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
+    }
+
+    const token = authHeader.substring(7);
+    let decoded: JWTPayload;
+
+    try {
+      decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid or expired token" },
+        { status: 401 }
+      );
+    }
+
+    const existingApplication = await prisma.artistApplication.findFirst({
+      where: { userId: decoded.userId },
+    });
+
+    if (!existingApplication) {
+      return NextResponse.json(
+        { error: "No application found" },
+        { status: 404 }
+      );
+    }
+
+    if (existingApplication.status !== "PENDING") {
+      return NextResponse.json(
+        { error: "Only pending applications can be withdrawn" },
+        { status: 400 }
+      );
+    }
+
+    await prisma.artistApplication.delete({
+      where: { id: existingApplication.id },
+    });
+
+    return NextResponse.json(
+      { message: "Application withdrawn successfully" },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Withdraw API Error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

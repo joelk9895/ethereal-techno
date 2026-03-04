@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/app/lib/database";
 import { verifyAdminAccess } from "@/lib/admin-auth";
-
+import { sendApprovalNotification, sendRejectionNotification } from "@/app/services/emailService";
 
 
 // Get single application
@@ -156,7 +156,16 @@ export async function PATCH(
       });
     }
 
-    // TODO: Send email based on decision and criteria
+    // Send email notification based on decision
+    const applicantEmail = application.email || application.user?.email;
+    const artistName = application.artistName || application.user?.name || "Artist";
+    if (applicantEmail) {
+      if (status === "APPROVED") {
+        sendApprovalNotification(applicantEmail, artistName).catch(e => console.error("Failed to send approval email:", e));
+      } else if (status === "REJECTED") {
+        sendRejectionNotification(applicantEmail, artistName).catch(e => console.error("Failed to send rejection email:", e));
+      }
+    }
 
     return NextResponse.json(
       {

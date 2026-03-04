@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import {
     LayoutDashboard,
     User,
@@ -72,6 +73,26 @@ const NavItem: React.FC<NavItemProps> = ({ label, icon: Icon, active, onClick, e
 );
 
 export default function RightSidebar({ user, activeTab, onNavigate, onSignOut }: RightSidebarProps) {
+    const [hasApplication, setHasApplication] = useState(false);
+
+    useEffect(() => {
+        if (user.type !== "USER") return;
+        const checkApplication = async () => {
+            try {
+                const response = await fetch("/api/artist/apply", {
+                    headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` },
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    setHasApplication(data.exists && !!data.application);
+                }
+            } catch (error) {
+                console.error("Error checking application status:", error);
+            }
+        };
+        checkApplication();
+    }, [user.type]);
+
     return (
         <aside className="w-full lg:w-80 lg:h-full border-l border-white/10 bg-black/80 backdrop-blur-2xl z-20 pt-24 pb-12 px-8 flex flex-col justify-between overflow-y-auto no-scrollbar shadow-2xl">
             <div>
@@ -184,7 +205,7 @@ export default function RightSidebar({ user, activeTab, onNavigate, onSignOut }:
                             />
                             <NavItem
                                 id="applications"
-                                label="Circle Status"
+                                label={hasApplication ? "Circle Status" : "Join the Circle"}
                                 icon={FileText}
                                 active={activeTab === "applications"}
                                 onClick={() => onNavigate("applications")}

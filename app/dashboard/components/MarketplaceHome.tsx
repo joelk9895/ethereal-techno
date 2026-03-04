@@ -60,7 +60,7 @@ export default function MarketplaceHome() {
 
             {/* Header */}
             <div className="flex items-center justify-start mb-8 px-1">
-                <h1 className="font-main text-4xl md:text-5xl lowercase text-white">Home</h1>
+                <h1 className="font-main text-5xl md:text-7xl uppercase text-white">Home</h1>
             </div>
 
             <div className="space-y-16">

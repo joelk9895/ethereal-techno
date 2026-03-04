@@ -9,10 +9,9 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: "Key is required" }, { status: 400 });
     }
 
-    // Security check: Only allow access to artist application content for now
-    // Adjust this prefix based on where public profile images are stored
-    if (!key.startsWith("artist-applications/")) {
-        // Return 403 default, or 404 to hide existence
+    // Security check: Only allow access to known public content prefixes
+    const allowedPrefixes = ["artist-applications/", "profile-photos/"];
+    if (!allowedPrefixes.some(prefix => key.startsWith(prefix))) {
         console.warn(`Blocked access to restricted key: ${key}`);
         return NextResponse.json({ error: "Access Denied" }, { status: 403 });
     }

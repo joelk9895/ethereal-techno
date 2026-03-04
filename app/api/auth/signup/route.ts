@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/app/lib/database";
 import bcrypt from "bcryptjs";
-
-
+import { verifyOtp } from "@/app/api/auth/send-otp/route";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email, password } = body;
+    const { name, email, password, otp } = body;
 
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !otp) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -27,6 +26,15 @@ export async function POST(request: NextRequest) {
     if (password.length < 8) {
       return NextResponse.json(
         { error: "Password must be at least 8 characters" },
+        { status: 400 }
+      );
+    }
+
+    // Verify OTP before creating the user
+    const otpResult = verifyOtp(email, otp);
+    if (!otpResult.valid) {
+      return NextResponse.json(
+        { error: otpResult.error || "Invalid verification code" },
         { status: 400 }
       );
     }
@@ -90,7 +98,5 @@ export async function POST(request: NextRequest) {
       { error: "An error occurred during signup" },
       { status: 500 }
     );
-  } finally {
-
   }
 }

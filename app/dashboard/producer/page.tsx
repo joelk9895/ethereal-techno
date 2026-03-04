@@ -237,7 +237,7 @@ export default function ProducerOverviewPage() {
                     <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] mix-blend-overlay"></div>
 
                     <div className="relative z-10 pr-4">
-                        <h4 className="text-sm text-white font-medium mb-10 opacity-90">
+                        <h4 className="text-xl text-white font-medium mb-10 opacity-90">
                             As a verified member, you receive:
                         </h4>
 
@@ -247,8 +247,8 @@ export default function ProducerOverviewPage() {
                                     <Unlock className="w-5 h-5" />
                                 </div>
                                 <div>
-                                    <h5 className="text-white text-sm font-medium mb-1.5 opacity-90">Access to Circle Exclusives</h5>
-                                    <p className="text-white/50 text-sm leading-relaxed">
+                                    <h5 className="text-white text-lg font-medium mb-1.5 opacity-90">Access to Circle Exclusives</h5>
+                                    <p className="text-white/50 text-base leading-relaxed">
                                         Small curated libraries available free as part of your membership.
                                     </p>
                                 </div>
@@ -259,8 +259,8 @@ export default function ProducerOverviewPage() {
                                     <ShoppingBag className="w-5 h-5" />
                                 </div>
                                 <div>
-                                    <h5 className="text-white text-sm font-medium mb-1.5 opacity-90">20% Privilege on Libraries & Merch</h5>
-                                    <p className="text-white/50 text-sm leading-relaxed">
+                                    <h5 className="text-white text-lg font-medium mb-1.5 opacity-90">20% Privilege on Libraries & Merch</h5>
+                                    <p className="text-white/50 text-base leading-relaxed">
                                         Automatically applied at checkout. Personal and non-transferable.
                                     </p>
                                 </div>

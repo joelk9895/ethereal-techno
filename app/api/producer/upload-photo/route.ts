@@ -51,7 +51,17 @@ export async function POST(request: NextRequest) {
       data: { artistPhoto: url },
     });
 
-    return NextResponse.json({ photoUrl: url, user });
+    // Convert to proxy URL for private bucket
+    let proxyUrl = url;
+    try {
+      const parsed = new URL(url);
+      const key = parsed.pathname.startsWith('/') ? parsed.pathname.slice(1) : parsed.pathname;
+      proxyUrl = `/api/image-proxy?key=${encodeURIComponent(key)}`;
+    } catch {
+      // fallback to raw URL
+    }
+
+    return NextResponse.json({ photoUrl: proxyUrl, user });
   } catch (error) {
     console.error("Upload Error:", error);
     return NextResponse.json(

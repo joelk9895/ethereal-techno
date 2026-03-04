@@ -122,6 +122,7 @@ export default function DashboardPage() {
     const [loading, setLoading] = useState(true);
     const [editing, setEditing] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [withdrawing, setWithdrawing] = useState(false);
 
     const [formData, setFormData] = useState({
         name: "",
@@ -313,25 +314,25 @@ export default function DashboardPage() {
                                     {!editing ? (
                                         <button
                                             onClick={() => setEditing(true)}
-                                            className="hidden md:flex items-center gap-2 bg-white text-black px-6 py-3 font-bold uppercase tracking-widest text-xs hover:bg-primary transition-colors"
+                                            className="hidden md:flex items-center gap-2 bg-primary text-black px-6 py-2.5 rounded-full font-bold uppercase tracking-widest text-[10px] hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
                                         >
-                                            <User className="w-4 h-4" />
+                                            <User className="w-3 h-3" />
                                             Edit Details
                                         </button>
                                     ) : (
-                                        <div className="flex gap-4">
+                                        <div className="flex gap-3">
                                             <button
                                                 onClick={handleCancel}
-                                                className="hidden md:flex items-center gap-2 text-white/50 px-6 py-3 font-bold uppercase tracking-widest text-xs hover:text-white transition-colors"
+                                                className="hidden md:flex items-center gap-2 px-6 py-2.5 rounded-full font-bold uppercase tracking-widest text-[10px] transition-colors border border-white/20 text-white/60 hover:text-white hover:border-white/40"
                                             >
                                                 Cancel
                                             </button>
                                             <button
                                                 onClick={handleSave}
                                                 disabled={saving}
-                                                className="hidden md:flex items-center gap-2 bg-primary text-black px-6 py-3 font-bold uppercase tracking-widest text-xs hover:bg-white transition-colors disabled:opacity-50"
+                                                className="hidden md:flex items-center gap-2 bg-white text-black px-6 py-2.5 rounded-full font-bold uppercase tracking-widest text-[10px] hover:bg-neutral-200 transition-colors disabled:opacity-50 shadow-lg shadow-white/10"
                                             >
-                                                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                                {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
                                                 Save
                                             </button>
                                         </div>
@@ -376,14 +377,14 @@ export default function DashboardPage() {
                                     <div className="grid grid-cols-2 gap-4 mt-8 md:hidden">
                                         <button
                                             onClick={handleCancel}
-                                            className="w-full flex items-center justify-center gap-2 bg-white/10 text-white px-6 py-4 font-bold uppercase tracking-widest text-xs hover:bg-white/20 transition-colors"
+                                            className="w-full flex items-center justify-center gap-2 rounded-full border border-white/20 text-white/60 px-6 py-3 font-bold uppercase tracking-widest text-[10px] hover:text-white hover:border-white/40 transition-colors"
                                         >
                                             Cancel
                                         </button>
                                         <button
                                             onClick={handleSave}
                                             disabled={saving}
-                                            className="w-full flex items-center justify-center gap-2 bg-primary text-black px-6 py-4 font-bold uppercase tracking-widest text-xs hover:bg-white transition-colors"
+                                            className="w-full flex items-center justify-center gap-2 bg-white text-black px-6 py-3 rounded-full font-bold uppercase tracking-widest text-[10px] hover:bg-neutral-200 transition-colors shadow-lg shadow-white/10"
                                         >
                                             {saving ? "Saving..." : "Save"}
                                         </button>
@@ -392,7 +393,7 @@ export default function DashboardPage() {
                                 {!editing && (
                                     <button
                                         onClick={() => setEditing(true)}
-                                        className="md:hidden w-full mt-8 flex items-center justify-center gap-2 bg-white text-black px-6 py-4 font-bold uppercase tracking-widest text-xs hover:bg-primary transition-colors"
+                                        className="md:hidden w-full mt-8 flex items-center justify-center gap-2 bg-primary text-black px-6 py-3 rounded-full font-bold uppercase tracking-widest text-[10px] hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
                                     >
                                         Edit Details
                                     </button>
@@ -415,7 +416,7 @@ export default function DashboardPage() {
                                 className="w-full max-w-none"
                             >
                                 <div className="space-y-6">
-                                    <h2 className="font-main text-4xl md:text-5xl font-bold text-white">Library</h2>
+                                    <h2 className="font-main text-5xl md:text-7xl uppercase text-white">Library</h2>
 
                                     {/* Filters */}
                                     <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
@@ -480,13 +481,19 @@ export default function DashboardPage() {
                             >
                                 <div className="flex items-end justify-between mb-12">
                                     <div>
-                                        <h2 className="font-main text-5xl md:text-7xl uppercase text-white mb-2">Circle Status</h2>
-                                        <p className="text-white/50 text-lg font-light">Track your application and membership status within the Circle.</p>
+                                        <h2 className="font-main text-5xl md:text-7xl uppercase text-white mb-2">
+                                            {applications.length > 0 ? "Circle Status" : "Join the Circle"}
+                                        </h2>
+                                        <p className="text-white/50 text-lg font-light">
+                                            {applications.length > 0
+                                                ? "Track your application and membership status within the Circle."
+                                                : "Apply to become a verified member of the Ethereal Techno Circle."}
+                                        </p>
                                     </div>
                                     {user.type === "USER" && (
                                         <button
                                             onClick={() => router.push("/artist/apply")}
-                                            className="hidden md:flex items-center gap-2 bg-white text-black px-6 py-3 font-bold uppercase tracking-widest text-xs hover:bg-primary transition-colors"
+                                            className="hidden md:flex items-center gap-2 bg-primary text-black px-6 py-2.5 rounded-full font-bold uppercase tracking-widest text-[10px] hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
                                         >
                                             Apply to Join
                                         </button>
@@ -496,8 +503,8 @@ export default function DashboardPage() {
                                 {/* Case 4: APPROVED — user is already an ARTIST */}
                                 {user.type === "ARTIST" ? (
                                     <div className="py-16 border-y border-white/10">
-                                        <div className="max-w-2xl">
-                                            <div className="flex items-center gap-3 mb-6">
+                                        <div className="max-w-2xl mx-auto text-center">
+                                            <div className="flex items-center justify-center gap-3 mb-6">
                                                 <div className="w-3 h-3 rounded-full bg-green-400" />
                                                 <span className="text-xs font-mono uppercase tracking-widest text-green-400">Approved</span>
                                             </div>
@@ -511,7 +518,7 @@ export default function DashboardPage() {
                                 ) : applications.length === 0 ? (
                                     /* Case 1: NO APPLICATION */
                                     <div className="py-16 border-y border-white/10">
-                                        <div className="max-w-2xl">
+                                        <div className="max-w-2xl mx-auto text-center">
                                             <p className="text-white/60 text-lg font-light mb-8">You have not applied to join the Circle yet.</p>
                                             <button
                                                 onClick={() => router.push("/artist/apply")}
@@ -529,8 +536,8 @@ export default function DashboardPage() {
                                                 /* Case 3: REFUSED */
                                                 return (
                                                     <div key={app.id} className="py-16 border-y border-white/10">
-                                                        <div className="max-w-2xl">
-                                                            <div className="flex items-center gap-3 mb-6">
+                                                        <div className="max-w-2xl mx-auto text-center">
+                                                            <div className="flex items-center justify-center gap-3 mb-6">
                                                                 <div className="w-3 h-3 rounded-full bg-red-400" />
                                                                 <span className="text-xs font-mono uppercase tracking-widest text-red-400">Not Approved</span>
                                                             </div>
@@ -553,8 +560,8 @@ export default function DashboardPage() {
                                             /* Case 2: PENDING / UNDER_REVIEW */
                                             return (
                                                 <div key={app.id} className="py-16 border-y border-white/10">
-                                                    <div className="max-w-2xl">
-                                                        <div className="flex items-center gap-3 mb-6">
+                                                    <div className="max-w-2xl mx-auto text-center">
+                                                        <div className="flex items-center justify-center gap-3 mb-6">
                                                             <div className="w-3 h-3 rounded-full bg-yellow-400 animate-pulse" />
                                                             <span className="text-xs font-mono uppercase tracking-widest text-yellow-400">Under Review</span>
                                                         </div>
@@ -565,6 +572,33 @@ export default function DashboardPage() {
                                                             <p>You will be notified by email once a decision has been made.</p>
                                                             <p>Thank you for your patience.</p>
                                                         </div>
+                                                        <button
+                                                            onClick={async () => {
+                                                                if (!confirm("Are you sure you want to withdraw your application? This action cannot be undone.")) return;
+                                                                setWithdrawing(true);
+                                                                try {
+                                                                    const res = await fetch("/api/artist/apply", {
+                                                                        method: "DELETE",
+                                                                        headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` },
+                                                                    });
+                                                                    if (res.ok) {
+                                                                        setApplications([]);
+                                                                    } else {
+                                                                        const data = await res.json();
+                                                                        alert(data.error || "Failed to withdraw application.");
+                                                                    }
+                                                                } catch (err) {
+                                                                    console.error("Withdraw error:", err);
+                                                                    alert("Something went wrong. Please try again.");
+                                                                } finally {
+                                                                    setWithdrawing(false);
+                                                                }
+                                                            }}
+                                                            disabled={withdrawing}
+                                                            className="mt-8 inline-flex items-center gap-2 text-red-400/70 font-bold uppercase tracking-widest text-xs hover:text-red-400 transition-colors disabled:opacity-50"
+                                                        >
+                                                            {withdrawing ? "Withdrawing..." : "Withdraw Application"}
+                                                        </button>
                                                     </div>
                                                 </div>
                                             );

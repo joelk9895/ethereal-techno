@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { User, Camera, Save, Loader2, Link2, ExternalLink, Globe, MapPin, Edit2, Instagram, Facebook, Youtube, Mail, Trash2, CheckSquare, Square, Music, Lock, KeyRound, ChevronRight } from "lucide-react";
+import { User, Camera, Save, Loader2, Link2, ExternalLink, Globe, MapPin, Edit2, Instagram, Facebook, Youtube, Mail, Trash2, CheckSquare, Square, Music, Lock, KeyRound, ChevronRight, Play } from "lucide-react";
 import { authenticatedFetch, logout } from "@/lib/auth";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -87,6 +87,102 @@ const fadeVar = {
     exit: { opacity: 0, y: -20, transition: { duration: 0.4 } }
 };
 
+interface SoundCloudTrackData {
+    thumbnail_url: string;
+    title: string;
+}
+
+const SoundCloudEmbed = ({ url }: { url: string }) => {
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [trackData, setTrackData] = useState<SoundCloudTrackData | null>(null);
+    const [error, setError] = useState(false);
+
+    useEffect(() => {
+        if (!url) return;
+
+        let finalUrl = url;
+        if (!finalUrl.startsWith("https://")) {
+            finalUrl = `https://${finalUrl}`;
+        }
+
+        if (!finalUrl.includes("soundcloud") || finalUrl.includes("/sets/")) {
+            setError(true);
+            return;
+        }
+
+        fetch(`/api/soundcloud?url=${encodeURIComponent(finalUrl)}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.thumbnail_url) {
+                    setTrackData(data);
+                } else {
+                    setError(true);
+                }
+            })
+            .catch(() => setError(true));
+    }, [url]);
+
+    if (error || !url) return null;
+
+    if (isPlaying) {
+        const src = `https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}&color=%23ff5500&auto_play=true&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false&visual=true`;
+        return (
+            <div className="group space-y-3">
+                <div className="aspect-square w-full border border-white/5 bg-neutral-900 rounded-xl overflow-hidden">
+                    <iframe
+                        width="100%"
+                        height="100%"
+                        scrolling="no"
+                        frameBorder="no"
+                        allow="autoplay"
+                        src={src}
+                    />
+                </div>
+                {trackData?.title && (
+                    <div className="px-1">
+                        <p className="text-white/70 text-xs font-medium line-clamp-2 leading-snug tracking-wide">
+                            {trackData.title}
+                        </p>
+                    </div>
+                )}
+            </div>
+        );
+    }
+
+    return (
+        <div className="group space-y-3 cursor-pointer" onClick={() => setIsPlaying(true)}>
+            <div className="relative aspect-square w-full border border-white/5 bg-neutral-900 rounded-xl overflow-hidden">
+                {trackData?.thumbnail_url ? (
+                    <Image
+                        src={trackData.thumbnail_url}
+                        alt={trackData.title || "SoundCloud Track"}
+                        fill
+                        className="object-cover transition-transform duration-700 group-hover:scale-110 opacity-80 group-hover:opacity-100"
+                    />
+                ) : (
+                    <div className="absolute inset-0 flex items-center justify-center text-white/20">
+                        <Music size={48} />
+                    </div>
+                )}
+
+                <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">
+                    <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white group-hover:scale-110 transition-transform duration-300 border border-white/20">
+                        <Play size={32} fill="currentColor" className="ml-1" />
+                    </div>
+                </div>
+            </div>
+
+            {trackData?.title && (
+                <div className="px-1">
+                    <p className="text-white/70 group-hover:text-white transition-colors text-xs font-medium line-clamp-2 leading-snug tracking-wide">
+                        {trackData.title}
+                    </p>
+                </div>
+            )}
+        </div>
+    );
+};
+
 const SectionHeader = ({ title }: { title: string }) => (
     <h3 className="text-xl font-bold text-white mb-4 px-1">{title}</h3>
 );
@@ -144,6 +240,7 @@ export default function ProducerProfilePage() {
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [uploadingPhoto, setUploadingPhoto] = useState(false);
     const router = useRouter();
 
     const scrollY = useMotionValue(0);
@@ -274,6 +371,7 @@ export default function ProducerProfilePage() {
         const file = e.target.files?.[0];
         if (!file) return;
 
+        setUploadingPhoto(true);
         const formData = new FormData();
         formData.append("photo", file);
 
@@ -284,10 +382,19 @@ export default function ProducerProfilePage() {
             });
             if (res.ok) {
                 const data = await res.json();
+                // Preload the image before showing it
+                await new Promise<void>((resolve) => {
+                    const img = new window.Image();
+                    img.onload = () => resolve();
+                    img.onerror = () => resolve();
+                    img.src = data.photoUrl;
+                });
                 setArtistPhoto(data.photoUrl);
             }
         } catch (err) {
             console.error(err);
+        } finally {
+            setUploadingPhoto(false);
         }
     };
 
@@ -342,7 +449,7 @@ export default function ProducerProfilePage() {
                     </motion.h2>
                 </div>
 
-                <div className="flex items-center gap-3" style={{ transform: `translateY(${headerY}px)` }}>
+                <motion.div className="flex items-center gap-3" style={{ y: headerY }}>
                     {isEditing && (
                         <motion.button
                             initial={{ opacity: 0, scale: 0.9 }}
@@ -404,7 +511,7 @@ export default function ProducerProfilePage() {
                             )}
                         </AnimatePresence>
                     </motion.button>
-                </div>
+                </motion.div>
             </div>
 
             <div className="relative mb-12 group">
@@ -423,7 +530,18 @@ export default function ProducerProfilePage() {
                             )}
                         </div>
                         <AnimatePresence>
-                            {isEditing && (
+                            {uploadingPhoto && (
+                                <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    className="absolute inset-0 z-30 rounded-full bg-black/70 flex flex-col items-center justify-center backdrop-blur-sm"
+                                >
+                                    <Loader2 className="w-8 h-8 text-primary animate-spin mb-2" />
+                                    <span className="text-[10px] font-mono uppercase text-white/80">Uploading...</span>
+                                </motion.div>
+                            )}
+                            {isEditing && !uploadingPhoto && (
                                 <motion.div
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
@@ -459,13 +577,27 @@ export default function ProducerProfilePage() {
                         <div className="space-y-2 group/input">
                             <label className="text-[10px] font-mono uppercase tracking-widest text-white/30 pl-1 group-focus-within/input:text-primary transition-colors">Artist Statement</label>
                             {isEditing ? (
-                                <textarea
-                                    value={profileForm.quote || ""}
-                                    onChange={(e) => setProfileForm({ ...profileForm, quote: e.target.value })}
-                                    placeholder="Ethereal Techno is..."
-                                    rows={2}
-                                    className="w-full bg-black/20 border border-white/10 rounded-2xl px-6 py-4 text-lg md:text-xl text-white/80 focus:text-white focus:outline-none focus:border-primary/50 placeholder:text-white/10 resize-none font-light leading-relaxed transition-all"
-                                />
+                                <div className="relative group border-b border-white/20 focus-within:border-primary transition-colors">
+                                    <textarea
+                                        rows={1}
+                                        className="w-full bg-transparent border-none py-4 text-lg md:text-xl font-light text-white/80 focus:text-white focus:outline-none focus:ring-0 resize-none placeholder:text-white/20 leading-relaxed"
+                                        placeholder=""
+                                        value={profileForm.quote?.startsWith("Ethereal Techno is ") ? profileForm.quote : `Ethereal Techno is ${profileForm.quote || ""}`}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            const PREFIX = "Ethereal Techno is ";
+                                            if (!val.startsWith(PREFIX)) {
+                                                setProfileForm({ ...profileForm, quote: PREFIX });
+                                            } else {
+                                                const target = e.target;
+                                                target.style.height = 'auto';
+                                                target.style.height = `${target.scrollHeight}px`;
+                                                setProfileForm({ ...profileForm, quote: val });
+                                            }
+                                        }}
+                                        style={{ height: 'auto', minHeight: '1.5em' }}
+                                    />
+                                </div>
                             ) : (
                                 <div className="px-6 py-4 text-lg md:text-xl text-white/80 font-light leading-relaxed min-h-[5rem] flex items-center justify-center md:justify-start">
                                     {profileForm.quote
@@ -691,39 +823,51 @@ export default function ProducerProfilePage() {
 
                     <div>
                         <SectionHeader title="Featured Tracks" />
-                        <div className="bg-zinc-900/30 border border-white/5 rounded-3xl overflow-hidden backdrop-blur-sm">
-                            <InputRow
-                                label="Track 1"
-                                value={profileForm.track1}
-                                onChange={(v) => setProfileForm({ ...profileForm, track1: v })}
-                                onBlur={() => handleFieldBlur('track1', profileForm.track1)}
-                                error={fieldErrors.track1}
-                                placeholder="soundcloud.com/artist/track"
-                                icon={<Music className="w-5 h-5" />}
-                                isEditing={isEditing}
-                            />
-                            <InputRow
-                                label="Track 2"
-                                value={profileForm.track2}
-                                onChange={(v) => setProfileForm({ ...profileForm, track2: v })}
-                                onBlur={() => handleFieldBlur('track2', profileForm.track2)}
-                                error={fieldErrors.track2}
-                                placeholder="soundcloud.com/artist/track"
-                                icon={<Music className="w-5 h-5" />}
-                                isEditing={isEditing}
-                            />
-                            <InputRow
-                                label="Track 3"
-                                value={profileForm.track3}
-                                onChange={(v) => setProfileForm({ ...profileForm, track3: v })}
-                                onBlur={() => handleFieldBlur('track3', profileForm.track3)}
-                                error={fieldErrors.track3}
-                                placeholder="soundcloud.com/artist/track"
-                                last
-                                icon={<Music className="w-5 h-5" />}
-                                isEditing={isEditing}
-                            />
-                        </div>
+                        {isEditing ? (
+                            <div className="bg-zinc-900/30 border border-white/5 rounded-3xl overflow-hidden backdrop-blur-sm">
+                                <InputRow
+                                    label="Track 1"
+                                    value={profileForm.track1}
+                                    onChange={(v) => setProfileForm({ ...profileForm, track1: v })}
+                                    onBlur={() => handleFieldBlur('track1', profileForm.track1)}
+                                    error={fieldErrors.track1}
+                                    placeholder="soundcloud.com/artist/track"
+                                    icon={<Music className="w-5 h-5" />}
+                                    isEditing={isEditing}
+                                />
+                                <InputRow
+                                    label="Track 2"
+                                    value={profileForm.track2}
+                                    onChange={(v) => setProfileForm({ ...profileForm, track2: v })}
+                                    onBlur={() => handleFieldBlur('track2', profileForm.track2)}
+                                    error={fieldErrors.track2}
+                                    placeholder="soundcloud.com/artist/track"
+                                    icon={<Music className="w-5 h-5" />}
+                                    isEditing={isEditing}
+                                />
+                                <InputRow
+                                    label="Track 3"
+                                    value={profileForm.track3}
+                                    onChange={(v) => setProfileForm({ ...profileForm, track3: v })}
+                                    onBlur={() => handleFieldBlur('track3', profileForm.track3)}
+                                    error={fieldErrors.track3}
+                                    placeholder="soundcloud.com/artist/track"
+                                    last
+                                    icon={<Music className="w-5 h-5" />}
+                                    isEditing={isEditing}
+                                />
+                            </div>
+                        ) : (profileForm.track1 || profileForm.track2 || profileForm.track3) ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                                {profileForm.track1 && <SoundCloudEmbed url={profileForm.track1} />}
+                                {profileForm.track2 && <SoundCloudEmbed url={profileForm.track2} />}
+                                {profileForm.track3 && <SoundCloudEmbed url={profileForm.track3} />}
+                            </div>
+                        ) : (
+                            <div className="bg-zinc-900/30 border border-white/5 rounded-3xl p-8 text-center text-white/20 text-sm">
+                                No tracks added yet.
+                            </div>
+                        )}
                     </div>
 
                     <div>
@@ -835,6 +979,6 @@ export default function ProducerProfilePage() {
                     </motion.div>
                 )}
             </AnimatePresence>
-        </motion.div>
+        </motion.div >
     );
 }

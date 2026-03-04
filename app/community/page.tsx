@@ -92,7 +92,13 @@ export default function CommunityPage() {
     useEffect(() => {
         const authUser = getAuthUser();
         setUser(authUser);
-        const verified = authUser?.type === "ARTIST" || authUser?.type === "ADMIN";
+
+        if (authUser?.type === "ARTIST") {
+            router.push("/dashboard/producer");
+            return;
+        }
+
+        const verified = authUser?.type === "ADMIN";
         setIsVerified(verified);
 
         const init = async () => {

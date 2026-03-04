@@ -51,8 +51,8 @@ export default function NewsFeed() {
                         key={item.id}
                         className="p-8 rounded-[2rem] bg-white/5 border border-white/5 hover:bg-white/10 transition-colors"
                     >
-                        <h4 className="font-bold text-base mb-3 text-white">{item.title}</h4>
-                        <p className="text-white/60 leading-relaxed font-light text-sm">{item.content}</p>
+                        <h4 className="font-bold text-xl mb-3 text-white">{item.title}</h4>
+                        <p className="text-white/60 leading-relaxed font-light text-base">{item.content}</p>
                         <div className="mt-4 text-sm font-mono text-white/30 uppercase">
                             {new Date(item.createdAt).toLocaleDateString()}
                         </div>

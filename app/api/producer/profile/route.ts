@@ -83,6 +83,19 @@ export async function GET(request: NextRequest) {
     // Fallback Logic: Use User fields if present, else fallback to ArtistApplication
     const app = user.artistApplications[0];
 
+    // Convert S3 URL to proxy URL for private bucket photos
+    const rawPhoto = user.artistPhoto || app?.photoUrl || null;
+    let proxyPhoto: string | null = null;
+    if (rawPhoto) {
+      try {
+        const url = new URL(rawPhoto);
+        const key = url.pathname.startsWith('/') ? url.pathname.slice(1) : url.pathname;
+        proxyPhoto = `/api/image-proxy?key=${encodeURIComponent(key)}`;
+      } catch {
+        proxyPhoto = rawPhoto; // fallback if URL parsing fails
+      }
+    }
+
     const producer = {
       id: user.id,
       username: user.username,
@@ -93,7 +106,7 @@ export async function GET(request: NextRequest) {
 
       // Profile Fields (User > Application > null)
       artistName: user.artistName || app?.artistName || null,
-      artistPhoto: user.artistPhoto || app?.photoUrl || null,
+      artistPhoto: proxyPhoto,
       city: user.city || null,
       country: user.country || null,
       quote: user.quote || app?.quote || null,
