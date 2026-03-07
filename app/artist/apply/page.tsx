@@ -219,8 +219,12 @@ export default function ApplyPage() {
 
             if (response.ok) {
                 const data = await response.json();
-                if (data.exists) {
-                    router.push("/dashboard");
+                if (data.exists && data.application) {
+                    const status = data.application.status;
+                    // Only redirect if application is active/approved
+                    if (status === "PENDING" || status === "UNDER_REVIEW" || status === "APPROVED") {
+                        router.push("/dashboard");
+                    }
                 }
             }
         } catch (error) {

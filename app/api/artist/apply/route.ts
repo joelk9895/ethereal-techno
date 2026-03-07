@@ -175,40 +175,82 @@ export async function POST(request: NextRequest) {
       where: { userId: userId },
     });
 
-    if (existingApplication) {
-      return NextResponse.json(
-        { error: "Application already exists" },
-        { status: 400 }
-      );
-    }
+    let application;
 
-    const application = await prisma.artistApplication.create({
-      data: {
-        userId: userId,
-        artistName: body.artistName || "",
-        email: body.email || "", // Fallback to body email if available
-        status: "PENDING",
-        quote: body.quote || "",
-        photoUrl: body.photoUrl || null,
-        instagram: body.instagram || null,
-        tiktok: body.tiktok || null,
-        facebook: body.facebook || null,
-        youtube: body.youtube || null,
-        x: body.x || null,
-        linktree: body.linktree || null,
-        spotify: body.spotify || null,
-        soundcloud: body.soundcloud || null,
-        beatport: body.beatport || null,
-        bandcamp: body.bandcamp || null,
-        appleMusic: body.appleMusic || null,
-        track1: body.track1 || null,
-        track2: body.track2 || null,
-        track3: body.track3 || null,
-        canCreateLoops: body.canCreateLoops || false,
-        canCreateSerum: body.canCreateSerum || false,
-        canCreateDiva: body.canCreateDiva || false,
-      },
-    });
+    if (existingApplication) {
+      if (existingApplication.status !== "REJECTED") {
+        return NextResponse.json(
+          { error: "Application already exists and is currently active." },
+          { status: 400 }
+        );
+      }
+
+      // Update existing rejected application
+      application = await prisma.artistApplication.update({
+        where: { id: existingApplication.id },
+        data: {
+          artistName: body.artistName || "",
+          email: body.email || "", // Fallback to body email if available
+          status: "PENDING",
+          quote: body.quote || "",
+          photoUrl: body.photoUrl || null,
+          instagram: body.instagram || null,
+          tiktok: body.tiktok || null,
+          facebook: body.facebook || null,
+          youtube: body.youtube || null,
+          x: body.x || null,
+          linktree: body.linktree || null,
+          spotify: body.spotify || null,
+          soundcloud: body.soundcloud || null,
+          beatport: body.beatport || null,
+          bandcamp: body.bandcamp || null,
+          appleMusic: body.appleMusic || null,
+          track1: body.track1 || null,
+          track2: body.track2 || null,
+          track3: body.track3 || null,
+          canCreateLoops: body.canCreateLoops || false,
+          canCreateSerum: body.canCreateSerum || false,
+          canCreateDiva: body.canCreateDiva || false,
+          // Reset reviews
+          reviewNotes: null,
+          reviewedAt: null,
+          reviewedBy: null,
+          criteriaQuality: null,
+          criteriaStyle: null,
+          criteriaPresentation: null,
+          criteriaStatement: null,
+        },
+      });
+    } else {
+      // Create new application
+      application = await prisma.artistApplication.create({
+        data: {
+          userId: userId,
+          artistName: body.artistName || "",
+          email: body.email || "", // Fallback to body email if available
+          status: "PENDING",
+          quote: body.quote || "",
+          photoUrl: body.photoUrl || null,
+          instagram: body.instagram || null,
+          tiktok: body.tiktok || null,
+          facebook: body.facebook || null,
+          youtube: body.youtube || null,
+          x: body.x || null,
+          linktree: body.linktree || null,
+          spotify: body.spotify || null,
+          soundcloud: body.soundcloud || null,
+          beatport: body.beatport || null,
+          bandcamp: body.bandcamp || null,
+          appleMusic: body.appleMusic || null,
+          track1: body.track1 || null,
+          track2: body.track2 || null,
+          track3: body.track3 || null,
+          canCreateLoops: body.canCreateLoops || false,
+          canCreateSerum: body.canCreateSerum || false,
+          canCreateDiva: body.canCreateDiva || false,
+        },
+      });
+    }
 
     // Send emails (fire-and-forget so they don't block the response)
     const applicantEmail = body.email || user?.email || "";

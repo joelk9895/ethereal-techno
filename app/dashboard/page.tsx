@@ -490,7 +490,7 @@ export default function DashboardPage() {
                                                 : "Apply to become a verified member of the Ethereal Techno Circle."}
                                         </p>
                                     </div>
-                                    {user.type === "USER" && (
+                                    {user.type === "USER" && (!applications.length || applications.every(a => a.status === "REJECTED")) && (
                                         <button
                                             onClick={() => router.push("/artist/apply")}
                                             className="hidden md:flex items-center gap-2 bg-primary text-black px-6 py-2.5 rounded-full font-bold uppercase tracking-widest text-[10px] hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
