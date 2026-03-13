@@ -16,6 +16,7 @@ interface SendEmailParams {
   subject: string;
   htmlContent: string;
   tags?: string[];
+  sender?: { name: string; email: string };
 }
 
 interface ContactParams {
@@ -32,7 +33,7 @@ interface EmailContent {
 
 // ─── Core: Send Email ────────────────────────────────
 
-export async function sendEmail({ to, subject, htmlContent, tags }: SendEmailParams) {
+export async function sendEmail({ to, subject, htmlContent, tags, sender }: SendEmailParams) {
   const apiKey = BREVO_API_KEY();
   const proxyToken = PROXY_TOKEN();
 
@@ -53,7 +54,9 @@ export async function sendEmail({ to, subject, htmlContent, tags }: SendEmailPar
         Accept: "application/json",
       },
       body: JSON.stringify({
-        sender: { name: "Ethereal Techno", email: "noreply@etherealtechno.com" },
+        sender: tags && tags.includes("artist-messaging") && sender
+          ? sender
+          : (sender || { name: "Ethereal Techno", email: "noreply@etherealtechno.com" }),
         to: recipients,
         subject,
         htmlContent,
@@ -73,6 +76,71 @@ export async function sendEmail({ to, subject, htmlContent, tags }: SendEmailPar
     console.error("Email service error:", error);
     return { success: false, error: String(error) };
   }
+}
+
+// ─── Templates for Artist Messaging ──────────────────
+
+export const artistMessageEmail = (artistName: string, senderName: string, senderUsername: string, messageBody: string) => emailLayout(`
+    <h2 style="color:#ffffff;font-size:24px;margin:0 0 20px;font-weight:700;letter-spacing:-0.5px;">New Message</h2>
+    <p style="color:#a1a1aa;font-size:15px;line-height:1.6;margin-bottom:24px;">Hi ${artistName},</p>
+    <p style="color:#d4d4d8;font-size:15px;line-height:1.6;margin-bottom:24px;">
+        <strong style="color:#ffffff;">${senderName}</strong> (@${senderUsername}) sent you a secure message:
+    </p>
+    
+    <div style="background:#0a0a0a;border:1px solid #1f1f22;padding:24px;border-radius:8px;margin:32px 0;white-space:pre-wrap;color:#e4e4e7;font-size:15px;line-height:1.7;">
+        ${messageBody}
+    </div>
+    
+    <div style="margin:40px 0 20px;">
+        <p style="color:#a1a1aa;font-size:14px;margin-bottom:20px;">To reply, visit their profile on Ethereal Techno:</p>
+        <a href="${APP_URL}/artist/${senderUsername}" style="display:inline-block;background:#ffffff;color:#000000;padding:12px 24px;text-decoration:none;border-radius:4px;font-weight:600;font-size:14px;letter-spacing:0.5px;text-transform:uppercase;">View Profile to Reply</a>
+    </div>
+    <p style="color:#52525b;font-size:12px;margin-top:40px;">This message was sent securely via Ethereal Techno. Your email address is protected.</p>
+`);
+
+export async function sendArtistMessageEmail(
+  toEmail: string,
+  artistName: string,
+  senderName: string,
+  senderUsername: string,
+  subject: string,
+  messageBody: string
+) {
+  return sendEmail({
+    to: toEmail,
+    subject: `New message from ${senderName}`,
+    htmlContent: artistMessageEmail(artistName, senderName, senderUsername, messageBody),
+    tags: ["artist-messaging"],
+    sender: { name: senderName, email: `${senderUsername}@etherealtechno.com` },
+  });
+}
+
+// ─── Templates for Forgot Password ───────────────────
+
+export const resetPasswordEmail = (name: string, otp: string) => emailLayout(`
+    <h2 style="color:#ffffff;font-size:24px;margin:0 0 20px;font-weight:700;letter-spacing:-0.5px;text-align:center;">Reset Password</h2>
+    <p style="color:#a1a1aa;font-size:15px;line-height:1.6;text-align:center;margin-bottom:32px;">
+        We received a request to reset your Ethereal Techno password.<br>Enter the following verification code to proceed:
+    </p>
+    
+    <div style="text-align:center;margin:32px 0;">
+        <div style="display:inline-block;background:#0a0a0a;border:1px solid #27272a;border-radius:12px;padding:24px 48px;">
+            <span style="font-size:40px;font-weight:700;letter-spacing:16px;color:#ffffff;font-family:'Courier New',monospace;">${otp}</span>
+        </div>
+    </div>
+    
+    <p style="color:#52525b;font-size:13px;line-height:1.6;text-align:center;margin-top:40px;">
+        This code expires in 10 minutes. If you did not request this, you can safely ignore this email.
+    </p>
+`);
+
+export async function sendResetPasswordEmail(toEmail: string, name: string, otp: string) {
+  return sendEmail({
+    to: toEmail,
+    subject: "Reset your Ethereal Techno password",
+    htmlContent: resetPasswordEmail(name, otp),
+    tags: ["forgot-password"],
+  });
 }
 
 // ─── Core: Add / Update Contact ──────────────────────
@@ -126,32 +194,34 @@ function emailLayout(body: string): string {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="margin:0;padding:0;background-color:#0a0a0a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
-    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#0a0a0a;">
+<body style="margin:0;padding:0;background-color:#000000;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased;">
+    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#000000;">
         <tr>
-            <td align="center" style="padding:40px 20px;">
-                <table role="presentation" style="max-width:600px;width:100%;border:1px solid #1a1a1a;background-color:#111111;">
+            <td align="center" style="padding:60px 20px;">
+                <table role="presentation" style="max-width:600px;width:100%;border:1px solid #1f1f22;background-color:#09090b;border-radius:12px;overflow:hidden;">
                     <!-- Header -->
                     <tr>
-                        <td style="background:linear-gradient(135deg,#00ff87 0%,#60efff 100%);padding:30px 20px;text-align:center;">
-                            <img src="${LOGO_URL}" alt="Ethereal Techno" width="140" style="display:block;margin:0 auto;" />
+                        <td style="background-color:#040405;border-bottom:1px solid #1f1f22;padding:40px 20px;text-align:center;">
+                            <img src="${LOGO_URL}" alt="Ethereal Techno" width="160" style="display:block;margin:0 auto;filter:brightness(1.2);" />
                         </td>
                     </tr>
                     <!-- Body -->
                     <tr>
-                        <td style="padding:40px 30px;color:#ffffff;">
+                        <td style="padding:48px 40px;color:#ffffff;">
                             ${body}
                         </td>
                     </tr>
                     <!-- Footer -->
                     <tr>
-                        <td style="padding:25px 30px;text-align:center;border-top:1px solid #1a1a1a;">
-                            <p style="margin:5px 0;">
-                                <a href="https://etherealtechno.com" style="color:#00ff87;text-decoration:none;margin:0 8px;font-size:13px;">Website</a> •
-                                <a href="https://instagram.com/etherealtechno" style="color:#00ff87;text-decoration:none;margin:0 8px;font-size:13px;">Instagram</a> •
-                                <a href="https://soundcloud.com/etherealtechno" style="color:#00ff87;text-decoration:none;margin:0 8px;font-size:13px;">SoundCloud</a>
+                        <td style="padding:32px 40px;text-align:center;border-top:1px solid #1f1f22;background-color:#040405;">
+                            <p style="margin:0 0 16px;">
+                                <a href="https://etherealtechno.com" style="color:#a1a1aa;text-decoration:none;margin:0 12px;font-size:12px;text-transform:uppercase;letter-spacing:1px;font-weight:600;">Website</a>
+                                <span style="color:#27272a;">|</span>
+                                <a href="https://instagram.com/etherealtechno" style="color:#a1a1aa;text-decoration:none;margin:0 12px;font-size:12px;text-transform:uppercase;letter-spacing:1px;font-weight:600;">Instagram</a>
+                                <span style="color:#27272a;">|</span>
+                                <a href="https://soundcloud.com/etherealtechno" style="color:#a1a1aa;text-decoration:none;margin:0 12px;font-size:12px;text-transform:uppercase;letter-spacing:1px;font-weight:600;">SoundCloud</a>
                             </p>
-                            <p style="color:#555;font-size:12px;margin:10px 0 0;">© ${new Date().getFullYear()} Ethereal Techno. All rights reserved.</p>
+                            <p style="color:#52525b;font-size:11px;margin:0;line-height:1.5;">© ${new Date().getFullYear()} Ethereal Techno. All rights reserved.<br>London, United Kingdom</p>
                         </td>
                     </tr>
                 </table>
@@ -170,18 +240,20 @@ export function applicationConfirmationEmail(artistName: string): EmailContent {
     subject: "Application Received — Ethereal Techno",
     tags: ["application-confirmation"],
     htmlContent: emailLayout(`
-            <h2 style="color:#00ff87;font-size:24px;margin:0 0 20px;">Application Received!</h2>
-            <p style="color:#ccc;font-size:16px;line-height:1.6;">Hi ${artistName},</p>
-            <p style="color:#ccc;font-size:16px;line-height:1.6;">Thank you for applying to join the Ethereal Techno community of producers. We're excited to review your application!</p>
-            <div style="background:#1a1a1a;border-left:4px solid #00ff87;padding:15px 20px;margin:25px 0;">
-                <p style="color:#fff;margin:5px 0;"><strong style="color:#00ff87;">What happens next?</strong></p>
-                <p style="color:#ccc;margin:5px 0;">• Our team will review your application within 5–7 business days</p>
-                <p style="color:#ccc;margin:5px 0;">• We'll carefully review your music, production abilities, and vision</p>
-                <p style="color:#ccc;margin:5px 0;">• You'll receive an email with our decision</p>
-                <p style="color:#ccc;margin:5px 0;">• If approved, you'll get access to the artist dashboard</p>
+            <h2 style="color:#ffffff;font-size:24px;margin:0 0 24px;font-weight:700;letter-spacing:-0.5px;">Application Received</h2>
+            <p style="color:#a1a1aa;font-size:15px;line-height:1.6;margin-bottom:24px;">Hi ${artistName},</p>
+            <p style="color:#d4d4d8;font-size:15px;line-height:1.6;margin-bottom:24px;">Thank you for applying to join the Ethereal Techno community of producers. We're excited to review your application.</p>
+            
+            <div style="background:#0a0a0a;border:1px solid #1f1f22;padding:24px;border-radius:8px;margin:32px 0;">
+                <p style="color:#ffffff;margin:0 0 16px;font-weight:600;font-size:14px;letter-spacing:0.5px;text-transform:uppercase;">What happens next?</p>
+                <p style="color:#a1a1aa;font-size:14px;margin:8px 0;">• Our team will review your application within 5–7 business days.</p>
+                <p style="color:#a1a1aa;font-size:14px;margin:8px 0;">• We carefully review your music, production abilities, and vision.</p>
+                <p style="color:#a1a1aa;font-size:14px;margin:8px 0;">• You'll receive an email with our decision.</p>
+                <p style="color:#a1a1aa;font-size:14px;margin:8px 0;">• If approved, you'll get immediate access to the artist dashboard.</p>
             </div>
-            <p style="color:#ccc;font-size:16px;line-height:1.6;">We receive many applications from talented artists, and we appreciate your patience during the review process.</p>
-            <p style="color:#ccc;font-size:16px;line-height:1.6;">Best regards,<br><strong style="color:#00ff87;">The Ethereal Techno Team</strong></p>
+            
+            <p style="color:#a1a1aa;font-size:14px;line-height:1.6;">We receive many applications from talented artists, and we appreciate your patience during the review process.</p>
+            <p style="color:#d4d4d8;font-size:15px;line-height:1.6;margin-top:32px;">Best regards,<br><strong style="color:#ffffff;">The Ethereal Techno Team</strong></p>
         `),
   };
 }
@@ -197,18 +269,20 @@ export function adminApplicationNotificationEmail(
     subject: `New Artist Application: ${artistName}`,
     tags: ["admin-notification"],
     htmlContent: emailLayout(`
-            <h2 style="color:#00ff87;font-size:24px;margin:0 0 20px;">🎵 New Application</h2>
-            <p style="color:#ccc;font-size:16px;line-height:1.6;">A new artist has submitted an application and is waiting for review.</p>
-            <div style="background:#1a1a1a;border-left:4px solid #00ff87;padding:15px 20px;margin:25px 0;">
-                <p style="color:#ccc;margin:8px 0;"><strong style="color:#00ff87;min-width:120px;display:inline-block;">Artist Name:</strong> ${artistName}</p>
-                <p style="color:#ccc;margin:8px 0;"><strong style="color:#00ff87;min-width:120px;display:inline-block;">Email:</strong> ${applicantEmail}</p>
-                <p style="color:#ccc;margin:8px 0;"><strong style="color:#00ff87;min-width:120px;display:inline-block;">Application ID:</strong> ${applicationId}</p>
-                <p style="color:#ccc;margin:8px 0;"><strong style="color:#00ff87;min-width:120px;display:inline-block;">Submitted:</strong> ${new Date().toLocaleString()}</p>
+            <h2 style="color:#ffffff;font-size:24px;margin:0 0 24px;font-weight:700;letter-spacing:-0.5px;">Action Required: New Application</h2>
+            <p style="color:#a1a1aa;font-size:15px;line-height:1.6;margin-bottom:24px;">A new artist has submitted an application and is waiting for review.</p>
+            
+            <div style="background:#0a0a0a;border:1px solid #1f1f22;padding:24px;border-radius:8px;margin:32px 0;">
+                <p style="color:#d4d4d8;margin:12px 0;font-size:14px;"><strong style="color:#ffffff;min-width:120px;display:inline-block;text-transform:uppercase;font-size:12px;letter-spacing:1px;">Artist Name:</strong> ${artistName}</p>
+                <p style="color:#d4d4d8;margin:12px 0;font-size:14px;"><strong style="color:#ffffff;min-width:120px;display:inline-block;text-transform:uppercase;font-size:12px;letter-spacing:1px;">Email:</strong> ${applicantEmail}</p>
+                <p style="color:#d4d4d8;margin:12px 0;font-size:14px;font-family:monospace;"><strong style="color:#ffffff;min-width:120px;display:inline-block;font-family:sans-serif;text-transform:uppercase;font-size:12px;letter-spacing:1px;">Application ID:</strong> ${applicationId}</p>
+                <p style="color:#d4d4d8;margin:12px 0;font-size:14px;"><strong style="color:#ffffff;min-width:120px;display:inline-block;text-transform:uppercase;font-size:12px;letter-spacing:1px;">Submitted:</strong> ${new Date().toLocaleString()}</p>
             </div>
-            <div style="text-align:center;margin:30px 0;">
-                <a href="${applicationUrl}" style="display:inline-block;background:linear-gradient(135deg,#00ff87 0%,#60efff 100%);color:#000;padding:14px 28px;text-decoration:none;border-radius:25px;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:1px;">Review Application →</a>
+            
+            <div style="text-align:center;margin:40px 0;">
+                <a href="${applicationUrl}" style="display:inline-block;background:#ffffff;color:#000000;padding:12px 32px;text-decoration:none;border-radius:4px;font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:1px;">Review Application</a>
             </div>
-            <p style="color:#666;font-size:13px;margin-top:30px;"><strong>Note:</strong> Applicants are expecting a response within 5–7 business days.</p>
+            <p style="color:#52525b;font-size:12px;margin-top:40px;text-align:center;">Applicants are expecting a response within 5–7 business days.</p>
         `),
   };
 }
@@ -219,14 +293,15 @@ export function applicationApprovedEmail(artistName: string): EmailContent {
     subject: "Welcome to the Circle — Ethereal Techno",
     tags: ["application-approved"],
     htmlContent: emailLayout(`
-            <h2 style="color:#00ff87;font-size:24px;margin:0 0 20px;">Welcome to the Circle!</h2>
-            <p style="color:#ccc;font-size:16px;line-height:1.6;">Hi ${artistName},</p>
-            <p style="color:#ccc;font-size:16px;line-height:1.6;">We're thrilled to let you know that your application to join the Ethereal Techno Circle has been <strong style="color:#00ff87;">approved</strong>!</p>
-            <p style="color:#ccc;font-size:16px;line-height:1.6;">You now have access to the full artist dashboard, where you can customize your profile, connect with the community, and showcase your work.</p>
-            <div style="text-align:center;margin:30px 0;">
-                <a href="${APP_URL}/dashboard/producer" style="display:inline-block;background:linear-gradient(135deg,#00ff87 0%,#60efff 100%);color:#000;padding:14px 28px;text-decoration:none;border-radius:25px;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:1px;">Go to Dashboard →</a>
+            <h2 style="color:#ffffff;font-size:24px;margin:0 0 24px;font-weight:700;letter-spacing:-0.5px;">Welcome to the Circle</h2>
+            <p style="color:#a1a1aa;font-size:15px;line-height:1.6;margin-bottom:24px;">Hi ${artistName},</p>
+            <p style="color:#d4d4d8;font-size:15px;line-height:1.6;margin-bottom:24px;">We're thrilled to let you know that your application to join Ethereal Techno has been <strong style="color:#ffffff;">approved</strong>.</p>
+            <p style="color:#a1a1aa;font-size:15px;line-height:1.6;margin-bottom:32px;">You now have access to the full artist dashboard, where you can configure your identity, manage tracks, and connect with the community.</p>
+            
+            <div style="text-align:center;margin:40px 0;">
+                <a href="${APP_URL}/dashboard/producer" style="display:inline-block;background:#ffffff;color:#000000;padding:12px 32px;text-decoration:none;border-radius:4px;font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:1px;">Access Dashboard</a>
             </div>
-            <p style="color:#ccc;font-size:16px;line-height:1.6;">Welcome aboard.<br><strong style="color:#00ff87;">The Ethereal Techno Team</strong></p>
+            <p style="color:#d4d4d8;font-size:15px;line-height:1.6;margin-top:40px;">Welcome aboard,<br><strong style="color:#ffffff;">The Ethereal Techno Team</strong></p>
         `),
   };
 }
@@ -237,12 +312,12 @@ export function applicationRejectedEmail(artistName: string): EmailContent {
     subject: "Application Update — Ethereal Techno",
     tags: ["application-rejected"],
     htmlContent: emailLayout(`
-            <h2 style="color:#ffffff;font-size:24px;margin:0 0 20px;">Application Update</h2>
-            <p style="color:#ccc;font-size:16px;line-height:1.6;">Hi ${artistName},</p>
-            <p style="color:#ccc;font-size:16px;line-height:1.6;">Thank you for your interest in joining the Ethereal Techno Circle.</p>
-            <p style="color:#ccc;font-size:16px;line-height:1.6;">After careful review, we were unable to approve your application at this time.</p>
-            <p style="color:#ccc;font-size:16px;line-height:1.6;">We encourage you to continue developing your artistic direction and apply again in the future when you feel your work aligns closely with the Ethereal Techno aesthetic.</p>
-            <p style="color:#ccc;font-size:16px;line-height:1.6;">Best regards,<br><strong style="color:#00ff87;">The Ethereal Techno Team</strong></p>
+            <h2 style="color:#ffffff;font-size:24px;margin:0 0 24px;font-weight:700;letter-spacing:-0.5px;">Application Update</h2>
+            <p style="color:#a1a1aa;font-size:15px;line-height:1.6;margin-bottom:24px;">Hi ${artistName},</p>
+            <p style="color:#d4d4d8;font-size:15px;line-height:1.6;margin-bottom:24px;">Thank you for your interest in joining Ethereal Techno.</p>
+            <p style="color:#a1a1aa;font-size:15px;line-height:1.6;margin-bottom:24px;">After careful review, our curation team was unable to approve your application at this time.</p>
+            <p style="color:#a1a1aa;font-size:15px;line-height:1.6;margin-bottom:32px;">We encourage you to continue developing your artistic direction. You are welcome to apply again in the future as your sound evolves to align with the Ethereal Techno vision.</p>
+            <p style="color:#d4d4d8;font-size:15px;line-height:1.6;margin-top:40px;">Best regards,<br><strong style="color:#ffffff;">The Ethereal Techno Team</strong></p>
         `),
   };
 }
@@ -253,9 +328,9 @@ export function waitlistWelcomeEmail(): EmailContent {
     subject: "You're on the waitlist!",
     tags: ["waitlist-welcome"],
     htmlContent: emailLayout(`
-            <h2 style="color:#00ff87;font-size:24px;margin:0 0 20px;">You're on the waitlist!</h2>
-            <p style="color:#ccc;font-size:16px;line-height:1.6;">You have successfully joined the waitlist for Ethereal Techno.</p>
-            <p style="color:#ccc;font-size:16px;line-height:1.6;">We'll keep you posted with updates as we approach early access. Stay tuned!</p>
+            <h2 style="color:#ffffff;font-size:24px;margin:0 0 24px;font-weight:700;letter-spacing:-0.5px;text-align:center;">You're on the waitlist</h2>
+            <p style="color:#a1a1aa;font-size:15px;line-height:1.6;text-align:center;margin-bottom:24px;">You have successfully joined the priority access waitlist for Ethereal Techno.</p>
+            <p style="color:#d4d4d8;font-size:15px;line-height:1.6;text-align:center;">We'll keep you posted with exclusive updates as we approach our rollout. Stay tuned.</p>
         `),
   };
 }
@@ -266,16 +341,20 @@ export function otpVerificationEmail(name: string, otp: string): EmailContent {
     subject: "Your Verification Code — Ethereal Techno",
     tags: ["otp-verification"],
     htmlContent: emailLayout(`
-            <h2 style="color:#00ff87;font-size:24px;margin:0 0 20px;">Verify Your Email</h2>
-            <p style="color:#ccc;font-size:16px;line-height:1.6;">Hi ${name},</p>
-            <p style="color:#ccc;font-size:16px;line-height:1.6;">Use the code below to verify your email address and complete your registration.</p>
-            <div style="text-align:center;margin:30px 0;">
-                <div style="display:inline-block;background:#1a1a1a;border:1px solid #333;border-radius:12px;padding:20px 40px;">
-                    <span style="font-size:36px;font-weight:700;letter-spacing:12px;color:#00ff87;font-family:'Courier New',monospace;">${otp}</span>
+            <h2 style="color:#ffffff;font-size:24px;margin:0 0 24px;font-weight:700;letter-spacing:-0.5px;text-align:center;">Verify Your Access</h2>
+            <p style="color:#a1a1aa;font-size:15px;line-height:1.6;text-align:center;margin-bottom:32px;">
+                Hi ${name},<br>Use the code below to verify your identity and access your account.
+            </p>
+            
+            <div style="text-align:center;margin:32px 0;">
+                <div style="display:inline-block;background:#0a0a0a;border:1px solid #27272a;border-radius:12px;padding:24px 48px;">
+                    <span style="font-size:40px;font-weight:700;letter-spacing:16px;color:#ffffff;font-family:'Courier New',monospace;">${otp}</span>
                 </div>
             </div>
-            <p style="color:#888;font-size:14px;line-height:1.6;">This code expires in <strong style="color:#fff;">10 minutes</strong>. If you didn't request this, you can safely ignore this email.</p>
-            <p style="color:#ccc;font-size:16px;line-height:1.6;margin-top:20px;">— <strong style="color:#00ff87;">The Ethereal Techno Team</strong></p>
+            
+            <p style="color:#52525b;font-size:13px;line-height:1.6;text-align:center;margin-top:40px;">
+                This code expires in 10 minutes. If you did not request this, you can safely ignore this email.
+            </p>
         `),
   };
 }

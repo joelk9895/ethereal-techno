@@ -5,29 +5,56 @@ interface MessageModalProps {
     isOpen: boolean;
     onClose: () => void;
     artistName: string;
+    username?: string; // The specific username of the artist page being viewed
 }
 
-export function MessageModal({ isOpen, onClose, artistName }: MessageModalProps) {
+export function MessageModal({ isOpen, onClose, artistName, username }: MessageModalProps) {
     const [subject, setSubject] = useState("");
     const [message, setMessage] = useState("");
     const [sending, setSending] = useState(false);
     const [sent, setSent] = useState(false);
+    const [error, setError] = useState("");
 
     if (!isOpen) return null;
 
     const handleSend = async (e: React.FormEvent) => {
         e.preventDefault();
         setSending(true);
-        // Simulate sending
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        setSending(false);
-        setSent(true);
-        setTimeout(() => {
-            setSent(false);
-            setSubject("");
-            setMessage("");
-            onClose();
-        }, 1500);
+        setError("");
+
+        try {
+            const token = typeof window !== 'undefined' ? localStorage.getItem("accessToken") : null;
+            if (!token) throw new Error("Not authenticated");
+            if (!username) throw new Error("No username provided");
+
+            const response = await fetch(`/api/artist/${username}/message`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({ subject, message })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || "Failed to send message");
+            }
+
+            setSent(true);
+            setTimeout(() => {
+                setSent(false);
+                setSubject("");
+                setMessage("");
+                onClose();
+            }, 2500);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : "An error occurred";
+            setError(errorMessage);
+        } finally {
+            setSending(false);
+        }
     };
 
     return (
@@ -54,6 +81,11 @@ export function MessageModal({ isOpen, onClose, artistName }: MessageModalProps)
                     </div>
                 ) : (
                     <form onSubmit={handleSend} className="space-y-6">
+                        {error && (
+                            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-xs font-medium">
+                                {error}
+                            </div>
+                        )}
                         <div className="space-y-2">
                             <label className="text-[10px] font-sans uppercase tracking-widest text-white/40 font-medium">Subject</label>
                             <input

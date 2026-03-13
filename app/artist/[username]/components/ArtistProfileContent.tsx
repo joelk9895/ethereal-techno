@@ -215,6 +215,7 @@ export default function ArtistProfileContent({ profile, user, username }: Artist
                 isOpen={messageModalOpen}
                 onClose={() => setMessageModalOpen(false)}
                 artistName={artistName}
+                username={username}
             />
 
             {/* Background Ambient Animation - S REMOVED to fix visual artifact (Square Box) reported by user */}

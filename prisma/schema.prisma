@@ -184,6 +184,8 @@ model User {
   contents           Content[]
   loopandmidis       Loopandmidi[]
   presets            Preset[]
+  sentMessages       Message[]           @relation("SentMessages")
+  receivedMessages   Message[]           @relation("ReceivedMessages")
 
   telegramChatId          String?
   telegramUsername        String?
@@ -318,4 +320,19 @@ enum ContentStatus {
   APPROVED
   REJECTED
   NEEDS_FIX
+}
+
+model Message {
+  id          String   @id @default(uuid()) @map("_id")
+  senderId    String   @db.ObjectId
+  receiverId  String   @db.ObjectId
+  content     String
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  sender      User     @relation("SentMessages", fields: [senderId], references: [id])
+  receiver    User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+
+  @@index([senderId])
+  @@index([receiverId])
 }

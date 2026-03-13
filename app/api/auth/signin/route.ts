@@ -5,6 +5,8 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
 import crypto from "crypto";
+import { sendOtpEmail } from "@/app/services/emailService";
+import { checkAndRecordRateLimit, storeOtp, verifyOtp } from "@/app/lib/otpStore";
 
 const JWT_SECRET =
   process.env.JWT_SECRET || "your-secret-key-change-in-production";
@@ -14,7 +16,7 @@ const hashToken = (token: string) =>
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json();
+    const { email, password, otp } = await request.json();
 
     if (!email || !password) {
       return NextResponse.json(
@@ -47,6 +49,48 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Invalid email or password" },
         { status: 401 }
+      );
+    }
+
+    const emailLower = email.toLowerCase().trim();
+
+    // --- PHASE 1: NO OTP PROVIDED (Credentials valid) ---
+    if (!otp) {
+      // Rate limiting
+      if (checkAndRecordRateLimit(emailLower)) {
+        return NextResponse.json(
+          { error: "Too many sign-in attempts. Please wait before trying again." },
+          { status: 429 }
+        );
+      }
+
+      // Generate and store OTP
+      const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      storeOtp(emailLower, user.name, newOtp);
+
+      // Send OTP email via Brevo
+      const result = await sendOtpEmail(emailLower, user.name, newOtp);
+
+      if (!result.success) {
+        console.error("Failed to send Signin OTP email:", result.error);
+        return NextResponse.json(
+          { error: "Failed to send verification code. Please try again." },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json(
+        { requiresOtp: true, message: "Verification code sent to your email" },
+        { status: 200 }
+      );
+    }
+
+    // --- PHASE 2: OTP PROVIDED ---
+    const verification = verifyOtp(emailLower, otp);
+    if (!verification.valid) {
+      return NextResponse.json(
+        { error: verification.error || "Invalid verification code" },
+        { status: 400 }
       );
     }
 

@@ -16,7 +16,8 @@ import {
     Music,
     Package,
     Radio,
-    FileCheck
+    FileCheck,
+    MessageSquare
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -157,6 +158,13 @@ export default function RightSidebar({ user, activeTab, onNavigate, onSignOut }:
                                 icon={User}
                                 active={activeTab === "profile"}
                                 onClick={() => onNavigate("profile")}
+                            />
+                            <NavItem
+                                id="messages"
+                                label="Messages"
+                                icon={MessageSquare}
+                                active={activeTab === "messages"}
+                                onClick={() => onNavigate("messages")}
                             />
                             <NavItem
                                 id="billing"

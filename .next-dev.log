@@ -1,0 +1,221 @@
+
+> pivot@0.1.0 dev
+> next dev
+
+   ▲ Next.js 15.5.9
+   - Local:        http://localhost:3000
+   - Network:      http://192.0.0.2:3000
+   - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 2.7s
+ ○ Compiling /api/auth/forgot-password/send-otp ...
+ ✓ Compiled /api/auth/forgot-password/send-otp in 1735ms (300 modules)
+ POST /api/auth/forgot-password/send-otp 200 in 9040ms
+ ✓ Compiled /api/auth/forgot-password/reset in 271ms (303 modules)
+ POST /api/auth/forgot-password/reset 400 in 336ms
+ POST /api/auth/forgot-password/send-otp 200 in 1403ms
+ POST /api/auth/forgot-password/reset 400 in 14ms
+ ✓ Compiled in 36ms
+ ○ Compiling / ...
+ ✓ Compiled / in 599ms (551 modules)
+ ○ Compiling /dashboard/producer/profile ...
+ ✓ Compiled /dashboard/producer/profile in 1433ms (1556 modules)
+ GET /favicon.ico 200 in 1675ms
+ GET /apple-touch-icon-precomposed.png 404 in 1776ms
+ GET /apple-touch-icon.png 404 in 1770ms
+ GET /dashboard/producer/profile 200 in 1786ms
+ GET /favicon.ico 200 in 11ms
+ ✓ Compiled / in 228ms (333 modules)
+ GET / 200 in 444ms
+ ✓ Compiled in 829ms (702 modules)
+ ✓ Compiled in 463ms (702 modules)
+ ✓ Compiled in 309ms (702 modules)
+ ✓ Compiled in 341ms (702 modules)
+ ✓ Compiled in 437ms (702 modules)
+ ✓ Compiled in 249ms (702 modules)
+ ✓ Compiled in 564ms (1021 modules)
+ ✓ Compiled in 503ms (1021 modules)
+ ✓ Compiled in 564ms (1021 modules)
+ ✓ Compiled in 499ms (703 modules)
+ ✓ Compiled in 289ms (703 modules)
+ ✓ Compiled /_not-found in 256ms (1027 modules)
+ GET / 404 in 432ms
+ ○ Compiling /dashboard/producer/profile ...
+ ✓ Compiled /dashboard/producer/profile in 594ms (852 modules)
+ GET /dashboard/producer/profile 200 in 836ms
+ ✓ Compiled in 891ms (1022 modules)
+ ✓ Compiled in 656ms (703 modules)
+ ✓ Compiled in 587ms (703 modules)
+ ✓ Compiled in 228ms (703 modules)
+ ✓ Compiled in 240ms (703 modules)
+ ✓ Compiled in 177ms (703 modules)
+ ✓ Compiled in 211ms (703 modules)
+ ✓ Compiled in 150ms (703 modules)
+ ✓ Compiled in 306ms (703 modules)
+ ✓ Compiled in 417ms (703 modules)
+ ○ Compiling /dashboard/producer/messages ...
+ ✓ Compiled /dashboard/producer/messages in 739ms (1481 modules)
+ GET /dashboard/producer/messages 200 in 986ms
+ ○ Compiling /dashboard ...
+ ✓ Compiled /dashboard in 600ms (1503 modules)
+ GET /dashboard 200 in 705ms
+ ○ Compiling /api/artist/apply ...
+ ✓ Compiled /api/artist/apply in 566ms (1604 modules)
+ GET /api/artist/apply 401 in 674ms
+ GET /api/user/profile 401 in 681ms
+ GET /api/artist/apply 401 in 21ms
+ GET /api/user/profile 401 in 23ms
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/app/page.js'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/app/page.js',
+  page: '/'
+}
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 1788ms (1944 modules)
+ GET /dashboard 200 in 970ms
+ GET /dashboard 200 in 25ms
+ GET / 500 in 2555ms
+ GET /dashboard/producer/messages 200 in 163ms
+ GET /dashboard 200 in 31ms
+ GET /api/user/profile 401 in 54ms
+ GET /api/artist/apply 401 in 69ms
+ GET /api/user/profile 401 in 26ms
+ GET /api/artist/apply 401 in 18ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 717ms (1949 modules)
+ GET /login 404 in 867ms
+ GET /dashboard/producer/messages 200 in 100ms
+ GET /dashboard 200 in 50ms
+ GET /api/user/profile 401 in 51ms
+ GET /api/artist/apply 401 in 65ms
+ GET /api/user/profile 401 in 27ms
+ GET /api/artist/apply 401 in 27ms
+ GET /dashboard 200 in 186ms
+ ✓ Compiled /api/artist/apply in 331ms (986 modules)
+ ✓ Compiled (1072 modules)
+ GET /favicon.ico 200 in 582ms
+ GET /api/artist/apply 401 in 602ms
+ GET /api/user/profile 401 in 613ms
+ ✓ Compiled /_not-found in 292ms (1933 modules)
+ GET /auth 404 in 432ms
+ GET /register 404 in 75ms
+ ✓ Compiled in 689ms (870 modules)
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 601ms (1830 modules)
+ GET /register 404 in 742ms
+ GET /register 404 in 86ms
+ ✓ Compiled in 791ms (870 modules)
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 506ms (1830 modules)
+ GET /register 404 in 606ms
+ GET /register 404 in 89ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 1713ms (1830 modules)
+ GET /register 404 in 1396ms
+ GET /register 404 in 19ms
+ GET /register 404 in 150ms
+ ✓ Compiled in 1101ms (873 modules)
+ ✓ Compiled /_not-found in 221ms (1833 modules)
+ GET /register 404 in 301ms
+ GET /register 404 in 82ms
+ ✓ Compiled in 921ms (873 modules)
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ✓ Compiled /_not-found in 215ms (1833 modules)
+ GET /register 404 in 278ms
+ GET /register 404 in 407ms
+ GET /register 404 in 51ms
+ ✓ Compiled /favicon.ico in 259ms (987 modules)
+ GET /favicon.ico 200 in 352ms
+ ✓ Compiled in 790ms (873 modules)
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 694ms (1833 modules)
+ ⨯ Error: Cannot find module './5873.js'
+Require stack:
+- /Users/joelkgeorge/Developer/ethereal-techno/.next/server/webpack-runtime.js
+- /Users/joelkgeorge/Developer/ethereal-techno/.next/server/app/_not-found/page.js
+- /Users/joelkgeorge/Developer/ethereal-techno/node_modules/next/dist/server/require.js
+- /Users/joelkgeorge/Developer/ethereal-techno/node_modules/next/dist/server/load-components.js
+- /Users/joelkgeorge/Developer/ethereal-techno/node_modules/next/dist/build/utils.js
+- /Users/joelkgeorge/Developer/ethereal-techno/node_modules/next/dist/build/swc/options.js
+- /Users/joelkgeorge/Developer/ethereal-techno/node_modules/next/dist/build/swc/index.js
+- /Users/joelkgeorge/Developer/ethereal-techno/node_modules/next/dist/build/next-config-ts/transpile-config.js
+- /Users/joelkgeorge/Developer/ethereal-techno/node_modules/next/dist/server/config.js
+- /Users/joelkgeorge/Developer/ethereal-techno/node_modules/next/dist/server/next.js
+- /Users/joelkgeorge/Developer/ethereal-techno/node_modules/next/dist/server/lib/start-server.js
+    at <unknown> (.next/server/app/_not-found/page.js:2:8255)
+    at Object.<anonymous> (.next/server/app/_not-found/page.js:2:8312) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ ⨯ Error: Cannot find module './5873.js'
+Require stack:
+- /Users/joelkgeorge/Developer/ethereal-techno/.next/server/webpack-runtime.js
+- /Users/joelkgeorge/Developer/ethereal-techno/.next/server/app/_not-found/page.js
+- /Users/joelkgeorge/Developer/ethereal-techno/node_modules/next/dist/server/require.js
+- /Users/joelkgeorge/Developer/ethereal-techno/node_modules/next/dist/server/load-components.js
+- /Users/joelkgeorge/Developer/ethereal-techno/node_modules/next/dist/build/utils.js
+- /Users/joelkgeorge/Developer/ethereal-techno/node_modules/next/dist/build/swc/options.js
+- /Users/joelkgeorge/Developer/ethereal-techno/node_modules/next/dist/build/swc/index.js
+- /Users/joelkgeorge/Developer/ethereal-techno/node_modules/next/dist/build/next-config-ts/transpile-config.js
+- /Users/joelkgeorge/Developer/ethereal-techno/node_modules/next/dist/server/config.js
+- /Users/joelkgeorge/Developer/ethereal-techno/node_modules/next/dist/server/next.js
+- /Users/joelkgeorge/Developer/ethereal-techno/node_modules/next/dist/server/lib/start-server.js
+    at <unknown> (.next/server/app/_not-found/page.js:2:8255)
+    at Object.<anonymous> (.next/server/app/_not-found/page.js:2:8312) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ GET /register 500 in 1735ms
+ GET /register 500 in 1613ms
+ ⨯ Error: Cannot find module './5611.js'
+Require stack:
+- /Users/joelkgeorge/Developer/ethereal-techno/.next/server/webpack-runtime.js
+- /Users/joelkgeorge/Developer/ethereal-techno/.next/server/app/_not-found/page.js
+- /Users/joelkgeorge/Developer/ethereal-techno/node_modules/next/dist/server/require.js
+- /Users/joelkgeorge/Developer/ethereal-techno/node_modules/next/dist/server/load-components.js
+- /Users/joelkgeorge/Developer/ethereal-techno/node_modules/next/dist/build/utils.js
+- /Users/joelkgeorge/Developer/ethereal-techno/node_modules/next/dist/build/swc/options.js
+- /Users/joelkgeorge/Developer/ethereal-techno/node_modules/next/dist/build/swc/index.js
+- /Users/joelkgeorge/Developer/ethereal-techno/node_modules/next/dist/build/next-config-ts/transpile-config.js
+- /Users/joelkgeorge/Developer/ethereal-techno/node_modules/next/dist/server/config.js
+- /Users/joelkgeorge/Developer/ethereal-techno/node_modules/next/dist/server/next.js
+- /Users/joelkgeorge/Developer/ethereal-techno/node_modules/next/dist/server/lib/start-server.js
+    at <unknown> (.next/server/pages/_document.js:1:327)
+    at Object.<anonymous> (.next/server/pages/_document.js:1:374) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ GET /register 500 in 32ms
+ ✓ Compiled /favicon.ico in 134ms (987 modules)
+ ⨯ Error: Cannot find module './5873.js'
+Require stack:
+- /Users/joelkgeorge/Developer/ethereal-techno/.next/server/webpack-runtime.js
+- /Users/joelkgeorge/Developer/ethereal-techno/.next/server/app/favicon.ico/route.js
+- /Users/joelkgeorge/Developer/ethereal-techno/node_modules/next/dist/server/require.js
+- /Users/joelkgeorge/Developer/ethereal-techno/node_modules/next/dist/server/load-components.js
+- /Users/joelkgeorge/Developer/ethereal-techno/node_modules/next/dist/build/utils.js
+- /Users/joelkgeorge/Developer/ethereal-techno/node_modules/next/dist/build/swc/options.js
+- /Users/joelkgeorge/Developer/ethereal-techno/node_modules/next/dist/build/swc/index.js
+- /Users/joelkgeorge/Developer/ethereal-techno/node_modules/next/dist/build/next-config-ts/transpile-config.js
+- /Users/joelkgeorge/Developer/ethereal-techno/node_modules/next/dist/server/config.js
+- /Users/joelkgeorge/Developer/ethereal-techno/node_modules/next/dist/server/next.js
+- /Users/joelkgeorge/Developer/ethereal-techno/node_modules/next/dist/server/lib/start-server.js
+    at <unknown> (.next/server/app/favicon.ico/route.js:1:41258)
+    at Object.<anonymous> (.next/server/app/favicon.ico/route.js:1:41315) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/favicon.ico'
+}
+ GET /favicon.ico 500 in 164ms
+ ✓ Compiled in 460ms (877 modules)
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ GET /favicon.ico 404 in 24ms
+ ✓ Compiled in 225ms (877 modules)
+ ✓ Compiled in 330ms (877 modules)
+ ✓ Compiled in 540ms (877 modules)

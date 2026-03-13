@@ -1,10 +1,10 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Eye, EyeOff, Loader2, Check, AlertCircle, ArrowRight, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, Loader2, Check, AlertCircle, ArrowRight, ArrowLeft, Mail } from "lucide-react";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 // --- Animation Variants ---
 const fadeInUp = {
@@ -27,6 +27,23 @@ function SignInContent() {
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [showSuccess, setShowSuccess] = useState(false);
+
+    // OTP State
+    const [step, setStep] = useState<"form" | "otp">("form");
+    const [otpDigits, setOtpDigits] = useState(["", "", "", "", "", ""]);
+    const [otpLoading, setOtpLoading] = useState(false);
+    const [otpError, setOtpError] = useState("");
+    const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+    const [resendCooldown, setResendCooldown] = useState(0);
+
+    // Cooldown timer
+    useEffect(() => {
+        let timer: NodeJS.Timeout;
+        if (resendCooldown > 0) {
+            timer = setTimeout(() => setResendCooldown(c => c - 1), 1000);
+        }
+        return () => clearTimeout(timer);
+    }, [resendCooldown]);
 
     useEffect(() => {
         if (registered === "true") {
@@ -78,19 +95,142 @@ function SignInContent() {
                 return;
             }
 
-            localStorage.setItem("accessToken", data.accessToken);
-            localStorage.setItem("refreshToken", data.refreshToken);
-            localStorage.setItem("user", JSON.stringify(data.user));
+            if (data.requiresOtp) {
+                setStep("otp");
+                setResendCooldown(60);
+                setOtpDigits(["", "", "", "", "", ""]);
+                setOtpError("");
+                setLoading(false);
+                return;
+            }
 
-            const redirectUrl = getRedirectUrl(data.user.type);
-
-            setTimeout(() => {
-                router.push(redirectUrl);
-            }, 100);
+            // Should not reach here if OTP is required for all
+            handleSuccess(data);
 
         } catch (error) {
             console.error("Sign in error:", error);
+            setErrors({ general: "Connection error. Please try again." });
             setLoading(false);
+        }
+    };
+
+    const handleSuccess = (data: { accessToken: string; refreshToken: string; user: { id: string; email: string; name: string; type: string } }) => {
+        localStorage.setItem("accessToken", data.accessToken);
+        localStorage.setItem("refreshToken", data.refreshToken);
+        localStorage.setItem("user", JSON.stringify(data.user));
+
+        const redirectUrl = getRedirectUrl(data.user.type);
+
+        setTimeout(() => {
+            router.push(redirectUrl);
+        }, 100);
+    };
+
+    // --- OTP Handlers ---
+    const handleOtpChange = (index: number, value: string) => {
+        if (!/^\d*$/.test(value)) return;
+
+        const newDigits = [...otpDigits];
+        newDigits[index] = value.slice(-1);
+        setOtpDigits(newDigits);
+        setOtpError("");
+
+        if (value && index < 5) {
+            inputRefs.current[index + 1]?.focus();
+        }
+
+        const fullOtp = newDigits.join("");
+        if (fullOtp.length === 6) {
+            handleVerifyOtp(fullOtp);
+        }
+    };
+
+    const handleOtpKeyDown = (index: number, e: React.KeyboardEvent) => {
+        if (e.key === "Backspace" && !otpDigits[index] && index > 0) {
+            inputRefs.current[index - 1]?.focus();
+        }
+    };
+
+    const handleOtpPaste = (e: React.ClipboardEvent) => {
+        e.preventDefault();
+        const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+        if (pasted.length === 0) return;
+
+        const newDigits = [...otpDigits];
+        for (let i = 0; i < pasted.length; i++) {
+            newDigits[i] = pasted[i];
+        }
+        setOtpDigits(newDigits);
+        setOtpError("");
+
+        if (pasted.length === 6) {
+            handleVerifyOtp(pasted);
+        } else {
+            inputRefs.current[pasted.length]?.focus();
+        }
+    };
+
+    const handleVerifyOtp = async (otp: string) => {
+        setOtpLoading(true);
+        setOtpError("");
+
+        try {
+            const response = await fetch("/api/auth/signin", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    email: formData.email,
+                    password: formData.password,
+                    otp,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                setOtpError(data.error || "Verification failed");
+                setOtpDigits(["", "", "", "", "", ""]);
+                inputRefs.current[0]?.focus();
+                setOtpLoading(false);
+                return;
+            }
+
+            handleSuccess(data);
+        } catch (error) {
+            console.error("Verify OTP error:", error);
+            setOtpError("Connection error. Please try again.");
+            setOtpLoading(false);
+        }
+    };
+
+    const handleResendOtp = async () => {
+        if (resendCooldown > 0) return;
+        setOtpLoading(true);
+        setOtpError("");
+
+        try {
+            const res = await fetch("/api/auth/signin", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    email: formData.email,
+                    password: formData.password,
+                }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                setOtpError(data.error || "Failed to resend code");
+            } else {
+                setResendCooldown(60);
+                inputRefs.current[0]?.focus();
+            }
+        } catch (error) {
+            console.error("Resend OTP error:", error);
+            setOtpError("Connection error. Please try again.");
+        } finally {
+            setOtpLoading(false);
         }
     };
 
@@ -119,122 +259,211 @@ function SignInContent() {
                     <ArrowLeft className="w-3 h-3" /> Back Home
                 </Link>
 
-                <motion.div
-                    initial="hidden"
-                    animate="visible"
-                    variants={fadeInUp}
-                    className="w-full max-w-md mx-auto"
-                >
-                    <div className="lg:hidden mb-12 mt-12">
-                        <h1 className="font-main text-5xl uppercase mb-2">Sign In</h1>
-                        <p className="text-white/50">Welcome back to the circle.</p>
-                    </div>
+                <div className="relative">
+                    <AnimatePresence mode="wait">
+                        {step === "form" ? (
+                            <motion.div
+                                key="form"
+                                initial="hidden"
+                                animate="visible"
+                                exit={{ opacity: 0, x: -20 }}
+                                variants={fadeInUp}
+                                className="w-full max-w-md mx-auto"
+                            >
+                                <div className="lg:hidden mb-12 mt-12">
+                                    <h1 className="font-main text-5xl uppercase mb-2">Sign In</h1>
+                                    <p className="text-white/50">Welcome back to the circle.</p>
+                                </div>
 
-                    <div className="hidden lg:block mb-12">
-                        <h2 className="font-main text-4xl uppercase mb-2">Identify</h2>
-                        <p className="text-white/50">Enter your credentials to continue.</p>
-                    </div>
+                                <div className="hidden lg:block mb-12">
+                                    <h2 className="font-main text-4xl uppercase mb-2">Identify</h2>
+                                    <p className="text-white/50">Enter your credentials to continue.</p>
+                                </div>
 
-                    {showSuccess && (
-                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-8 p-4 border-l-2 border-green-500 bg-green-500/10 flex items-start gap-3">
-                            <Check className="w-5 h-5 text-green-400 mt-0.5" />
-                            <div>
-                                <p className="text-sm font-bold text-green-400 uppercase tracking-wide">Success</p>
-                                <p className="text-sm text-white/60">Account created. Please log in.</p>
-                            </div>
-                        </motion.div>
-                    )}
+                                {showSuccess && (
+                                    <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-8 p-4 border-l-2 border-green-500 bg-green-500/10 flex items-start gap-3">
+                                        <Check className="w-5 h-5 text-green-400 mt-0.5" />
+                                        <div>
+                                            <p className="text-sm font-bold text-green-400 uppercase tracking-wide">Success</p>
+                                            <p className="text-sm text-white/60">Account created. Please log in.</p>
+                                        </div>
+                                    </motion.div>
+                                )}
 
-                    {errors.general && (
-                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-8 p-4 border-l-2 border-red-500 bg-red-500/10 flex items-start gap-3">
-                            <AlertCircle className="w-5 h-5 text-red-400 mt-0.5" />
-                            <div>
-                                <p className="text-sm font-bold text-red-400 uppercase tracking-wide">Error</p>
-                                <p className="text-sm text-white/60">{errors.general}</p>
-                            </div>
-                        </motion.div>
-                    )}
+                                {errors.general && (
+                                    <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-8 p-4 border-l-2 border-red-500 bg-red-500/10 flex items-start gap-3">
+                                        <AlertCircle className="w-5 h-5 text-red-400 mt-0.5" />
+                                        <div>
+                                            <p className="text-sm font-bold text-red-400 uppercase tracking-wide">Error</p>
+                                            <p className="text-sm text-white/60">{errors.general}</p>
+                                        </div>
+                                    </motion.div>
+                                )}
 
-                    <form onSubmit={handleSubmit} className="space-y-8">
+                                <form onSubmit={handleSubmit} className="space-y-8">
 
-                        <div className="group">
-                            <div className="flex justify-between items-baseline mb-2">
-                                <label className="text-[10px] font-mono uppercase tracking-widest text-white group-focus-within:text-primary transition-colors">Email Address</label>
-                                {errors.email && <span className="text-[10px] text-red-500 font-mono">{errors.email}</span>}
-                            </div>
-                            <input
-                                type="email"
-                                value={formData.email}
-                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                className={`
-                                    w-full bg-transparent border-b py-3 text-lg text-white placeholder:text-white/10 focus:outline-none transition-colors
-                                    ${errors.email ? "border-red-500" : "border-white/20 focus:border-primary"}
-                                `}
-                                placeholder="name@example.com"
-                            />
-                        </div>
+                                    <div className="group">
+                                        <div className="flex justify-between items-baseline mb-2">
+                                            <label className="text-[10px] font-mono uppercase tracking-widest text-white group-focus-within:text-primary transition-colors">Email Address</label>
+                                            {errors.email && <span className="text-[10px] text-red-500 font-mono">{errors.email}</span>}
+                                        </div>
+                                        <input
+                                            type="email"
+                                            value={formData.email}
+                                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                            className={`
+                                                w-full bg-transparent border-b py-3 text-lg text-white placeholder:text-white/10 focus:outline-none transition-colors
+                                                ${errors.email ? "border-red-500" : "border-white/20 focus:border-primary"}
+                                            `}
+                                            placeholder="name@example.com"
+                                        />
+                                    </div>
 
-                        <div className="group">
-                            <div className="flex justify-between items-baseline mb-2">
-                                <label className="text-[10px] font-mono uppercase tracking-widest text-white group-focus-within:text-primary transition-colors">Password</label>
-                                {errors.password && <span className="text-[10px] text-red-500 font-mono">{errors.password}</span>}
-                            </div>
-                            <div className="relative">
-                                <input
-                                    type={showPassword ? "text" : "password"}
-                                    value={formData.password}
-                                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                    className={`
-                                        w-full bg-transparent border-b py-3 text-lg text-white placeholder:text-white/10 focus:outline-none transition-colors pr-10
-                                        ${errors.password ? "border-red-500" : "border-white/20 focus:border-primary"}
-                                    `}
-                                    placeholder="••••••••"
-                                />
+                                    <div className="group">
+                                        <div className="flex justify-between items-baseline mb-2">
+                                            <label className="text-[10px] font-mono uppercase tracking-widest text-white group-focus-within:text-primary transition-colors">Password</label>
+                                            {errors.password && <span className="text-[10px] text-red-500 font-mono">{errors.password}</span>}
+                                        </div>
+                                        <div className="relative">
+                                            <input
+                                                type={showPassword ? "text" : "password"}
+                                                value={formData.password}
+                                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                                className={`
+                                                    w-full bg-transparent border-b py-3 text-lg text-white placeholder:text-white/10 focus:outline-none transition-colors pr-10
+                                                    ${errors.password ? "border-red-500" : "border-white/20 focus:border-primary"}
+                                                `}
+                                                placeholder="••••••••"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                className="absolute right-0 top-1/2 -translate-y-1/2 text-white/30 hover:text-white transition-colors"
+                                            >
+                                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                            </button>
+                                        </div>
+                                        <div className="mt-2 text-right">
+                                            <Link href="/forgot-password" className="text-[10px] font-mono uppercase tracking-widest text-white/40 hover:text-primary transition-colors">
+                                                Forgot Password?
+                                            </Link>
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className="w-full p-8 rounded-3xl group relative py-4 bg-white text-black font-bold uppercase tracking-widest text-xs hover:bg-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 overflow-hidden"
+                                    >
+                                        {loading ? (
+                                            <>
+                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                                <span>Authenticating...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span>Authenticate</span>
+                                                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                            </>
+                                        )}
+                                    </button>
+
+                                    <div className="pt-8 border-t border-white/10 text-center">
+                                        <p className="text-sm text-white/40">
+                                            New to the circle?{" "}
+                                            <Link href="/signup" className="text-white hover:text-primary hover:underline transition-colors">
+                                                Create Account
+                                            </Link>
+                                        </p>
+                                    </div>
+
+                                </form>
+
+                            </motion.div>
+                        ) : (
+                            <motion.div
+                                key="otp"
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } }}
+                                exit={{ opacity: 0, x: -20 }}
+                                className="w-full max-w-md mx-auto"
+                            >
                                 <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-0 top-1/2 -translate-y-1/2 text-white/30 hover:text-white transition-colors"
+                                    onClick={() => { setStep("form"); setOtpError(""); setOtpDigits(["", "", "", "", "", ""]); }}
+                                    className="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-white/40 hover:text-white transition-colors mb-12 mt-12 lg:mt-0"
                                 >
-                                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                    <ArrowLeft className="w-3 h-3" /> Back
                                 </button>
-                            </div>
-                            <div className="mt-2 text-right">
-                                <Link href="/forgot-password" className="text-[10px] font-mono uppercase tracking-widest text-white/40 hover:text-primary transition-colors">
-                                    Forgot Password?
-                                </Link>
-                            </div>
-                        </div>
 
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="w-full p-8 rounded-3xl group relative py-4 bg-white text-black font-bold uppercase tracking-widest text-xs hover:bg-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 overflow-hidden"
-                        >
-                            {loading ? (
-                                <>
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                    <span>Authenticating...</span>
-                                </>
-                            ) : (
-                                <>
-                                    <span>Authenticate</span>
-                                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                                </>
-                            )}
-                        </button>
+                                <div className="text-center mb-12">
+                                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full border border-primary/30 bg-primary/10 mb-6">
+                                        <Mail className="w-7 h-7 text-primary" />
+                                    </div>
+                                    <h2 className="font-main text-4xl uppercase mb-3">Verify Login</h2>
+                                    <p className="text-white/50 text-sm">
+                                        We sent a 6-digit code to<br />
+                                        <span className="text-white font-medium">{formData.email}</span>
+                                    </p>
+                                </div>
 
-                        <div className="pt-8 border-t border-white/10 text-center">
-                            <p className="text-sm text-white/40">
-                                New to the circle?{" "}
-                                <Link href="/signup" className="text-white hover:text-primary hover:underline transition-colors">
-                                    Create Account
-                                </Link>
-                            </p>
-                        </div>
+                                {otpError && (
+                                    <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-8 p-4 border-l-2 border-red-500 bg-red-500/10 flex items-start gap-3">
+                                        <AlertCircle className="w-5 h-5 text-red-400 mt-0.5" />
+                                        <p className="text-sm text-red-400">{otpError}</p>
+                                    </motion.div>
+                                )}
 
-                    </form>
+                                <div className="flex justify-center gap-3 mb-10">
+                                    {otpDigits.map((digit, i) => (
+                                        <input
+                                            key={i}
+                                            ref={(el) => { inputRefs.current[i] = el; }}
+                                            type="text"
+                                            inputMode="numeric"
+                                            maxLength={1}
+                                            value={digit}
+                                            onChange={(e) => handleOtpChange(i, e.target.value)}
+                                            onKeyDown={(e) => handleOtpKeyDown(i, e)}
+                                            onPaste={i === 0 ? handleOtpPaste : undefined}
+                                            disabled={otpLoading}
+                                            className={`
+                                                w-12 h-14 md:w-14 md:h-16 text-center text-2xl md:text-3xl font-bold bg-transparent
+                                                border-b-2 focus:outline-none transition-all
+                                                ${digit ? "border-primary text-primary" : "border-white/20 text-white focus:border-white/50"}
+                                                ${otpLoading ? "opacity-50 cursor-not-allowed" : ""}
+                                            `}
+                                            autoFocus={i === 0}
+                                        />
+                                    ))}
+                                </div>
 
-                </motion.div>
+                                {otpLoading && (
+                                    <div className="flex items-center justify-center gap-3 mb-8">
+                                        <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                                        <span className="text-sm text-white/60">Verifying...</span>
+                                    </div>
+                                )}
+
+                                <div className="text-center">
+                                    <p className="text-sm text-white/40 mb-2">Didn&apos;t receive the code?</p>
+                                    {resendCooldown > 0 ? (
+                                        <p className="text-sm text-white/30">
+                                            Resend in <span className="text-white font-mono">{resendCooldown}s</span>
+                                        </p>
+                                    ) : (
+                                        <button
+                                            onClick={handleResendOtp}
+                                            disabled={otpLoading}
+                                            className="text-sm text-primary hover:text-primary/80 transition-colors font-medium disabled:opacity-50"
+                                        >
+                                            Resend Code
+                                        </button>
+                                    )}
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
             </div>
         </div>
     );

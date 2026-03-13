@@ -67,13 +67,17 @@ export default function ProducerLayout({ children }: { children: React.ReactNode
             case "orders":
                 router.push("/dashboard/producer/orders");
                 break;
+            case "messages":
+                router.push("/dashboard/producer/messages");
+                break;
             default:
                 router.push("/dashboard/producer");
         }
     };
 
     let activeTab = "overview";
-    if (pathname.includes("/profile")) activeTab = "profile";
+    if (pathname.includes("/messages")) activeTab = "messages";
+    else if (pathname.includes("/profile")) activeTab = "profile";
     else if (pathname.includes("/billing")) activeTab = "billing";
     else if (pathname.includes("/orders")) activeTab = "orders";
 

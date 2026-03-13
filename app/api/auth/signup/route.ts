@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/app/lib/database";
 import bcrypt from "bcryptjs";
-import { verifyOtp } from "@/app/api/auth/send-otp/route";
+import { verifyOtp } from "@/app/lib/otpStore";
 
 export async function POST(request: NextRequest) {
   try {
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify OTP before creating the user
-    const otpResult = verifyOtp(email, otp);
+    const otpResult = verifyOtp(`signup-${email}`, otp);
     if (!otpResult.valid) {
       return NextResponse.json(
         { error: otpResult.error || "Invalid verification code" },
