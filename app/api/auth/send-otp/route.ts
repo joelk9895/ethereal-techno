@@ -24,9 +24,9 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Generate and store OTP
+        // Generate and store OTP (with signup- prefix to match signup/route.ts)
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        storeOtp(emailLower, name, otp);
+        storeOtp(`signup-${emailLower}`, name, otp);
 
         // Send OTP email via Brevo
         const result = await sendOtpEmail(emailLower, name, otp);
