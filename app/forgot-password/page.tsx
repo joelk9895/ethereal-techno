@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
+
 import { Eye, EyeOff, Loader2, Check, AlertCircle, ArrowLeft, Mail, KeyRound } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -426,7 +426,7 @@ function ForgotPasswordContent() {
 
 export default function ForgotPasswordPage() {
     return (
-        <Suspense fallback={<div className="min-h-screen bg-black flex grid place-items-center"><Loader2 className="w-8 h-8 animate-spin text-white/20" /></div>}>
+        <Suspense fallback={<div className="min-h-screen bg-black flex place-items-center"><Loader2 className="w-8 h-8 animate-spin text-white/20" /></div>}>
             <ForgotPasswordContent />
         </Suspense>
     );

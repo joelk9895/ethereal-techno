@@ -16,9 +16,11 @@ export default function SignUpPage() {
     const [step, setStep] = useState<"form" | "otp">("form");
     const [formData, setFormData] = useState({
         name: "",
+        surname: "",
         email: "",
         password: "",
         confirmPassword: "",
+        country: "",
     });
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -32,6 +34,18 @@ export default function SignUpPage() {
     const [resendCooldown, setResendCooldown] = useState(0);
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
+    const countries = [
+        "United States", "United Kingdom", "Canada", "Australia", "Germany",
+        "France", "Spain", "Italy", "Netherlands", "Belgium", "Sweden",
+        "Norway", "Denmark", "Finland", "Switzerland", "Austria", "Portugal",
+        "Ireland", "Poland", "Czech Republic", "Greece", "Romania", "Hungary",
+        "Brazil", "Mexico", "Argentina", "Chile", "Colombia", "Peru",
+        "Japan", "South Korea", "China", "India", "Singapore", "Thailand",
+        "South Africa", "Egypt", "Nigeria", "Kenya", "Morocco",
+        "New Zealand", "Russia", "Ukraine", "Turkey", "Israel",
+        "United Arab Emirates", "Saudi Arabia", "Qatar", "Other"
+    ].sort();
+
     // Resend cooldown timer
     useEffect(() => {
         if (resendCooldown <= 0) return;
@@ -41,7 +55,9 @@ export default function SignUpPage() {
 
     const validateForm = () => {
         const newErrors: Record<string, string> = {};
-        if (!formData.name.trim()) newErrors.name = "Name is required";
+        if (!formData.name.trim()) newErrors.name = "First Name is required";
+        if (!formData.surname.trim()) newErrors.surname = "Last Name is required";
+        if (!formData.country.trim()) newErrors.country = "Country is required";
         if (!formData.email.trim()) newErrors.email = "Email is required";
         else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = "Invalid email format";
         if (!formData.password) newErrors.password = "Password is required";
@@ -65,6 +81,8 @@ export default function SignUpPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     name: formData.name,
+                    surname: formData.surname,
+                    country: formData.country,
                     email: formData.email,
                     password: formData.password,
                     otp: "check-only", // Will fail OTP but we can catch 409 before sending OTP
@@ -163,6 +181,8 @@ export default function SignUpPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     name: formData.name,
+                    surname: formData.surname,
+                    country: formData.country,
                     email: formData.email,
                     password: formData.password,
                     otp,
@@ -296,21 +316,62 @@ export default function SignUpPage() {
                             <form onSubmit={handleSendOtp} className="space-y-8">
 
                                 {/* Name */}
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="group">
+                                        <div className="flex justify-between items-baseline mb-2">
+                                            <label className="text-[10px] font-mono uppercase tracking-widest text-white/40 group-focus-within:text-primary transition-colors">First Name</label>
+                                            {errors.name && <span className="text-[10px] text-red-500 font-mono">{errors.name}</span>}
+                                        </div>
+                                        <input
+                                            type="text"
+                                            value={formData.name}
+                                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                            className={`
+                                                w-full bg-transparent border-b py-3 text-lg text-white placeholder:text-white/10 focus:outline-none transition-colors
+                                                ${errors.name ? "border-red-500" : "border-white/20 focus:border-primary"}
+                                            `}
+                                            placeholder="First Name"
+                                        />
+                                    </div>
+
+                                    <div className="group">
+                                        <div className="flex justify-between items-baseline mb-2">
+                                            <label className="text-[10px] font-mono uppercase tracking-widest text-white/40 group-focus-within:text-primary transition-colors">Last Name</label>
+                                            {errors.surname && <span className="text-[10px] text-red-500 font-mono">{errors.surname}</span>}
+                                        </div>
+                                        <input
+                                            type="text"
+                                            value={formData.surname}
+                                            onChange={(e) => setFormData({ ...formData, surname: e.target.value })}
+                                            className={`
+                                                w-full bg-transparent border-b py-3 text-lg text-white placeholder:text-white/10 focus:outline-none transition-colors
+                                                ${errors.surname ? "border-red-500" : "border-white/20 focus:border-primary"}
+                                            `}
+                                            placeholder="Last Name"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Country */}
                                 <div className="group">
                                     <div className="flex justify-between items-baseline mb-2">
-                                        <label className="text-[10px] font-mono uppercase tracking-widest text-white/40 group-focus-within:text-primary transition-colors">Full Name</label>
-                                        {errors.name && <span className="text-[10px] text-red-500 font-mono">{errors.name}</span>}
+                                        <label className="text-[10px] font-mono uppercase tracking-widest text-white/40 group-focus-within:text-primary transition-colors">Country</label>
+                                        {errors.country && <span className="text-[10px] text-red-500 font-mono">{errors.country}</span>}
                                     </div>
-                                    <input
-                                        type="text"
-                                        value={formData.name}
-                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                    <select
+                                        value={formData.country}
+                                        onChange={(e) => setFormData({ ...formData, country: e.target.value })}
                                         className={`
-                                            w-full bg-transparent border-b py-3 text-lg text-white placeholder:text-white/10 focus:outline-none transition-colors
-                                            ${errors.name ? "border-red-500" : "border-white/20 focus:border-primary"}
+                                            w-full bg-transparent border-b py-3 text-lg text-white focus:outline-none transition-colors appearance-none cursor-pointer
+                                            ${errors.country ? "border-red-500" : "border-white/20 focus:border-primary"}
+                                            ${!formData.country ? "text-white/30" : "text-white"}
                                         `}
-                                        placeholder="Your Name"
-                                    />
+                                    >
+                                        <option value="" disabled className="bg-black text-white/30">Select your country</option>
+                                        {countries.map(c => (
+                                            <option key={c} value={c} className="bg-black text-white">{c}</option>
+                                        ))}
+                                    </select>
                                 </div>
 
                                 {/* Email */}

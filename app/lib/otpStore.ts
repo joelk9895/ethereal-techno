@@ -26,7 +26,7 @@ if (!globalForOtp.__rateLimitMap) {
 const otpStore = globalForOtp.__otpStore;
 const rateLimitMap = globalForOtp.__rateLimitMap; // email -> timestamps of requests
 
-const OTP_EXPIRY_MS = 10 * 60 * 1000; // 10 minutes
+const OTP_EXPIRY_MS = 2 * 60 * 1000; // 2 minutes
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
 export const MAX_REQUESTS_PER_WINDOW = 3;
 

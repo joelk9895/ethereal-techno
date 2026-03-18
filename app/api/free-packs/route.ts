@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/app/lib/database";
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET || "fallback-secret-development-only";
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
 export async function GET(request: NextRequest) {
     try {

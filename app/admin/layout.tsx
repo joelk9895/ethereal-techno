@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { getAuthUser, logout, AuthUser } from "@/lib/auth";
+import { getAuthUser, logout } from "@/lib/auth";
 import { Loader2 } from "lucide-react";
 import RightSidebar from "@/app/components/RightSidebar";
 

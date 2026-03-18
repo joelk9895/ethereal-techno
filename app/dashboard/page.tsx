@@ -123,6 +123,7 @@ export default function DashboardPage() {
     const [editing, setEditing] = useState(false);
     const [saving, setSaving] = useState(false);
     const [withdrawing, setWithdrawing] = useState(false);
+    const [deletingAccount, setDeletingAccount] = useState(false);
 
     const [formData, setFormData] = useState({
         name: "",
@@ -399,11 +400,48 @@ export default function DashboardPage() {
                                     </button>
                                 )}
 
+                                {/* Delete Account Section */}
+                                <div className="mt-16 pt-12 border-t border-red-500/10">
+                                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                                        <div>
+                                            <h3 className="font-main text-2xl uppercase text-red-400 mb-2">Delete Account</h3>
+                                            <p className="text-white/40 text-sm font-light max-w-md">
+                                                Permanently delete your Ethereal Techno account and all associated data. This action cannot be undone.
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={async () => {
+                                                if (!confirm("Are you absolutely sure you want to delete your account? This action cannot be undone and you will lose all access.")) return;
+                                                setDeletingAccount(true);
+                                                try {
+                                                    const res = await fetch("/api/user", {
+                                                        method: "DELETE",
+                                                        headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` },
+                                                    });
+                                                    if (res.ok) {
+                                                        logout();
+                                                        router.push("/");
+                                                    } else {
+                                                        const data = await res.json();
+                                                        alert(data.error || "Failed to delete account.");
+                                                    }
+                                                } catch (err) {
+                                                    console.error("Delete account error:", err);
+                                                    alert("Something went wrong. Please try again.");
+                                                } finally {
+                                                    setDeletingAccount(false);
+                                                }
+                                            }}
+                                            disabled={deletingAccount}
+                                            className="self-start md:self-auto px-6 py-3 bg-red-500/10 text-red-400 border border-red-500/20 rounded-full font-bold uppercase tracking-widest text-[10px] hover:bg-red-500 hover:text-white transition-all disabled:opacity-50"
+                                        >
+                                            {deletingAccount ? "Deleting..." : "Delete Account"}
+                                        </button>
+                                    </div>
+                                </div>
+
                             </motion.div>
                         )}
-
-
-
 
 
                         {activeTab === "library" && (

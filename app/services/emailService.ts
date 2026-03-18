@@ -130,7 +130,7 @@ export const resetPasswordEmail = (name: string, otp: string) => emailLayout(`
     </div>
     
     <p style="color:#52525b;font-size:13px;line-height:1.6;text-align:center;margin-top:40px;">
-        This code expires in 10 minutes. If you did not request this, you can safely ignore this email.
+        This code expires in 2 minutes. If you did not request this, you can safely ignore this email.
     </p>
 `);
 
@@ -233,6 +233,27 @@ function emailLayout(body: string): string {
 }
 
 // ─── Templates ───────────────────────────────────────
+
+/** Sent to a new regular user upons successful signup */
+export const welcomeEmail = () => emailLayout(`
+    <h2 style="color:#ffffff;font-size:24px;margin:0 0 24px;font-weight:700;letter-spacing:-0.5px;">Welcome to Ethereal Techno.</h2>
+    <p style="color:#a1a1aa;font-size:15px;line-height:1.6;margin-bottom:24px;">Your account is now active.</p>
+    <p style="color:#d4d4d8;font-size:15px;line-height:1.6;margin-bottom:32px;">You can explore our sound libraries, access your dashboard, and manage your profile.<br>Producers may also apply to join the Circle.</p>
+    
+    <div style="margin:40px 0 20px;">
+        <a href="https://ethereal-techno.com/signin" style="display:inline-block;background:#ffffff;color:#000000;padding:12px 24px;text-decoration:none;border-radius:4px;font-weight:600;font-size:14px;letter-spacing:0.5px;text-transform:uppercase;">👉 Access your account</a>
+    </div>
+`);
+
+export async function sendWelcomeEmail(toEmail: string, name: string) {
+  return sendEmail({
+    to: toEmail,
+    subject: "Welcome to Ethereal Techno",
+    htmlContent: welcomeEmail(),
+    tags: ["welcome-email"],
+    sender: { name: "Ethereal Techno", email: "noreply@etherealtechno.com" },
+  });
+}
 
 /** Sent to applicant when their Circle application is submitted */
 export function applicationConfirmationEmail(artistName: string): EmailContent {

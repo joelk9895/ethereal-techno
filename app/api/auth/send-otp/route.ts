@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendOtpEmail } from "@/app/services/emailService";
-import { checkAndRecordRateLimit, storeOtp, verifyOtp as verifyOtpStore } from "@/app/lib/otpStore";
+import { checkAndRecordRateLimit, storeOtp } from "@/app/lib/otpStore";
 
 export async function POST(request: NextRequest) {
     try {

@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/app/lib/database";
 import bcrypt from "bcryptjs";
 import { verifyOtp } from "@/app/lib/otpStore";
+import { sendWelcomeEmail } from "@/app/services/emailService";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email, password, otp } = body;
+    const { name, surname, country, email, password, otp } = body;
 
-    if (!name || !email || !password || !otp) {
+    if (!name || !surname || !country || !email || !password || !otp) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -70,6 +71,8 @@ export async function POST(request: NextRequest) {
     const user = await prisma.user.create({
       data: {
         name,
+        surname,
+        country,
         email,
         username: finalUsername,
         password: hashedPassword,
@@ -84,6 +87,14 @@ export async function POST(request: NextRequest) {
         createdAt: true,
       },
     });
+
+    // Send Welcome Email
+    try {
+      await sendWelcomeEmail(user.email, user.name);
+    } catch (emailError) {
+      console.error("Failed to send welcome email:", emailError);
+      // We don't want to fail the signup if the email fails, just log it.
+    }
 
     return NextResponse.json(
       {

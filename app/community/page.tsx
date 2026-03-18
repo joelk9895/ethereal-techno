@@ -72,14 +72,6 @@ const fadeVar = {
     visible: { opacity: 1, scale: 1, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const } }
 };
 
-const textReveal = {
-    hidden: { y: "100%" },
-    visible: (i: number) => ({
-        y: "0%",
-        transition: { duration: 0.8, ease: [0.76, 0, 0.24, 1] as const, delay: i * 0.05 }
-    })
-};
-
 export default function CommunityPage() {
     const router = useRouter();
     const [user, setUser] = useState<AuthUser | null>(null);
@@ -118,7 +110,7 @@ export default function CommunityPage() {
         };
 
         init();
-    }, []);
+    }, [router]);
 
     const fetchNews = async () => {
         try {

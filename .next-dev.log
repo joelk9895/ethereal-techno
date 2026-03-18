@@ -227,3 +227,448 @@ Require stack:
  GET /favicon.ico 200 in 9ms
  ✓ Compiled in 664ms (886 modules)
 <w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename '/Users/joelkgeorge/Developer/ethereal-techno/.next/cache/webpack/client-development/5.pack.gz_' -> '/Users/joelkgeorge/Developer/ethereal-techno/.next/cache/webpack/client-development/5.pack.gz'
+ ✓ Compiled in 434ms (886 modules)
+ ✓ Compiled in 271ms (886 modules)
+ ✓ Compiled in 347ms (886 modules)
+ ✓ Compiled in 254ms (886 modules)
+ ✓ Compiled in 194ms (886 modules)
+ ✓ Compiled in 240ms (886 modules)
+ ✓ Compiled in 255ms (886 modules)
+ ✓ Compiled in 281ms (886 modules)
+ ⨯ ./app/dashboard/page.tsx
+Error:   [31mx[0m Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+     ,-[[36;1;4m/Users/joelkgeorge/Developer/ethereal-techno/app/dashboard/page.tsx[0m:400:1]
+ [2m397[0m |                                     >
+ [2m398[0m |                                         Edit Details
+ [2m399[0m |                                     </button>
+ [2m400[0m |                                 )}
+     : [35;1m                                 ^[0m
+ [2m401[0m | 
+ [2m402[0m |                                 {/* Delete Account Section */}
+ [2m403[0m |                                 <div className="mt-16 pt-12 border-t border-red-500/10">
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./app/dashboard/page.tsx
+ ⨯ ./app/dashboard/page.tsx
+Error:   [31mx[0m Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+     ,-[[36;1;4m/Users/joelkgeorge/Developer/ethereal-techno/app/dashboard/page.tsx[0m:398:1]
+ [2m395[0m |                                     >
+ [2m396[0m |                                         Edit Details
+ [2m397[0m |                                     </button>
+ [2m398[0m |                                 )}
+     : [35;1m                                 ^[0m
+ [2m399[0m | 
+ [2m400[0m |                                 {/* Delete Account Section */}
+ [2m401[0m |                                 <div className="mt-16 pt-12 border-t border-red-500/10">
+     `----
+  [31mx[0m Expected '</', got ')'
+     ,-[[36;1;4m/Users/joelkgeorge/Developer/ethereal-techno/app/dashboard/page.tsx[0m:441:1]
+ [2m438[0m |                                 </div>
+ [2m439[0m | 
+ [2m440[0m |                             </motion.div>
+ [2m441[0m |                         )}
+     : [35;1m                        ^[0m
+ [2m442[0m | 
+ [2m443[0m | 
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./app/dashboard/page.tsx
+ ⨯ ./app/dashboard/page.tsx
+Error:   [31mx[0m Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+     ,-[[36;1;4m/Users/joelkgeorge/Developer/ethereal-techno/app/dashboard/page.tsx[0m:398:1]
+ [2m395[0m |                                     >
+ [2m396[0m |                                         Edit Details
+ [2m397[0m |                                     </button>
+ [2m398[0m |                                 )}
+     : [35;1m                                 ^[0m
+ [2m399[0m | 
+ [2m400[0m |                                 {/* Delete Account Section */}
+ [2m401[0m |                                 <div className="mt-16 pt-12 border-t border-red-500/10">
+     `----
+  [31mx[0m Expected '</', got ')'
+     ,-[[36;1;4m/Users/joelkgeorge/Developer/ethereal-techno/app/dashboard/page.tsx[0m:441:1]
+ [2m438[0m |                                 </div>
+ [2m439[0m | 
+ [2m440[0m |                             </motion.div>
+ [2m441[0m |                         )}
+     : [35;1m                        ^[0m
+ [2m442[0m | 
+ [2m443[0m | 
+ [2m444[0m |                         {activeTab === "library" && (
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./app/dashboard/page.tsx
+ ⨯ ./app/dashboard/page.tsx
+Error:   [31mx[0m Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+     ,-[[36;1;4m/Users/joelkgeorge/Developer/ethereal-techno/app/dashboard/page.tsx[0m:398:1]
+ [2m395[0m |                                     >
+ [2m396[0m |                                         Edit Details
+ [2m397[0m |                                     </button>
+ [2m398[0m |                                 )}
+     : [35;1m                                 ^[0m
+ [2m399[0m | 
+ [2m400[0m |                                 {/* Delete Account Section */}
+ [2m401[0m |                                 <div className="mt-16 pt-12 border-t border-red-500/10">
+     `----
+  [31mx[0m Expected '</', got ')'
+     ,-[[36;1;4m/Users/joelkgeorge/Developer/ethereal-techno/app/dashboard/page.tsx[0m:441:1]
+ [2m438[0m |                                 </div>
+ [2m439[0m | 
+ [2m440[0m |                             </motion.div>
+ [2m441[0m |                         )}
+     : [35;1m                        ^[0m
+ [2m442[0m | 
+ [2m443[0m | 
+ [2m444[0m |                         {activeTab === "library" && (
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./app/dashboard/page.tsx
+ ⨯ ./app/dashboard/page.tsx
+Error:   [31mx[0m Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+     ,-[[36;1;4m/Users/joelkgeorge/Developer/ethereal-techno/app/dashboard/page.tsx[0m:398:1]
+ [2m395[0m |                                     >
+ [2m396[0m |                                         Edit Details
+ [2m397[0m |                                     </button>
+ [2m398[0m |                                 )}
+     : [35;1m                                 ^[0m
+ [2m399[0m | 
+ [2m400[0m |                                 {/* Delete Account Section */}
+ [2m401[0m |                                 <div className="mt-16 pt-12 border-t border-red-500/10">
+     `----
+  [31mx[0m Expected '</', got ')'
+     ,-[[36;1;4m/Users/joelkgeorge/Developer/ethereal-techno/app/dashboard/page.tsx[0m:441:1]
+ [2m438[0m |                                 </div>
+ [2m439[0m | 
+ [2m440[0m |                             </motion.div>
+ [2m441[0m |                         )}
+     : [35;1m                        ^[0m
+ [2m442[0m | 
+ [2m443[0m | 
+ [2m444[0m |                         {activeTab === "library" && (
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./app/dashboard/page.tsx
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename '/Users/joelkgeorge/Developer/ethereal-techno/.next/cache/webpack/client-development-fallback/1.pack.gz_' -> '/Users/joelkgeorge/Developer/ethereal-techno/.next/cache/webpack/client-development-fallback/1.pack.gz'
+ ⨯ ./app/dashboard/page.tsx
+Error:   [31mx[0m Expected '</', got ')'
+     ,-[[36;1;4m/Users/joelkgeorge/Developer/ethereal-techno/app/dashboard/page.tsx[0m:440:1]
+ [2m437[0m |                                 </div>
+ [2m438[0m | 
+ [2m439[0m |                             </motion.div>
+ [2m440[0m |                         )}
+     : [35;1m                        ^[0m
+ [2m441[0m | 
+ [2m442[0m | 
+ [2m443[0m |                         {activeTab === "library" && (
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./app/dashboard/page.tsx
+ ⨯ ./app/dashboard/page.tsx
+Error:   [31mx[0m Expected '</', got ')'
+     ,-[[36;1;4m/Users/joelkgeorge/Developer/ethereal-techno/app/dashboard/page.tsx[0m:440:1]
+ [2m437[0m |                                 </div>
+ [2m438[0m | 
+ [2m439[0m |                             </motion.div>
+ [2m440[0m |                         )}
+     : [35;1m                        ^[0m
+ [2m441[0m | 
+ [2m442[0m | 
+ [2m443[0m |                         {activeTab === "library" && (
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./app/dashboard/page.tsx
+ ⨯ ./app/dashboard/page.tsx
+Error:   [31mx[0m Expected '</', got ')'
+     ,-[[36;1;4m/Users/joelkgeorge/Developer/ethereal-techno/app/dashboard/page.tsx[0m:440:1]
+ [2m437[0m |                                 </div>
+ [2m438[0m | 
+ [2m439[0m |                             </motion.div>
+ [2m440[0m |                         )}
+     : [35;1m                        ^[0m
+ [2m441[0m | 
+ [2m442[0m | 
+ [2m443[0m |                         {activeTab === "library" && (
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./app/dashboard/page.tsx
+ ✓ Compiled in 1559ms (1855 modules)
+ ✓ Compiled in 287ms (886 modules)
+ ✓ Compiled in 180ms (886 modules)
+ ✓ Compiled in 260ms (886 modules)
+ ✓ Compiled in 228ms (886 modules)
+ ✓ Compiled in 175ms (886 modules)
+ ✓ Compiled in 180ms (886 modules)
+ ✓ Compiled in 180ms (886 modules)
+ ✓ Compiled in 170ms (886 modules)
+ ✓ Compiled in 241ms (886 modules)
+ ✓ Compiled in 164ms (886 modules)
+ ○ Compiling /signup ...
+ ✓ Compiled /signup in 883ms (1908 modules)
+ ⨯ Error: ENOENT: no such file or directory, open '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/vendor-chunks/framer-motion.js'
+    at <unknown> (.next/server/app/signup/page.js:280:47)
+    at Object.<anonymous> (.next/server/app/signup/page.js:283:3) {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/vendor-chunks/framer-motion.js',
+  page: '/signup'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/pages/_document.js'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/pages/_document.js'
+}
+Error: ENOENT: no such file or directory, open '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/vendor-chunks/framer-motion.js'
+    at <unknown> (.next/server/app/signup/page.js:280:47)
+    at Object.<anonymous> (.next/server/app/signup/page.js:283:3) {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/vendor-chunks/framer-motion.js',
+  page: '/signup'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/pages/_document.js'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/pages/_document.js'
+}
+[Error: ENOENT: no such file or directory, open '/Users/joelkgeorge/Developer/ethereal-techno/.next/fallback-build-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/joelkgeorge/Developer/ethereal-techno/.next/fallback-build-manifest.json'
+}
+ GET /signup 500 in 1472ms
+ GET /signup 500 in 235ms
+ ✓ Compiled /favicon.ico in 394ms (1046 modules)
+ GET /favicon.ico 200 in 529ms
+ ⨯ Error: ENOENT: no such file or directory, open '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/vendor-chunks/framer-motion.js'
+    at <unknown> (.next/server/app/signup/page.js:280:47)
+    at Object.<anonymous> (.next/server/app/signup/page.js:283:3) {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/vendor-chunks/framer-motion.js',
+  page: '/signup'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/pages/_document.js'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/pages/_document.js'
+}
+Error: ENOENT: no such file or directory, open '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/vendor-chunks/framer-motion.js'
+    at <unknown> (.next/server/app/signup/page.js:280:47)
+    at Object.<anonymous> (.next/server/app/signup/page.js:283:3) {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/vendor-chunks/framer-motion.js',
+  page: '/signup'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/pages/_document.js'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/pages/_document.js'
+}
+[Error: ENOENT: no such file or directory, open '/Users/joelkgeorge/Developer/ethereal-techno/.next/fallback-build-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/joelkgeorge/Developer/ethereal-techno/.next/fallback-build-manifest.json'
+}
+ GET /signup 500 in 580ms
+ GET /signup 500 in 240ms
+ GET /favicon.ico 200 in 26ms
+ ○ Compiling /signin ...
+ ✓ Compiled /signin in 653ms (1936 modules)
+ ⨯ Error: ENOENT: no such file or directory, open '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/vendor-chunks/framer-motion.js'
+    at <unknown> (.next/server/app/signin/page.js:280:47)
+    at Object.<anonymous> (.next/server/app/signin/page.js:283:3) {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/vendor-chunks/framer-motion.js',
+  page: '/signin'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/pages/_document.js'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/pages/_document.js'
+}
+Error: ENOENT: no such file or directory, open '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/vendor-chunks/framer-motion.js'
+    at <unknown> (.next/server/app/signin/page.js:280:47)
+    at Object.<anonymous> (.next/server/app/signin/page.js:283:3) {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/vendor-chunks/framer-motion.js',
+  page: '/signin'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/pages/_document.js'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/pages/_document.js'
+}
+[Error: ENOENT: no such file or directory, open '/Users/joelkgeorge/Developer/ethereal-techno/.next/fallback-build-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/joelkgeorge/Developer/ethereal-techno/.next/fallback-build-manifest.json'
+}
+ GET /signin 500 in 1172ms
+ GET /signin 500 in 231ms
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/app/page.js'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/app/page.js',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/pages/_document.js'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/pages/_document.js'
+}
+[Error: ENOENT: no such file or directory, open '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/app/page.js'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/app/page.js',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/pages/_document.js'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/pages/_document.js'
+}
+[Error: ENOENT: no such file or directory, open '/Users/joelkgeorge/Developer/ethereal-techno/.next/fallback-build-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/joelkgeorge/Developer/ethereal-techno/.next/fallback-build-manifest.json'
+}
+ GET / 500 in 558ms
+ GET / 500 in 235ms
+ ○ Compiling /dashboard/producer ...
+ GET /favicon.ico 200 in 1118ms
+ ✓ Compiled /dashboard/producer in 2.1s (1948 modules)
+ ⨯ Error: ENOENT: no such file or directory, open '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/vendor-chunks/framer-motion.js'
+    at <unknown> (.next/server/app/dashboard/producer/page.js:377:47)
+    at Object.<anonymous> (.next/server/app/dashboard/producer/page.js:380:3) {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/vendor-chunks/framer-motion.js',
+  page: '/dashboard/producer'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/pages/_document.js'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/pages/_document.js'
+}
+ GET /apple-touch-icon-precomposed.png 404 in 2811ms
+ GET /apple-touch-icon.png 404 in 2785ms
+Error: ENOENT: no such file or directory, open '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/vendor-chunks/framer-motion.js'
+    at <unknown> (.next/server/app/dashboard/producer/page.js:377:47)
+    at Object.<anonymous> (.next/server/app/dashboard/producer/page.js:380:3) {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/vendor-chunks/framer-motion.js',
+  page: '/dashboard/producer'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/pages/_document.js'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/pages/_document.js'
+}
+[Error: ENOENT: no such file or directory, open '/Users/joelkgeorge/Developer/ethereal-techno/.next/fallback-build-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/joelkgeorge/Developer/ethereal-techno/.next/fallback-build-manifest.json'
+}
+ GET /dashboard/producer 500 in 3400ms
+ GET /dashboard/producer 500 in 229ms
+ ⨯ Error: ENOENT: no such file or directory, open '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/vendor-chunks/framer-motion.js'
+    at <unknown> (.next/server/app/dashboard/producer/page.js:377:47)
+    at Object.<anonymous> (.next/server/app/dashboard/producer/page.js:380:3) {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/vendor-chunks/framer-motion.js',
+  page: '/dashboard/producer'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/pages/_document.js'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/pages/_document.js'
+}
+Error: ENOENT: no such file or directory, open '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/vendor-chunks/framer-motion.js'
+    at <unknown> (.next/server/app/dashboard/producer/page.js:377:47)
+    at Object.<anonymous> (.next/server/app/dashboard/producer/page.js:380:3) {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/vendor-chunks/framer-motion.js',
+  page: '/dashboard/producer'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/pages/_document.js'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/joelkgeorge/Developer/ethereal-techno/.next/server/pages/_document.js'
+}
+[Error: ENOENT: no such file or directory, open '/Users/joelkgeorge/Developer/ethereal-techno/.next/fallback-build-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/joelkgeorge/Developer/ethereal-techno/.next/fallback-build-manifest.json'
+}
+ GET /dashboard/producer 500 in 707ms
+ GET /dashboard/producer 500 in 275ms
+ ✓ Compiled in 929ms (897 modules)
+ ✓ Compiled in 267ms (897 modules)
