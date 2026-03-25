@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/app/lib/database";
 import * as jose from "jose";
+import { sendAccountDeletionEmail } from "@/app/services/emailService";
 
 export async function DELETE(request: NextRequest) {
   try {
@@ -36,6 +37,11 @@ export async function DELETE(request: NextRequest) {
     // if a user has related records (e.g. applications, orders, pack contents).
     await prisma.user.delete({
       where: { id: userId },
+    });
+
+    // Send confirmation email asynchronously
+    void sendAccountDeletionEmail(user.email, user.name || "Producer").catch((err) => {
+      console.error("Failed to send account deletion email:", err);
     });
 
     return NextResponse.json({ message: "Account successfully deleted" }, { status: 200 });

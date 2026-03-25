@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/app/lib/database";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
+import { sendAccountDeletionEmail } from "@/app/services/emailService";
 
 const JWT_SECRET =
   process.env.JWT_SECRET || "your-secret-key-change-in-production";
@@ -263,10 +264,24 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
+    // Fetch the user before deleting to get their email and name for the confirmation email
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
     // Delete the user from the database
     // Prisma's onDelete: Cascade will handle related ArtistApplications, Sessions, RiskLogs
     await prisma.user.delete({
       where: { id: decoded.userId },
+    });
+
+    // Send confirmation email asynchronously
+    void sendAccountDeletionEmail(user.email, user.name || user.artistName || "Producer").catch((err) => {
+      console.error("Failed to send account deletion email:", err);
     });
 
     return NextResponse.json({ success: true, message: "Account deleted successfully." });

@@ -672,3 +672,4 @@ Error: ENOENT: no such file or directory, open '/Users/joelkgeorge/Developer/eth
  GET /dashboard/producer 500 in 275ms
  ✓ Compiled in 929ms (897 modules)
  ✓ Compiled in 267ms (897 modules)
+[?25h

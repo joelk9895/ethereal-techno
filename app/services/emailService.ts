@@ -255,6 +255,27 @@ export async function sendWelcomeEmail(toEmail: string, name: string) {
   });
 }
 
+/** Sent to a user confirming account deletion */
+export const accountDeletionEmail = (name: string) => emailLayout(`
+    <h2 style="color:#ffffff;font-size:24px;margin:0 0 24px;font-weight:700;letter-spacing:-0.5px;">Account deletion confirmed</h2>
+    <p style="color:#a1a1aa;font-size:15px;line-height:1.6;margin-bottom:24px;">Hi ${name},</p>
+    <p style="color:#d4d4d8;font-size:15px;line-height:1.6;margin-bottom:24px;">Your account has now been deleted.</p>
+    <p style="color:#d4d4d8;font-size:15px;line-height:1.6;margin-bottom:24px;">We’re sorry to see you go, but we respect your decision.</p>
+    <p style="color:#d4d4d8;font-size:15px;line-height:1.6;margin-bottom:24px;">If you ever wish to return, you’re always welcome to join Ethereal Techno again.</p>
+    <p style="color:#d4d4d8;font-size:15px;line-height:1.6;margin-bottom:24px;">For any questions, you can contact us anytime at support@etherealtechno.com.</p>
+    <p style="color:#d4d4d8;font-size:15px;line-height:1.6;margin-top:32px;">Best regards,<br><strong style="color:#ffffff;">Ethereal Techno</strong></p>
+`);
+
+export async function sendAccountDeletionEmail(toEmail: string, name: string) {
+  return sendEmail({
+    to: toEmail,
+    subject: "Account deletion confirmed",
+    htmlContent: accountDeletionEmail(name),
+    tags: ["account-deletion"],
+    sender: { name: "Ethereal Techno", email: "noreply@etherealtechno.com" },
+  });
+}
+
 /** Sent to applicant when their Circle application is submitted */
 export function applicationConfirmationEmail(artistName: string): EmailContent {
   return {
