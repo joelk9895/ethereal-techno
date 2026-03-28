@@ -70,20 +70,35 @@ export async function verifyToken(): Promise<boolean> {
   }
 }
 
+let refreshPromise: Promise<string | null> | null = null;
+
 export async function stickyRefresh(): Promise<string | null> {
-  try {
-    const res = await fetch("/api/auth/refresh", { method: "POST" });
-    if (res.ok) {
-      const data = await res.json();
-      if (data.accessToken) {
-        localStorage.setItem("accessToken", data.accessToken);
-        return data.accessToken;
-      }
-    }
-    return null;
-  } catch {
-    return null;
+  if (refreshPromise) {
+    return refreshPromise;
   }
+
+  refreshPromise = (async () => {
+    try {
+      const res = await fetch("/api/auth/refresh", { 
+        method: "POST", 
+        credentials: "include" 
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.accessToken) {
+          localStorage.setItem("accessToken", data.accessToken);
+          return data.accessToken;
+        }
+      }
+      return null;
+    } catch {
+      return null;
+    } finally {
+      refreshPromise = null;
+    }
+  })();
+
+  return refreshPromise;
 }
 
 export async function authenticatedFetch(
@@ -97,7 +112,7 @@ export async function authenticatedFetch(
       ...options,
       headers: {
         ...options.headers,
-        Authorization: `Bearer ${t}`,
+        ...(t ? { Authorization: `Bearer ${t}` } : {}),
         ...(options.body instanceof FormData
           ? {}
           : { "Content-Type": "application/json" }),
@@ -108,14 +123,18 @@ export async function authenticatedFetch(
   let response = await makeRequest(token);
 
   if (response.status === 401) {
+    console.log(`[AUTH] 401 on ${url}, attempting refresh...`);
     // Create a retry logic
     const newToken = await stickyRefresh();
     if (newToken) {
+      console.log(`[AUTH] Refresh success for ${url}, retrying...`);
       response = await makeRequest(newToken);
     } else {
-      // If refresh fails, user is logged out (or should be)
-      // We can trigger logout or just let it fail
-      // logout(); // Optional: force logout on failed refresh logic
+      console.log(`[AUTH] Refresh failed for ${url}, clearing storage and redirecting...`);
+      clearAuth();
+      if (typeof window !== "undefined") {
+        window.location.href = "/signin";
+      }
     }
   }
 

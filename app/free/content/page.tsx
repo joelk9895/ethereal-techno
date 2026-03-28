@@ -104,11 +104,11 @@ export default function FreeContentPage() {
     useEffect(() => {
         const authUser = getAuthUser();
         if (!authUser) {
-            router.push("/signin");
+            router.replace("/signin");
             return;
         }
         if (authUser.type !== "ARTIST" && authUser.type !== "ADMIN") {
-            router.push("/free");
+            router.replace("/free");
             return;
         }
 

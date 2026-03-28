@@ -82,6 +82,8 @@ interface ArtistApplication {
 
 interface User {
     name?: string | null;
+    artistName?: string | null;
+    artistPhoto?: string | null;
     country?: string | null;
     createdAt: Date | string;
 }
@@ -164,13 +166,13 @@ const SlotText = ({ text, className }: { text: string, className?: string }) => 
 };
 
 export default function ArtistProfileContent({ profile, user, username }: ArtistProfileContentProps) {
-    const artistName = profile?.artistName || user.name || username;
+    const artistName = user.artistName || profile?.artistName || user.name || username;
     const VISION_PREFIX = "Ethereal Techno is ";
     const rawQuote = profile?.quote;
     const bio = rawQuote
         ? (rawQuote.startsWith(VISION_PREFIX) ? rawQuote : `${VISION_PREFIX}${rawQuote}`)
         : "Music expresses that which cannot be said and on which it is impossible to be silent. The rhythm of the body, the melody of the mind and the harmony of the soul create the symphony of life.";
-    const photoUrl = profile?.photoUrl;
+    const photoUrl = user.artistPhoto || profile?.photoUrl;
     const country = user.country || "Global";
     const memberSince = new Date(user.createdAt).getFullYear();
 
@@ -311,7 +313,7 @@ export default function ArtistProfileContent({ profile, user, username }: Artist
                                     { href: profile?.youtube, icon: Youtube, label: "YouTube" },
                                     { href: profile?.x, icon: XIcon, label: "X" },
                                     { href: profile?.linktree, icon: LinkIcon, label: "Linktree" }
-                                ].map((social, index) => (
+                                ].filter(s => s.href).map((social, index) => (
                                     <motion.div key={index} variants={fadeInUp}>
                                         <SocialLink href={social.href} icon={social.icon} label={social.label} />
                                     </motion.div>
@@ -342,22 +344,34 @@ export default function ArtistProfileContent({ profile, user, username }: Artist
                     <div className="space-y-16">
 
                         {/* Listen Elsewhere */}
-                        <motion.div
-                            initial="hidden"
-                            whileInView="visible"
-                            viewport={{ once: true, margin: "-100px" }}
-                            variants={staggerContainer}
-                            className="space-y-6"
-                        >
-                            <motion.h2 variants={fadeInUp} className="text-xs font-sans text-white/40 uppercase tracking-widest">Listen Elsewhere</motion.h2>
-                            <motion.div variants={fadeInUp} className="flex flex-wrap gap-4">
-                                <PlatformLink href={profile?.spotify} icon={SpotifyIcon} label="Spotify" />
-                                <PlatformLink href={profile?.soundcloud} icon={SoundCloudIcon} label="Soundcloud" />
-                                <PlatformLink href={profile?.beatport} icon={BeatportIcon} label="Beatport" />
-                                <PlatformLink href={profile?.bandcamp} icon={BandcampIcon} label="Bandcamp" />
-                                <PlatformLink href={profile?.appleMusic} icon={AppleMusicIcon} label="Apple Music" />
+                        {[
+                            profile?.spotify,
+                            profile?.soundcloud,
+                            profile?.beatport,
+                            profile?.bandcamp,
+                            profile?.appleMusic
+                        ].some(Boolean) && (
+                            <motion.div
+                                initial="hidden"
+                                whileInView="visible"
+                                viewport={{ once: true, margin: "-100px" }}
+                                variants={staggerContainer}
+                                className="space-y-6"
+                            >
+                                <motion.h2 variants={fadeInUp} className="text-xs font-sans text-white/40 uppercase tracking-widest">Listen Elsewhere</motion.h2>
+                                <motion.div variants={fadeInUp} className="flex flex-wrap gap-4">
+                                    {[
+                                        { href: profile?.spotify, icon: SpotifyIcon, label: "Spotify" },
+                                        { href: profile?.soundcloud, icon: SoundCloudIcon, label: "Soundcloud" },
+                                        { href: profile?.beatport, icon: BeatportIcon, label: "Beatport" },
+                                        { href: profile?.bandcamp, icon: BandcampIcon, label: "Bandcamp" },
+                                        { href: profile?.appleMusic, icon: AppleMusicIcon, label: "Apple Music" }
+                                    ].filter(p => p.href).map((platform, idx) => (
+                                        <PlatformLink key={idx} href={platform.href} icon={platform.icon} label={platform.label} />
+                                    ))}
+                                </motion.div>
                             </motion.div>
-                        </motion.div>
+                        )}
 
                         {/* Reach Out */}
                         <motion.div
@@ -380,44 +394,42 @@ export default function ArtistProfileContent({ profile, user, username }: Artist
                     </div>
 
                     {/* Right Content: Selected Works */}
-                    <div className="bg-[#1E1E1E] rounded-3xl p-8 space-y-8 border border-white/5">
-                        <motion.div
-                            initial="hidden"
-                            whileInView="visible"
-                            viewport={{ once: true, margin: "-100px" }}
-                            variants={staggerContainer}
-                            className="space-y-6"
-                        >
-                            <motion.h2 variants={fadeInUp} className="text-xs font-sans text-white/40 uppercase tracking-widest">Selected Works</motion.h2>
+                    {(profile?.track1 || profile?.track2 || profile?.track3) && (
+                        <div className="bg-[#1E1E1E] rounded-3xl p-8 space-y-8 border border-white/5">
+                            <motion.div
+                                initial="hidden"
+                                whileInView="visible"
+                                viewport={{ once: true, margin: "-100px" }}
+                                variants={staggerContainer}
+                                className="space-y-6"
+                            >
+                                <motion.h2 variants={fadeInUp} className="text-xs font-sans text-white/40 uppercase tracking-widest">Selected Works</motion.h2>
 
-                            {(profile?.track1 || profile?.track2 || profile?.track3) ? (
                                 <div className="grid md:grid-cols-3 gap-6">
                                     {profile?.track1 && <motion.div variants={fadeInUp}><SoundCloudEmbed url={profile.track1} /></motion.div>}
                                     {profile?.track2 && <motion.div variants={fadeInUp}><SoundCloudEmbed url={profile.track2} /></motion.div>}
                                     {profile?.track3 && <motion.div variants={fadeInUp}><SoundCloudEmbed url={profile.track3} /></motion.div>}
                                 </div>
-                            ) : (
-                                <motion.div variants={fadeInUp} className="text-white/30 text-base font-light italic">
-                                    No tracks selected yet.
-                                </motion.div>
-                            )}
-                        </motion.div>
-                    </div>
+                            </motion.div>
+                        </div>
+                    )}
                 </div>
 
-                <div className="max-w-4xl mx-auto text-center space-y-8 pb-12">
-                    <motion.div
-                        initial={{ opacity: 0, y: 50 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, ease: "easeOut" }}
-                        viewport={{ once: true }}
-                    >
-                        <h2 className="text-xs font-sans text-white/40 uppercase tracking-widest mb-6">Statement</h2>
-                        <p className="text-xl md:text-3xl font-sans italic leading-relaxed text-white/90 tracking-wide font-light max-w-5xl mx-auto">
-                            &ldquo;{bio}&rdquo;
-                        </p>
-                    </motion.div>
-                </div>
+                {bio && rawQuote && (
+                    <div className="max-w-4xl mx-auto text-center space-y-8 pb-12">
+                        <motion.div
+                            initial={{ opacity: 0, y: 50 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.8, ease: "easeOut" }}
+                            viewport={{ once: true }}
+                        >
+                            <h2 className="text-xs font-sans text-white/40 uppercase tracking-widest mb-6">Statement</h2>
+                            <p className="text-xl md:text-3xl font-sans italic leading-relaxed text-white/90 tracking-wide font-light max-w-5xl mx-auto">
+                                &ldquo;{bio}&rdquo;
+                            </p>
+                        </motion.div>
+                    </div>
+                )}
 
             </div>
         </div>

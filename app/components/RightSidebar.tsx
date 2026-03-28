@@ -20,6 +20,7 @@ import {
     MessageSquare
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { authenticatedFetch } from "@/lib/auth";
 
 interface UserData {
     id: string;
@@ -80,9 +81,7 @@ export default function RightSidebar({ user, activeTab, onNavigate, onSignOut }:
         if (user.type !== "USER") return;
         const checkApplication = async () => {
             try {
-                const response = await fetch("/api/artist/apply", {
-                    headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` },
-                });
+                const response = await authenticatedFetch("/api/artist/apply");
                 if (response.ok) {
                     const data = await response.json();
                     setHasApplication(data.exists && !!data.application);
@@ -248,14 +247,16 @@ export default function RightSidebar({ user, activeTab, onNavigate, onSignOut }:
                             onClick={() => onNavigate("merch")}
                             external
                         />
-                        <NavItem
-                            id="free-content"
-                            label="Free Packs"
-                            icon={ArrowUpRight}
-                            active={false}
-                            onClick={() => onNavigate("free-content")}
-                            external
-                        />
+                        {(user.type === "ARTIST" || user.type === "ADMIN") && (
+                            <NavItem
+                                id="free-content"
+                                label="Free Packs"
+                                icon={ArrowUpRight}
+                                active={false}
+                                onClick={() => onNavigate("free-content")}
+                                external
+                            />
+                        )}
                     </div>
                 </div>
             </div>

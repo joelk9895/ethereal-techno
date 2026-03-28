@@ -176,7 +176,7 @@ const Card = ({ item }: { item: MarketplaceItem }) => (
 
 const JoinCircleCTA = ({ router }: { router: ReturnType<typeof useRouter> }) => (
     <motion.button
-        onClick={() => router.push("/community")}
+        onClick={() => router.push("/artist/apply")}
         whileHover="hover"
         initial="initial"
         className="group relative w-full py-24 md:py-32 border-y border-white/10 hover:border-primary/50 transition-colors overflow-hidden mt-12"

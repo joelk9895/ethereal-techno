@@ -26,7 +26,8 @@ export async function GET() {
         const sortedProducers = producers.sort((a, b) => {
             const scoreA = (a.profileViews || 0) + (a.messageClicks || 0);
             const scoreB = (b.profileViews || 0) + (b.messageClicks || 0);
-            return scoreB - scoreA;
+            if (scoreB !== scoreA) return scoreB - scoreA;
+            return a.id.localeCompare(b.id);
         });
 
         // Transform S3 URLs to use image proxy

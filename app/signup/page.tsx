@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Loader2, ArrowRight, ArrowLeft, Sparkles, AlertCircle, Mail } from "lucide-react";
+import { Eye, EyeOff, Loader2, ArrowRight, ArrowLeft, AlertCircle, Mail } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -242,18 +242,10 @@ export default function SignUpPage() {
     return (
         <div className="min-h-screen bg-black text-white font-sans selection:bg-primary selection:text-black grid lg:grid-cols-2">
 
-            <div className="hidden lg:flex relative flex-col justify-between p-12 bg-black border-r border-white/10 overflow-hidden">
-                <div className="absolute inset-0 pointer-events-none z-0 opacity-[0.04] bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
-                <div className="absolute bottom-[-20%] right-[-20%] w-[60vw] h-[60vw] bg-primary/5 rounded-full blur-[150px]" />
+            <div className="hidden lg:flex relative flex-col justify-center p-12 bg-black border-r border-white/10 overflow-hidden">
+                <div className="absolute inset-0 pointer-events-none z-0 opacity-[0.1] bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
+                <div className="absolute top-[-20%] left-[-20%] w-[60vw] h-[60vw] bg-primary/5 rounded-full blur-[150px]" />
 
-                <div className="relative z-10">
-                    <div className="flex items-center gap-3 mb-8">
-                        <div className="p-2 border border-white/20 rounded-full">
-                            <Sparkles className="w-4 h-4 text-primary" />
-                        </div>
-                        <span className="text-[10px] font-mono uppercase tracking-widest text-white/60">New Member Registration</span>
-                    </div>
-                </div>
 
                 <div className="relative z-10">
                     <h1 className="font-main text-8xl uppercase leading-[0.9] mb-6">
@@ -264,15 +256,10 @@ export default function SignUpPage() {
                     </p>
                 </div>
 
-                <div className="relative z-10 flex items-center gap-4 text-[10px] font-mono text-white/30 uppercase tracking-widest">
-                    <span>Est. 2025</span>
-                    <div className="h-px w-8 bg-white/10" />
-                    <span>Global Collective</span>
-                </div>
             </div>
 
             {/* --- RIGHT PANEL --- */}
-            <div className="flex flex-col justify-center px-6 sm:px-12 lg:px-24 py-12 relative">
+            <div className="flex flex-col bg-background justify-center px-6 sm:px-12 lg:px-24 py-12 relative">
 
                 {/* Back Link */}
                 <Link href="/" className="absolute top-8 left-6 lg:left-12 flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-white/40 hover:text-white transition-colors">
@@ -319,7 +306,7 @@ export default function SignUpPage() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="group">
                                         <div className="flex justify-between items-baseline mb-2">
-                                            <label className="text-[10px] font-mono uppercase tracking-widest text-white/40 group-focus-within:text-primary transition-colors">First Name</label>
+                                            <label className="text-[10px] font-mono uppercase tracking-widest text-white group-focus-within:text-primary transition-colors">First Name</label>
                                             {errors.name && <span className="text-[10px] text-red-500 font-mono">{errors.name}</span>}
                                         </div>
                                         <input
@@ -336,7 +323,7 @@ export default function SignUpPage() {
 
                                     <div className="group">
                                         <div className="flex justify-between items-baseline mb-2">
-                                            <label className="text-[10px] font-mono uppercase tracking-widest text-white/40 group-focus-within:text-primary transition-colors">Last Name</label>
+                                            <label className="text-[10px] font-mono uppercase tracking-widest text-white group-focus-within:text-primary transition-colors">Last Name</label>
                                             {errors.surname && <span className="text-[10px] text-red-500 font-mono">{errors.surname}</span>}
                                         </div>
                                         <input
@@ -355,7 +342,7 @@ export default function SignUpPage() {
                                 {/* Country */}
                                 <div className="group">
                                     <div className="flex justify-between items-baseline mb-2">
-                                        <label className="text-[10px] font-mono uppercase tracking-widest text-white/40 group-focus-within:text-primary transition-colors">Country</label>
+                                        <label className="text-[10px] font-mono uppercase tracking-widest text-white group-focus-within:text-primary transition-colors">Country</label>
                                         {errors.country && <span className="text-[10px] text-red-500 font-mono">{errors.country}</span>}
                                     </div>
                                     <select
@@ -377,7 +364,7 @@ export default function SignUpPage() {
                                 {/* Email */}
                                 <div className="group">
                                     <div className="flex justify-between items-baseline mb-2">
-                                        <label className="text-[10px] font-mono uppercase tracking-widest text-white/40 group-focus-within:text-primary transition-colors">Email Address</label>
+                                        <label className="text-[10px] font-mono uppercase tracking-widest text-white group-focus-within:text-primary transition-colors">Email Address</label>
                                         {errors.email && <span className="text-[10px] text-red-500 font-mono">{errors.email}</span>}
                                     </div>
                                     <input
@@ -395,7 +382,7 @@ export default function SignUpPage() {
                                 {/* Password */}
                                 <div className="group">
                                     <div className="flex justify-between items-baseline mb-2">
-                                        <label className="text-[10px] font-mono uppercase tracking-widest text-white/40 group-focus-within:text-primary transition-colors">Password</label>
+                                        <label className="text-[10px] font-mono uppercase tracking-widest text-white group-focus-within:text-primary transition-colors">Password</label>
                                         {errors.password && <span className="text-[10px] text-red-500 font-mono">{errors.password}</span>}
                                     </div>
                                     <div className="relative">
@@ -422,7 +409,7 @@ export default function SignUpPage() {
                                 {/* Confirm Password */}
                                 <div className="group">
                                     <div className="flex justify-between items-baseline mb-2">
-                                        <label className="text-[10px] font-mono uppercase tracking-widest text-white/40 group-focus-within:text-primary transition-colors">Confirm Password</label>
+                                        <label className="text-[10px] font-mono uppercase tracking-widest text-white group-focus-within:text-primary transition-colors">Confirm Password</label>
                                         {errors.confirmPassword && <span className="text-[10px] text-red-500 font-mono">{errors.confirmPassword}</span>}
                                     </div>
                                     <div className="relative">
@@ -451,7 +438,7 @@ export default function SignUpPage() {
                                     <button
                                         type="submit"
                                         disabled={loading}
-                                        className="w-full group relative py-4 bg-white text-black font-bold uppercase tracking-widest text-xs hover:bg-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 overflow-hidden"
+                                        className="w-full p-8 rounded-3xl group relative py-4 bg-white text-black font-bold uppercase tracking-widest text-xs hover:bg-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 overflow-hidden"
                                     >
                                         {loading ? (
                                             <Loader2 className="w-4 h-4 animate-spin" />

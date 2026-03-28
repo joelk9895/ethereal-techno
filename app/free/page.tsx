@@ -31,7 +31,7 @@ export default function FreePage() {
         setIsVerifiedProducer(verified);
 
         if (verified) {
-            router.push("/free/content");
+            router.replace("/free/content");
         }
     }, [router]);
 

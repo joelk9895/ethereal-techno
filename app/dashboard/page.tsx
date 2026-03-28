@@ -14,7 +14,7 @@ import {
 import Image from "next/image";
 import RightSidebar from "@/app/components/RightSidebar";
 import MarketplaceHome from "@/app/dashboard/components/MarketplaceHome";
-import { getAuthUser, logout } from "@/lib/auth";
+import { getAuthUser, logout, authenticatedFetch } from "@/lib/auth";
 import { motion, AnimatePresence } from "framer-motion";
 
 // Mock Data for Library
@@ -165,9 +165,7 @@ export default function DashboardPage() {
 
     const fetchApplications = useCallback(async () => {
         try {
-            const response = await fetch("/api/artist/apply", {
-                headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` },
-            });
+            const response = await authenticatedFetch("/api/artist/apply");
             if (response.ok) {
                 const data = await response.json();
                 if (data.exists && data.application) {
@@ -184,16 +182,16 @@ export default function DashboardPage() {
     useEffect(() => {
         const authUser = getAuthUser();
         if (!authUser) {
-            router.push("/signin");
+            router.replace("/signin");
             return;
         }
 
         switch (authUser.type) {
             case "ADMIN":
-                router.push("/admin");
+                router.replace("/admin");
                 break;
             case "ARTIST":
-                router.push("/dashboard/producer");
+                router.replace("/dashboard/producer");
                 break;
             case "USER":
             default:
@@ -249,7 +247,14 @@ export default function DashboardPage() {
         if (id === "sounds") return router.push("/libraries");
         if (id === "bundles") return router.push("/bundles");
         if (id === "merch") return router.push("/merch");
-        if (id === "free-content") return router.push("/free/content");
+        if (id === "free-content" && user && (user.type === "ARTIST" || user.type === "ADMIN")) {
+            return router.push("/free/content");
+        }
+        if (id === "community") return router.push("/community");
+
+        if (id === "applications" && applications.length === 0) {
+            return router.push("/artist/apply");
+        }
 
         setActiveTab(id);
     };
@@ -615,9 +620,8 @@ export default function DashboardPage() {
                                                                 if (!confirm("Are you sure you want to withdraw your application? This action cannot be undone.")) return;
                                                                 setWithdrawing(true);
                                                                 try {
-                                                                    const res = await fetch("/api/artist/apply", {
-                                                                        method: "DELETE",
-                                                                        headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` },
+                                                                    const res = await authenticatedFetch("/api/artist/apply", {
+                                                                        method: "DELETE"
                                                                     });
                                                                     if (res.ok) {
                                                                         setApplications([]);

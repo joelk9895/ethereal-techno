@@ -57,7 +57,8 @@ export default function ProducerList() {
             }).sort((a, b) => {
                 const scoreA = (a.profileViews || 0) + (a.messageClicks || 0);
                 const scoreB = (b.profileViews || 0) + (b.messageClicks || 0);
-                return scoreB - scoreA;
+                if (scoreB !== scoreA) return scoreB - scoreA;
+                return a.id.localeCompare(b.id);
             }));
 
             await fetch("/api/producers/interact", {

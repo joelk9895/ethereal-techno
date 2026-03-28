@@ -245,7 +245,7 @@ export const welcomeEmail = () => emailLayout(`
     </div>
 `);
 
-export async function sendWelcomeEmail(toEmail: string, name: string) {
+export async function sendWelcomeEmail(toEmail: string, _name?: string) {
   return sendEmail({
     to: toEmail,
     subject: "Welcome to Ethereal Techno",

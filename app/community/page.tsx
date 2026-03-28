@@ -86,7 +86,7 @@ export default function CommunityPage() {
         setUser(authUser);
 
         if (authUser?.type === "ARTIST") {
-            router.push("/dashboard/producer");
+            router.replace("/dashboard/producer");
             return;
         }
 
@@ -153,7 +153,7 @@ export default function CommunityPage() {
                 <ScrollIndicator />
             </section>
 
-            <section className="relative py-40 px-6 md:px-12 flex flex-col items-center justify-center text-center">
+            <section className="relative py-16 px-6 md:px-12 flex flex-col items-center justify-center text-center">
                 <motion.div
                     initial="hidden"
                     whileInView="visible"
@@ -525,7 +525,7 @@ const FeaturesSection: React.FC = () => {
     const yRight = useTransform(scrollYProgress, [0, 1], [300, -200]);
 
     return (
-        <section ref={containerRef} className="relative py-32 px-6 md:px-12 min-h-[120vh] flex items-center">
+        <section ref={containerRef} className="relative py-20 px-6 md:px-12 flex items-center">
             <div className="max-w-7xl mx-auto w-full">
                 <div className="mb-24">
                     <span className="text-xs font-mono text-primary uppercase tracking-widest">INSIDE THE ETHEREAL TECHNO CIRCLE</span>

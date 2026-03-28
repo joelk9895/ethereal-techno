@@ -59,8 +59,14 @@ export default async function ArtistProfilePage({ params }: PageProps) {
 
     const profile = user.artistApplications[0];
 
-    // Resolve S3 URL if photoUrl exists: Use photoKey if available, else fallback to photoUrl extraction
-    let signedPhotoUrl = profile?.photoKey || profile?.photoUrl;
+    // Priority 1: Use User table identity (as seen in the lists)
+    // Priority 2: Fallback to ArtistApplication (if User was not synced properly)
+    // Priority 3: Fallback to User.name (real name)
+    const effectiveArtistName = user.artistName || profile?.artistName || user.name || username;
+
+    // Resolve S3 URL: Priority User.artistPhoto, Fallback ArtistApplication.photoUrl
+    const photoSource = user.artistPhoto || profile?.photoKey || profile?.photoUrl;
+    let signedPhotoUrl = photoSource;
 
     if (signedPhotoUrl) {
         try {
@@ -85,15 +91,20 @@ export default async function ArtistProfilePage({ params }: PageProps) {
         }
     }
 
-    const profileWithSignedUrl = {
+    const profileData = {
         ...profile,
+        artistName: effectiveArtistName,
         photoUrl: signedPhotoUrl
     };
 
     return (
         <ArtistProfileContent
-            profile={profileWithSignedUrl}
-            user={user}
+            profile={profileData}
+            user={{
+                ...user,
+                artistName: effectiveArtistName,
+                artistPhoto: signedPhotoUrl
+            }}
             username={username}
         />
     );
