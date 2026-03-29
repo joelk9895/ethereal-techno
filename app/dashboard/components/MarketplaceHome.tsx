@@ -33,7 +33,7 @@ const sections = [
     }
 ];
 
-export default function MarketplaceHome() {
+export default function MarketplaceHome({ onNavigate }: { onNavigate?: (id: string) => void }) {
     const router = useRouter();
     const [producers, setProducers] = useState<Producer[]>([]);
     const [loading, setLoading] = useState(true);
@@ -123,7 +123,7 @@ export default function MarketplaceHome() {
                 </div>
 
                 {/* Join The Circle CTA */}
-                <JoinCircleCTA router={router} />
+                <JoinCircleCTA router={router} onNavigate={onNavigate} />
 
             </div>
         </div>
@@ -174,9 +174,15 @@ const Card = ({ item }: { item: MarketplaceItem }) => (
     </div>
 );
 
-const JoinCircleCTA = ({ router }: { router: ReturnType<typeof useRouter> }) => (
+const JoinCircleCTA = ({ router, onNavigate }: { router: ReturnType<typeof useRouter>, onNavigate?: (id: string) => void }) => (
     <motion.button
-        onClick={() => router.push("/artist/apply")}
+        onClick={() => {
+            if (onNavigate) {
+                onNavigate("applications");
+            } else {
+                router.push("/artist/apply");
+            }
+        }}
         whileHover="hover"
         initial="initial"
         className="group relative w-full py-24 md:py-32 border-y border-white/10 hover:border-primary/50 transition-colors overflow-hidden mt-12"

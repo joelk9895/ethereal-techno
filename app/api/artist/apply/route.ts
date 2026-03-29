@@ -171,6 +171,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!user) {
+      user = await prisma.user.findUnique({ where: { id: userId } });
+    }
+
     const existingApplication = await prisma.artistApplication.findFirst({
       where: { userId: userId },
     });

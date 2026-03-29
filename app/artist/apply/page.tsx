@@ -132,7 +132,7 @@ export default function ApplyPage() {
         instagram: /^(https?:\/\/)?(www\.)?instagram\.com\/[\w.-]+\/?$/,
         tiktok: /^(https?:\/\/)?(www\.)?tiktok\.com\/@[\w.-]+\/?$/,
         facebook: /^(https?:\/\/)?(www\.)?facebook\.com\/[\w.-]+\/?$/,
-        youtube: /^(https?:\/\/)?(www\.)?youtube\.com\/(@|channel\/|c\/|user\/)?[\w.-]+\/?$/,
+        youtube: /^(https?:\/\/)?((www\.)?youtube\.com|music\.youtube\.com)\/.+$/,
         x: /^(https?:\/\/)?(www\.)?x\.com\/[\w.-]+\/?$/,
         linktree: /^(https?:\/\/)?(www\.)?[\w.-]+\.[\w]{2,}(\/.*)?$/,
         spotify: /^(https?:\/\/)?(open\.)?spotify\.com\/artist\/[\w]+\/?$/, // Fixed regex
@@ -164,7 +164,7 @@ export default function ApplyPage() {
             case 'instagram': isValid = value.includes("instagram.com/"); break;
             case 'tiktok': isValid = value.includes("tiktok.com/@"); break;
             case 'facebook': isValid = value.includes("facebook.com/"); break;
-            case 'youtube': isValid = value.includes("youtube.com/@"); break;
+            case 'youtube': isValid = value.includes("youtube.com/") || value.includes("music.youtube.com/"); break;
             case 'x': isValid = value.includes("x.com/"); break;
             case 'spotify': isValid = value.includes("spotify.com/"); break;
             case 'soundcloud': isValid = value.includes("soundcloud.com/"); break;
@@ -191,7 +191,9 @@ export default function ApplyPage() {
         }
 
         if (!isValid) {
-            setErrors(prev => ({ ...prev, [field]: customError || `Invalid format. Expected: ${getPlaceholder(field)}` }));
+            let errorMsg = customError || `Invalid format. Expected: ${getPlaceholder(field)}`;
+            if (field === 'youtube') errorMsg = "Invalid Link.";
+            setErrors(prev => ({ ...prev, [field]: errorMsg }));
         } else {
             setErrors(prev => {
                 const newErrors = { ...prev };
@@ -206,7 +208,7 @@ export default function ApplyPage() {
             case 'instagram': return "instagram.com/yourprofile";
             case 'tiktok': return "tiktok.com/@yourprofile";
             case 'facebook': return "facebook.com/yourprofile";
-            case 'youtube': return "youtube.com/@yourchannel";
+            case 'youtube': return "youtube.com/@yourchannel or music.youtube.com/...";
             case 'x': return "x.com/yourprofile";
             case 'linktree': return "yourwebsite.com";
             case 'spotify': return "open.spotify.com/artist/...";
@@ -272,11 +274,19 @@ export default function ApplyPage() {
         }
 
         switch (id) {
-            case "overview": router.push("/dashboard/producer"); break;
-            case "profile": router.push("/dashboard/producer/profile"); break;
-            case "billing": router.push("/dashboard/producer/billing"); break;
-            case "orders": router.push("/dashboard/producer/orders"); break;
             case "applications": break; // already here
+            case "overview": router.push("/dashboard/producer"); break;
+            case "profile": 
+                if (user.type === "ARTIST") router.push("/dashboard/producer/profile"); 
+                else router.push("/dashboard/profile");
+                break;
+            case "billing": router.push("/dashboard/producer/billing"); break;
+            case "orders": 
+                if (user.type === "ARTIST") router.push("/dashboard/producer/orders"); 
+                else router.push("/dashboard/orders");
+                break;
+            case "library": router.push("/dashboard/library"); break;
+            case "home":
             default: router.push("/dashboard");
         }
     };
@@ -668,8 +678,8 @@ export default function ApplyPage() {
                                             verifiedData={verifiedLinks.facebook}
                                         />
                                         <MinimalInput
-                                            label="Youtube"
-                                            placeholder="youtube.com/@yourchannel"
+                                            label="YouTube / YouTube Music"
+                                            placeholder="youtube.com/@yourchannel or music.youtube.com/..."
                                             value={formData.youtube}
                                             onChange={(e) => handleInputChange("youtube", e.target.value)}
                                             onBlur={() => handleBlur("youtube")}
