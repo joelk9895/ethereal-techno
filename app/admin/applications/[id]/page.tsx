@@ -16,7 +16,8 @@ import {
     ExternalLink,
 } from "lucide-react";
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { authenticatedFetch } from "@/lib/auth";
 
 // --- Types ---
 interface Application {
@@ -24,6 +25,7 @@ interface Application {
     artistName: string;
     email: string;
     photoUrl: string | null;
+    photoKey: string | null;
     status: string;
     createdAt: string;
     reviewNotes: string | null;
@@ -123,9 +125,7 @@ export default function ApplicationReviewPage() {
 
     const fetchApplication = useCallback(async () => {
         try {
-            const response = await fetch(`/api/admin/applications/${params.id}`, {
-                headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` },
-            });
+            const response = await authenticatedFetch(`/api/admin/applications/${params.id}`);
             if (response.ok) {
                 const data = await response.json();
                 setApplication(data.application);
@@ -166,12 +166,8 @@ export default function ApplicationReviewPage() {
         setUpdating(true);
 
         try {
-            const response = await fetch(`/api/admin/applications/${params.id}`, {
+            const response = await authenticatedFetch(`/api/admin/applications/${params.id}`, {
                 method: "PATCH",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-                },
                 body: JSON.stringify({
                     status: finalStatus,
                     reviewNotes,
@@ -217,7 +213,23 @@ export default function ApplicationReviewPage() {
                     <div className="sticky top-28 bg-zinc-900/40 border border-white/5 rounded-[2.5rem] p-8">
                         <div className="w-full aspect-square bg-white/5 rounded-2xl overflow-hidden mb-8 relative group">
                             {application.photoUrl ? (
-                                <Image src={application.photoUrl} alt="Artist" fill className="object-cover grayscale group-hover:grayscale-0 transition-all duration-500" />
+                                (() => {
+                                    const displayPhotoUrl = application.photoKey 
+                                        ? `/api/image-proxy?key=${application.photoKey}` 
+                                        : (application.photoUrl && application.photoUrl.includes("amazonaws.com"))
+                                            ? `/api/image-proxy?key=${encodeURIComponent(new URL(application.photoUrl).pathname.startsWith('/') ? new URL(application.photoUrl).pathname.slice(1) : new URL(application.photoUrl).pathname)}`
+                                            : application.photoUrl;
+
+                                    return (
+                                        <>
+                                            <Image src={displayPhotoUrl} alt="Artist" fill className="object-cover grayscale group-hover:grayscale-0 transition-all duration-500" />
+                                            <a href={displayPhotoUrl} target="_blank" rel="noopener noreferrer" className="absolute bottom-4 right-4 bg-black/80 border border-white/10 text-white px-3 py-2 rounded-xl text-[10px] font-mono uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2 hover:bg-white/10">
+                                                <ExternalLink className="w-3 h-3" />
+                                                View Image
+                                            </a>
+                                        </>
+                                    );
+                                })()
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center text-white/20"><User className="w-12 h-12" /></div>
                             )}
@@ -259,10 +271,19 @@ export default function ApplicationReviewPage() {
                     {/* Links / Tracks */}
                     <section>
                         <SectionHeader icon={Music} title="Portfolio Evidence" />
-                        <div className="space-y-2">
-                            <LinkRow label="Track Submission 1" url={application.track1} icon={ExternalLink} />
-                            <LinkRow label="Track Submission 2" url={application.track2} icon={ExternalLink} />
-                            <LinkRow label="Track Submission 3" url={application.track3} icon={ExternalLink} />
+                        <div className="space-y-6">
+                            <div className="space-y-2">
+                                <LinkRow label="Track Submission 1" url={application.track1} icon={ExternalLink} />
+                                <SoundCloudEmbed url={application.track1} />
+                            </div>
+                            <div className="space-y-2">
+                                <LinkRow label="Track Submission 2" url={application.track2} icon={ExternalLink} />
+                                <SoundCloudEmbed url={application.track2} />
+                            </div>
+                            <div className="space-y-2">
+                                <LinkRow label="Track Submission 3" url={application.track3} icon={ExternalLink} />
+                                <SoundCloudEmbed url={application.track3} />
+                            </div>
                         </div>
 
                         <div className="mt-6 grid grid-cols-2 gap-4">
@@ -418,6 +439,26 @@ const LinkRow: React.FC<LinkRowProps> = ({ label, url, icon: Icon, compact }) =>
             </div>
             <ArrowLeft className={`rotate-135 text-white/20 group-hover:text-primary transition-colors ${compact ? "w-3 h-3" : "w-4 h-4"}`} />
         </a>
+    );
+};
+
+const SoundCloudEmbed: React.FC<{ url: string | null }> = ({ url }) => {
+    if (!url || !url.includes("soundcloud.com/") || url.includes("/sets/")) return null;
+
+    const src = `https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}&color=%23ff5500&auto_play=false&hide_related=false&show_comments=true&show_user=false&show_reposts=false&show_teaser=true&visual=false`;
+
+    return (
+        <div className="mt-2 border border-white/10 rounded-xl overflow-hidden bg-white/[0.02]">
+            <iframe
+                title="SoundCloud Player"
+                width="100%"
+                height="120"
+                scrolling="no"
+                frameBorder="no"
+                allow="autoplay"
+                src={src}
+            />
+        </div>
     );
 };
 

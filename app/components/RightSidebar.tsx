@@ -32,6 +32,8 @@ interface UserData {
     country: string | null;
     createdAt: string;
     approvedAt: string | null;
+    artistPhoto?: string | null;
+    artistName?: string;
 }
 
 interface RightSidebarProps {
@@ -94,12 +96,23 @@ export default function RightSidebar({ user, activeTab, onNavigate, onSignOut }:
     }, [user.type]);
 
     return (
-        <aside className="w-full lg:w-80 lg:h-full border-l border-white/10 bg-black/80 backdrop-blur-2xl z-20 pt-24 pb-12 px-8 flex flex-col justify-between overflow-y-auto no-scrollbar shadow-2xl">
+        <aside className="w-full lg:w-80 lg:h-full border-l border-white/10 bg-black/80 backdrop-blur-2xl z-20 pt-8 pb-12 px-8 flex flex-col justify-between overflow-y-auto no-scrollbar shadow-2xl">
             <div>
                 <div className="mb-10 px-2">
-                    <div className="text-sm font-sans text-white/60 uppercase tracking-widest mb-6">My Account</div>
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-8 h-8 rounded-full overflow-hidden border border-white/20 bg-white/10 flex-shrink-0">
+                            {user.artistPhoto ? (
+                                <img src={user.artistPhoto} alt={user.name} className="w-full h-full object-cover" />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white/60 uppercase">
+                                    {user.name?.charAt(0)}
+                                </div>
+                            )}
+                        </div>
+                        <div className="text-sm font-sans text-white/60 uppercase tracking-widest">My Account</div>
+                    </div>
                     <h1 className="font-main text-4xl text-white uppercase leading-none break-words tracking-wide mb-2">
-                        {user.name}
+                        {user.artistName || user.name}
                     </h1>
                 </div>
 

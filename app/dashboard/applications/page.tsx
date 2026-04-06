@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Trash2, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useUserDashboard } from "../UserLayoutClient";
 
@@ -12,7 +13,33 @@ const fadeVar = {
 
 export default function DashboardApplicationsPage() {
     const router = useRouter();
-    const { user, applications } = useUserDashboard();
+    const { user, applications, setApplications } = useUserDashboard();
+    const [isWithdrawing, setIsWithdrawing] = useState<string | null>(null);
+
+    const handleWithdraw = async (applicationId: string) => {
+        if (!window.confirm("Are you sure you want to withdraw your application? You can always apply again later.")) return;
+        
+        setIsWithdrawing(applicationId);
+        try {
+            const res = await fetch("/api/artist/apply", {
+                method: "DELETE",
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("accessToken")}`
+                }
+            });
+            if (res.ok) {
+                setApplications(applications.filter(app => app.id !== applicationId));
+            } else {
+                const data = await res.json();
+                alert(data.error || "Failed to withdraw application.");
+            }
+        } catch (error) {
+            console.error("Error withdrawing application:", error);
+            alert("Something went wrong. Please try again.");
+        } finally {
+            setIsWithdrawing(null);
+        }
+    };
 
     if (!user) return null;
 
@@ -134,6 +161,23 @@ export default function DashboardApplicationsPage() {
                                         <p className="text-sm border-t border-white/10 pt-6 mt-8">
                                             We will notify you via email as soon as a decision is made. Thank you for your patience.
                                         </p>
+                                        
+                                        {app.status === "PENDING" && (
+                                            <div className="pt-4 flex justify-center">
+                                                <button
+                                                    onClick={() => handleWithdraw(app.id)}
+                                                    disabled={isWithdrawing === app.id}
+                                                    className="flex items-center gap-2 text-white/40 hover:text-red-400 uppercase tracking-widest text-xs font-bold transition-colors"
+                                                >
+                                                    {isWithdrawing === app.id ? (
+                                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                                    ) : (
+                                                        <Trash2 className="w-4 h-4" />
+                                                    )}
+                                                    {isWithdrawing === app.id ? "Withdrawing..." : "Withdraw Application"}
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>

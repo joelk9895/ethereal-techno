@@ -189,7 +189,7 @@ export default function FreeContentPage() {
     if (!producer) return null;
 
     return (
-        <div className="flex h-screen bg-background text-white font-sans selection:bg-primary selection:text-black overflow-hidden relative">
+        <div className="flex h-screen bg-background text-white font-sans selection:bg-primary selection:text-black overflow-hidden relative pt-20">
 
             <div className="fixed inset-0 pointer-events-none z-0">
                 {/* Minimal grain */}

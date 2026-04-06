@@ -92,6 +92,7 @@ export default function ApplyPage() {
     const [avatarError, setAvatarError] = useState<string | null>(null);
     const [attemptedSubmit, setAttemptedSubmit] = useState(false);
     const [submitting, setSubmitting] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
     const validationTimeouts = useRef<Record<string, NodeJS.Timeout>>({});
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [verifying, setVerifying] = useState<Record<string, boolean>>({});
@@ -221,6 +222,7 @@ export default function ApplyPage() {
     };
 
     const checkExistingApplication = useCallback(async () => {
+        if (showSuccessModal) return;
         const token = localStorage.getItem("accessToken");
         if (!token) return;
 
@@ -242,7 +244,7 @@ export default function ApplyPage() {
         } catch (error) {
             console.error("Error checking application:", error);
         }
-    }, [router]);
+    }, [router, showSuccessModal]);
 
     useEffect(() => {
         const authUser = getAuthUser();
@@ -276,13 +278,13 @@ export default function ApplyPage() {
         switch (id) {
             case "applications": break; // already here
             case "overview": router.push("/dashboard/producer"); break;
-            case "profile": 
-                if (user.type === "ARTIST") router.push("/dashboard/producer/profile"); 
+            case "profile":
+                if (user.type === "ARTIST") router.push("/dashboard/producer/profile");
                 else router.push("/dashboard/profile");
                 break;
             case "billing": router.push("/dashboard/producer/billing"); break;
-            case "orders": 
-                if (user.type === "ARTIST") router.push("/dashboard/producer/orders"); 
+            case "orders":
+                if (user.type === "ARTIST") router.push("/dashboard/producer/orders");
                 else router.push("/dashboard/orders");
                 break;
             case "library": router.push("/dashboard/library"); break;
@@ -379,7 +381,7 @@ export default function ApplyPage() {
         const isArtistNameMissing = !formData.artistName && (!user || !user.username);
         const isAvatarMissing = !formData.photoPreview;
         const isTracksMissing = !formData.track1 || !formData.track2 || !formData.track3;
-        
+
         const normalizeTrack = (t: string) => t ? t.split('?')[0].replace(/\/$/, "").toLowerCase() : "";
         const t1 = normalizeTrack(formData.track1);
         const t2 = normalizeTrack(formData.track2);
@@ -407,6 +409,29 @@ export default function ApplyPage() {
         setSubmitting(true);
 
         try {
+            let uploadedPhotoUrl = null;
+            let uploadedPhotoKey = null;
+
+            if (formData.photo) {
+                const photoData = new FormData();
+                photoData.append("photo", formData.photo);
+
+                const uploadRes = await fetch("/api/artist/apply/upload-photo", {
+                    method: "POST",
+                    body: photoData,
+                });
+
+                if (uploadRes.ok) {
+                    const uploadJson = await uploadRes.json();
+                    uploadedPhotoUrl = uploadJson.photoUrl;
+                    uploadedPhotoKey = uploadJson.photoKey;
+                } else {
+                    setSubmitError("Failed to upload the photo. Please try again or use a smaller image.");
+                    setSubmitting(false);
+                    return;
+                }
+            }
+
             const payload = {
                 // Guest / Account fields
                 ...(!user ? {
@@ -419,7 +444,8 @@ export default function ApplyPage() {
 
                 artistName: formData.artistName || (user ? user.username : formData.username),
                 quote: formData.quote,
-                photoUrl: null, // Logic to upload file usually happens before or via FormData object
+                photoUrl: uploadedPhotoUrl,
+                photoKey: uploadedPhotoKey,
                 instagram: formData.instagram,
                 soundcloud: formData.soundcloud,
                 spotify: formData.spotify,
@@ -449,7 +475,7 @@ export default function ApplyPage() {
                 setAuthUser(data.user);
             }
 
-            router.push("/dashboard");
+            setShowSuccessModal(true);
 
         } catch (error) {
             setSubmitError("Something went wrong. Please try again.");
@@ -471,7 +497,73 @@ export default function ApplyPage() {
     }
 
     return (
-        <div className="flex h-screen bg-[#121212] text-white font-sans selection:bg-primary selection:text-black overflow-hidden relative">
+        <>
+        {/* Success Modal */}
+        <AnimatePresence>
+            {showSuccessModal && (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm"
+                    onClick={() => router.push("/dashboard")}
+                >
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                        className="bg-[#1a1a1a] border border-white/10 rounded-3xl p-10 md:p-14 max-w-lg w-full text-center relative overflow-hidden"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Subtle glow */}
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
+
+                        <div className="relative z-10">
+                            {/* Animated checkmark */}
+                            <motion.div
+                                initial={{ scale: 0, rotate: -90 }}
+                                animate={{ scale: 1, rotate: 0 }}
+                                transition={{ delay: 0.2, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                                className="w-20 h-20 mx-auto mb-8 rounded-full border-2 border-primary/40 bg-primary/10 flex items-center justify-center"
+                            >
+                                <Check className="w-10 h-10 text-primary" />
+                            </motion.div>
+
+                            <motion.h2
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.35 }}
+                                className="font-main text-3xl md:text-4xl uppercase tracking-wide text-white mb-4"
+                            >
+                                Application Received
+                            </motion.h2>
+
+                            <motion.p
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.45 }}
+                                className="text-white/50 text-base leading-relaxed mb-10 max-w-sm mx-auto"
+                            >
+                                Thank you for applying to the Ethereal Techno Circle. Our team will review your submission and get back to you shortly.
+                            </motion.p>
+
+                            <motion.button
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.55 }}
+                                onClick={() => router.push("/dashboard")}
+                                className="bg-white text-black font-bold uppercase text-xs tracking-widest px-8 py-4 rounded-full hover:bg-primary transition-colors"
+                            >
+                                Go to Dashboard
+                            </motion.button>
+                        </div>
+                    </motion.div>
+                </motion.div>
+            )}
+        </AnimatePresence>
+
+        <div className="flex h-screen bg-[#121212] text-white font-sans selection:bg-primary selection:text-black overflow-hidden relative pt-20">
 
             {/* Background */}
             <div className="fixed inset-0 pointer-events-none z-0">
@@ -932,6 +1024,7 @@ export default function ApplyPage() {
                 </main >
             </div >
         </div >
+        </>
     );
 }
 
@@ -982,7 +1075,7 @@ const MinimalInput: React.FC<MinimalInputProps> = ({
                     {verifying && <Loader2 className="w-5 h-5 animate-spin text-white/50" />}
                     {!verifying && verifiedData && <motion.div initial={{ scale: 0, rotate: -45 }} animate={{ scale: 1, rotate: 0 }}><Check className="w-5 h-5 text-green-500" /></motion.div>}
                     {!verifying && error && <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}><AlertCircle className="w-5 h-5 text-red-500" /></motion.div>}
-                    
+
                     <AnimatePresence>
                         {props.value && !disabled && (
                             <motion.button

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { authenticatedFetch } from "@/lib/auth";
 
 import {
   Loader2,
@@ -52,11 +53,7 @@ export default function AdminNewsPage() {
 
   const fetchNews = async () => {
     try {
-      const response = await fetch("/api/admin/news", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-        },
-      });
+      const response = await authenticatedFetch("/api/admin/news");
       if (response.ok) {
         const data = await response.json();
         setNews(data.news);
@@ -76,12 +73,8 @@ export default function AdminNewsPage() {
         : "/api/admin/news";
       const method = editingId ? "PUT" : "POST";
 
-      const response = await fetch(url, {
+      const response = await authenticatedFetch(url, {
         method,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-        },
         body: JSON.stringify(formData),
       });
 
@@ -111,11 +104,8 @@ export default function AdminNewsPage() {
     if (!confirm("Are you sure you want to delete this news item?")) return;
 
     try {
-      const response = await fetch(`/api/admin/news/${id}`, {
+      const response = await authenticatedFetch(`/api/admin/news/${id}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-        },
       });
 
       if (response.ok) {

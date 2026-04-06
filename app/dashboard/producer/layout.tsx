@@ -92,7 +92,7 @@ export default function ProducerLayout({ children }: { children: React.ReactNode
     if (!producer) return null;
 
     return (
-        <div className="flex h-screen bg-background text-white font-sans selection:bg-primary selection:text-black overflow-hidden relative">
+        <div className="flex h-[100dvh] pt-[88px] bg-background text-white font-sans selection:bg-primary selection:text-black overflow-hidden relative box-border">
 
             <div className="fixed inset-0 pointer-events-none z-0">
                 <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03]"></div>
@@ -107,8 +107,7 @@ export default function ProducerLayout({ children }: { children: React.ReactNode
                     onNavigate={handleNavigation}
                     onSignOut={() => logout().then(() => router.push("/signin"))}
                 />
-
-                <main className="flex-1 h-full overflow-y-auto overflow-x-hidden pb-32 lg:pb-12 no-scrollbar relative z-10 px-16">
+                <main className="flex-1 h-full overflow-y-auto overflow-x-hidden pb-32 lg:pb-12 no-scrollbar relative z-10 px-6 md:px-16">
                     <div className="mx-auto w-full min-h-full flex flex-col">
                         {children}
                     </div>

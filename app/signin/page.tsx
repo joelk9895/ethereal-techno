@@ -100,7 +100,7 @@ function SignInContent() {
     };
 
     return (
-        <div className="min-h-screen bg-black text-white font-sans selection:bg-primary selection:text-black grid lg:grid-cols-2">
+        <div className="min-h-screen pt-[88px] bg-black text-white font-sans selection:bg-primary selection:text-black grid lg:grid-cols-2">
 
             <div className="hidden lg:flex relative flex-col justify-center p-12 bg-black border-r border-white/10 overflow-hidden">
                 <div className="absolute inset-0 pointer-events-none z-0 opacity-[0.1] bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>

@@ -62,6 +62,7 @@ export const metadata: Metadata = {
     },
   },
 };
+import Navbar from "@/app/components/Navbar";
 
 export default function RootLayout({
   children,
@@ -73,6 +74,7 @@ export default function RootLayout({
       <body
         className={`${anton.variable} ${instrument_sans.variable} antialiased`}
       >
+        <Navbar />
         {children}
       </body>
     </html>

@@ -32,16 +32,21 @@ export async function GET(
             surname: true,
             createdAt: true,
             type: true,
+            artistPhoto: true,
           },
         },
       },
     });
-
+    console.log(application)
     if (!application) {
       return NextResponse.json(
         { error: "Application not found" },
         { status: 404 }
       );
+    }
+
+    if (!application.photoUrl && application.user?.artistPhoto) {
+      application.photoUrl = application.user.artistPhoto;
     }
 
     return NextResponse.json(
@@ -124,7 +129,6 @@ export async function PATCH(
       },
     });
 
-    // If approved, upgrade user to ARTIST and set abilities
     if (status === "APPROVED") {
       await prisma.user.update({
         where: { id: application.userId },
@@ -152,6 +156,20 @@ export async function PATCH(
           track2: application.track2,
           track3: application.track3,
           quote: application.quote,
+        },
+      });
+    }
+
+    // If rejected, downgrade user back to USER and revoke artist privileges
+    if (status === "REJECTED" && application.user?.type === "ARTIST") {
+      await prisma.user.update({
+        where: { id: application.userId },
+        data: {
+          type: "USER",
+          approvedAt: null,
+          canCreateSamples: false,
+          canCreateSerum: false,
+          canCreateDiva: false,
         },
       });
     }

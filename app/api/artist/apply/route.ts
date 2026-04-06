@@ -25,6 +25,7 @@ interface ApplicationBody {
   artistName?: string;
   quote?: string;
   photoUrl?: string | null;
+  photoKey?: string | null;
   instagram?: string | null;
   tiktok?: string | null;
   facebook?: string | null;
@@ -194,10 +195,11 @@ export async function POST(request: NextRequest) {
         where: { id: existingApplication.id },
         data: {
           artistName: body.artistName || "",
-          email: body.email || "", // Fallback to body email if available
+          email: body.email || user?.email || "",
           status: "PENDING",
           quote: body.quote || "",
           photoUrl: body.photoUrl || null,
+          photoKey: body.photoKey || null,
           instagram: body.instagram || null,
           tiktok: body.tiktok || null,
           facebook: body.facebook || null,
@@ -231,10 +233,11 @@ export async function POST(request: NextRequest) {
         data: {
           userId: userId,
           artistName: body.artistName || "",
-          email: body.email || "", // Fallback to body email if available
+          email: body.email || user?.email || "",
           status: "PENDING",
           quote: body.quote || "",
           photoUrl: body.photoUrl || null,
+          photoKey: body.photoKey || null,
           instagram: body.instagram || null,
           tiktok: body.tiktok || null,
           facebook: body.facebook || null,
@@ -259,9 +262,15 @@ export async function POST(request: NextRequest) {
     // Send emails (fire-and-forget so they don't block the response)
     const applicantEmail = body.email || user?.email || "";
     const artistName = body.artistName || body.name || "";
+
+    // Always notify admin regardless of whether we have the applicant's email
+    sendAdminNotification(artistName || "Unknown", applicantEmail || "no-email-provided", application.id)
+      .catch(e => console.error("Failed to send admin notification:", e));
+
+    // Send applicant confirmation only if we have their email
     if (applicantEmail) {
-      sendApplicationConfirmation(applicantEmail, artistName).catch(e => console.error("Failed to send applicant confirmation:", e));
-      sendAdminNotification(artistName, applicantEmail, application.id).catch(e => console.error("Failed to send admin notification:", e));
+      sendApplicationConfirmation(applicantEmail, artistName)
+        .catch(e => console.error("Failed to send applicant confirmation:", e));
     }
 
     return NextResponse.json({

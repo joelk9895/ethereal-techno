@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { motion, Variants } from "framer-motion";
 import Link from "next/link";
+import { authenticatedFetch } from "@/lib/auth";
 
 interface DashboardStats {
   totalUsers: number;
@@ -72,9 +73,7 @@ export default function AdminDashboardPage() {
 
   const fetchDashboardData = async () => {
     try {
-      const response = await fetch("/api/admin/dashboard", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` }
-      });
+      const response = await authenticatedFetch("/api/admin/dashboard");
 
       if (response.ok) {
         const data = await response.json();

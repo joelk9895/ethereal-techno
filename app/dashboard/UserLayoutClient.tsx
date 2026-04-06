@@ -153,7 +153,7 @@ export default function UserLayoutClient({ children }: { children: React.ReactNo
 
     return (
         <UserDashboardContext.Provider value={{ user, setUser, applications, setApplications }}>
-            <div className="flex h-screen bg-background text-white font-sans selection:bg-primary selection:text-black overflow-hidden relative">
+            <div className="flex h-[100dvh] pt-20 bg-background text-white font-sans selection:bg-primary selection:text-black overflow-hidden relative box-border">
                 <div className="fixed inset-0 pointer-events-none z-0">
                     <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03]"></div>
                     <div className="absolute top-[-20%] left-[-20%] w-[50vw] h-[50vw] bg-primary/5 blur-[150px] rounded-full opacity-50" />
@@ -167,7 +167,7 @@ export default function UserLayoutClient({ children }: { children: React.ReactNo
                         onSignOut={handleSignOut}
                     />
 
-                    <main className="flex-1 lg:overflow-y-auto pt-24 px-6 lg:px-8 pb-24 relative no-scrollbar">
+                    <main className="flex-1 lg:overflow-y-auto pt-20 px-6 lg:px-8 pb-24 relative no-scrollbar">
                         {children}
                     </main>
                 </div>

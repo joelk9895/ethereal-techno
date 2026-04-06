@@ -70,27 +70,7 @@ export default function Home() {
           <div className="absolute bottom-[-20%] left-[-10%] w-[50vw] h-[50vw] bg-tertiary/10 blur-[150px] rounded-full opacity-20" />
         </div>
 
-        {/* Navigation */}
-        <header>
-          <nav className="relative z-50 flex items-center justify-between px-6 md:px-12 py-8" aria-label="Main navigation">
-            <Link href="/" className="flex items-center gap-3" aria-label="Ethereal Techno Home">
-              <Image 
-                src="/logo.svg" 
-                alt="Ethereal Techno" 
-                width={32} 
-                height={32} 
-                className="h-8 w-auto" 
-                priority 
-              />
-            </Link>
-            <div className="flex items-center gap-6 text-xs font-mono uppercase tracking-widest">
-              <Link href="/signin" className="text-white/60 hover:text-white transition-colors">Sign In</Link>
-              <Link href="/signup" className="hidden md:flex items-center gap-2 bg-white text-black px-6 py-3 rounded-full font-bold hover:bg-neutral-200 transition-colors">
-                Join Circle
-              </Link>
-            </div>
-          </nav>
-        </header>
+        {/* Navigation removed in favor of site-wide layout navbar */}
 
         {/* Hero Section */}
         <section className="relative z-10 flex flex-col items-center justify-center min-h-[80vh] px-6 text-center pt-12 md:pt-0" aria-labelledby="hero-heading">

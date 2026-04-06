@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { authenticatedFetch } from "@/lib/auth";
 import {
     Search,
     Clock,
@@ -115,9 +116,7 @@ export default function ProducersPage() {
 
     const fetchProducers = async () => {
         try {
-            const response = await fetch("/api/admin/producers", {
-                headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` },
-            });
+            const response = await authenticatedFetch("/api/admin/producers");
             if (response.ok) {
                 const data = await response.json();
                 setProducers(data.producers);
@@ -132,12 +131,8 @@ export default function ProducersPage() {
             // Optimistic update
             setProducers(prev => prev.map(p => p.id === userId ? { ...p, [field]: !currentValue } : p));
 
-            const response = await fetch(`/api/admin/producers/${userId}/abilities`, {
+            const response = await authenticatedFetch(`/api/admin/producers/${userId}/abilities`, {
                 method: "PATCH",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-                },
                 body: JSON.stringify({ [field]: !currentValue }),
             });
             if (!response.ok) throw new Error("Failed");

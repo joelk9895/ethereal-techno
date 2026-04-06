@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { authenticatedFetch } from "@/lib/auth";
 import {
     Search,
     CheckCircle,
@@ -20,6 +22,8 @@ interface Application {
     email: string;
     status: string;
     createdAt: string;
+    photoUrl?: string | null;
+    photoKey?: string | null;
     user: {
         username: string;
         name: string;
@@ -67,39 +71,33 @@ const itemVar = {
 export default function AdminApplicationsPage() {
     const router = useRouter();
     const [applications, setApplications] = useState<Application[]>([]);
-    const [filteredApplications, setFilteredApplications] = useState<Application[]>([]);
     const [statusFilter, setStatusFilter] = useState<string>("all");
     const [searchQuery, setSearchQuery] = useState("");
 
-    const filterApplications = useCallback(() => {
-        let filtered = applications;
-        if (statusFilter !== "all") {
-            filtered = filtered.filter((app) => app.status === statusFilter);
+    const filteredApplications = applications.filter((app) => {
+        let matchStatus = true;
+        if (statusFilter === "PROCESSED") {
+            matchStatus = app.status === "APPROVED" || app.status === "REJECTED";
+        } else if (statusFilter !== "all") {
+            matchStatus = app.status === statusFilter;
         }
+
+        let matchQuery = true;
         if (searchQuery) {
             const query = searchQuery.toLowerCase();
-            filtered = filtered.filter(
-                (app) =>
-                    app.artistName.toLowerCase().includes(query) ||
-                    app.email.toLowerCase().includes(query)
-            );
+            matchQuery = app.artistName.toLowerCase().includes(query) || app.email.toLowerCase().includes(query);
         }
-        setFilteredApplications(filtered);
-    }, [applications, statusFilter, searchQuery]);
+
+        return matchStatus && matchQuery;
+    });
 
     useEffect(() => {
         fetchApplications();
     }, []);
 
-    useEffect(() => {
-        filterApplications();
-    }, [filterApplications]);
-
     const fetchApplications = async () => {
         try {
-            const response = await fetch("/api/admin/applications", {
-                headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` },
-            });
+            const response = await authenticatedFetch("/api/admin/applications");
             if (response.ok) {
                 const data = await response.json();
                 setApplications(data.applications);
@@ -142,7 +140,7 @@ export default function AdminApplicationsPage() {
                     <FilterPill label="All" active={statusFilter === 'all'} onClick={() => setStatusFilter('all')} />
                     <FilterPill label="Pending" active={statusFilter === 'PENDING'} onClick={() => setStatusFilter('PENDING')} />
                     <FilterPill label="Reviewing" active={statusFilter === 'UNDER_REVIEW'} onClick={() => setStatusFilter('UNDER_REVIEW')} />
-                    <FilterPill label="Processed" active={['APPROVED', 'REJECTED'].includes(statusFilter)} onClick={() => setStatusFilter('APPROVED')} />
+                    <FilterPill label="Processed" active={statusFilter === 'PROCESSED'} onClick={() => setStatusFilter('PROCESSED')} />
                 </div>
 
                 {/* Search */}
@@ -159,7 +157,7 @@ export default function AdminApplicationsPage() {
             </div>
 
             {/* Column Headers */}
-            <div className="hidden md:grid grid-cols-12 gap-4 px-6 pb-4 text-[10px] font-mono text-white/30 uppercase tracking-widest">
+            <div className="hidden md:grid grid-cols-12 gap-4 px-6 pb-4 text-xs font-mono text-white/30 uppercase tracking-widest">
                 <div className="col-span-4">Artist Identity</div>
                 <div className="col-span-3">Contact</div>
                 <div className="col-span-2">Submission Date</div>
@@ -169,8 +167,8 @@ export default function AdminApplicationsPage() {
 
             {/* Content List */}
             <AnimatePresence mode="wait">
-                <motion.div
-                    key={statusFilter + searchQuery}
+                    <motion.div
+                        key={`${statusFilter}-${searchQuery}-${applications.length}`}
                     variants={containerVar}
                     initial="hidden"
                     animate="show"
@@ -195,8 +193,8 @@ export default function AdminApplicationsPage() {
 
 const StatBlock: React.FC<StatBlockProps> = ({ label, value, active }) => (
     <div>
-        <div className="text-[10px] font-mono uppercase tracking-widest text-white/50 mb-1">{label}</div>
-        <div className={`font-main text-4xl ${active ? "text-primary" : "text-white"}`}>
+        <div className="text-xs md:text-sm font-mono uppercase tracking-widest text-white/50 mb-1">{label}</div>
+        <div className={`font-main text-5xl md:text-6xl ${active ? "text-primary" : "text-white"}`}>
             {value.toString().padStart(2, '0')}
         </div>
     </div>
@@ -206,7 +204,7 @@ const FilterPill: React.FC<FilterPillProps> = ({ label, active, onClick }) => (
     <button
         onClick={onClick}
         className={`
-            px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2
+            px-5 py-2.5 rounded-full text-sm font-bold uppercase tracking-wider transition-all flex items-center gap-2
             ${active
                 ? "bg-white text-black"
                 : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
@@ -221,6 +219,12 @@ const ApplicationRow: React.FC<ApplicationRowProps> = ({ app, router }) => {
     const statusConfig = getStatusStyle(app.status);
     const StatusIcon = statusConfig.icon;
 
+    const displayPhotoUrl = app.photoKey 
+        ? `/api/image-proxy?key=${app.photoKey}` 
+        : (app.photoUrl && app.photoUrl.includes("amazonaws.com"))
+            ? `/api/image-proxy?key=${encodeURIComponent(new URL(app.photoUrl).pathname.startsWith('/') ? new URL(app.photoUrl).pathname.slice(1) : new URL(app.photoUrl).pathname)}`
+            : app.photoUrl;
+
     return (
         <motion.div
             variants={itemVar}
@@ -229,29 +233,33 @@ const ApplicationRow: React.FC<ApplicationRowProps> = ({ app, router }) => {
         >
             {/* Identity */}
             <div className="col-span-12 md:col-span-4 flex items-center gap-4">
-                <div className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center font-main text-white border border-white/10 group-hover:border-primary/50 transition-colors text-lg">
-                    {app.artistName.charAt(0)}
+                <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center font-main text-white border border-white/10 group-hover:border-primary/50 transition-colors text-2xl relative overflow-hidden flex-shrink-0">
+                    {displayPhotoUrl ? (
+                        <Image src={displayPhotoUrl} alt={app.artistName} fill className="object-cover" />
+                    ) : (
+                        app.artistName.charAt(0)
+                    )}
                 </div>
                 <div>
-                    <h3 className="font-bold text-white text-lg leading-none mb-1 group-hover:text-primary transition-colors">{app.artistName}</h3>
-                    <p className="text-[10px] font-mono text-white/40 uppercase">@{app.user.username}</p>
+                    <h3 className="font-bold text-white text-xl leading-none mb-1 group-hover:text-primary transition-colors">{app.artistName}</h3>
+                    <p className="text-xs font-mono text-white/40 uppercase">@{app.user.username}</p>
                 </div>
             </div>
 
             {/* Contact */}
-            <div className="col-span-12 md:col-span-3 text-sm text-white/60 truncate font-light">
+            <div className="col-span-12 md:col-span-3 text-base text-white/60 truncate font-light">
                 {app.email}
             </div>
 
             {/* Date */}
-            <div className="col-span-6 md:col-span-2 text-xs font-mono text-white/40">
+            <div className="col-span-6 md:col-span-2 text-sm font-mono text-white/40">
                 {new Date(app.createdAt).toLocaleDateString()}
             </div>
 
             {/* Status */}
             <div className="col-span-6 md:col-span-2 flex items-center gap-2">
                 <StatusIcon className={`w-4 h-4 ${statusConfig.color}`} />
-                <span className={`text-[10px] font-bold uppercase tracking-wider ${statusConfig.text}`}>
+                <span className={`text-xs font-bold uppercase tracking-wider ${statusConfig.text}`}>
                     {statusConfig.label}
                 </span>
             </div>

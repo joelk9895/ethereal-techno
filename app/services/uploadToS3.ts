@@ -54,3 +54,29 @@ export async function uploadFileToS3(
 
   return { url, key };
 }
+
+export async function uploadBufferToS3(
+  buffer: Buffer,
+  mimetype: string,
+  filename: string,
+  folder: string = "uploads"
+): Promise<{ url: string; key: string }> {
+  if (!BUCKET_NAME) {
+    throw new Error("AWS_S3_BUCKET environment variable is not set");
+  }
+
+  const key = `${folder}/${Date.now()}-${filename}`;
+
+  const uploadParams = {
+    Bucket: BUCKET_NAME,
+    Key: key,
+    Body: buffer,
+    ContentType: mimetype,
+  };
+
+  await s3.send(new PutObjectCommand(uploadParams));
+
+  const url = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+
+  return { url, key };
+}

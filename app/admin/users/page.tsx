@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { authenticatedFetch } from "@/lib/auth";
 
 import {
   Search,
@@ -36,9 +37,7 @@ export default function AdminUsersPage() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch("/api/admin/users", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` }
-      });
+      const response = await authenticatedFetch("/api/admin/users");
       if (response.ok) {
         const data = await response.json();
         setUsers(data.users);
