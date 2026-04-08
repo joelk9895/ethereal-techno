@@ -17,9 +17,12 @@ import {
     Package,
     Radio,
     FileCheck,
-    MessageSquare
+    MessageSquare,
+    ChevronDown,
+    ChevronUp,
+    Globe
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { authenticatedFetch } from "@/lib/auth";
 
 interface UserData {
@@ -67,7 +70,7 @@ const NavItem: React.FC<NavItemProps> = ({ label, icon: Icon, active, onClick, e
         >
             <div className="flex items-center gap-4">
                 <Icon className={`w-5 h-5 transition-colors ${active ? "text-primary" : "text-white/40 group-hover:text-white"}`} />
-                <span className={`text-sm font-sans uppercase tracking-widest font-medium transition-colors ${active ? "text-white" : "text-white/40 group-hover:text-white"}`}>
+                <span className={`text-sm font-sans uppercase tracking-wider font-medium whitespace-nowrap transition-colors ${active ? "text-white" : "text-white/40 group-hover:text-white"}`}>
                     {label}
                 </span>
             </div>
@@ -78,6 +81,7 @@ const NavItem: React.FC<NavItemProps> = ({ label, icon: Icon, active, onClick, e
 
 export default function RightSidebar({ user, activeTab, onNavigate, onSignOut }: RightSidebarProps) {
     const [hasApplication, setHasApplication] = useState(false);
+    const [showMore, setShowMore] = useState(false);
 
     useEffect(() => {
         if (user.type !== "USER") return;
@@ -99,24 +103,38 @@ export default function RightSidebar({ user, activeTab, onNavigate, onSignOut }:
         <aside className="w-full lg:w-80 lg:h-full border-l border-white/10 bg-black/80 backdrop-blur-2xl z-20 pt-8 pb-12 px-8 flex flex-col justify-between overflow-y-auto no-scrollbar shadow-2xl">
             <div>
                 <div className="mb-10 px-2">
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="w-8 h-8 rounded-full overflow-hidden border border-white/20 bg-white/10 flex-shrink-0">
+                    <div className="text-[10px] font-mono text-white/40 uppercase tracking-widest mb-4">
+                        My Account
+                    </div>
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="w-9 h-9 rounded-full overflow-hidden border border-white/20 bg-white/10 flex-shrink-0">
                             {user.artistPhoto ? (
                                 <img src={user.artistPhoto} alt={user.name} className="w-full h-full object-cover" />
                             ) : (
-                                <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white/60 uppercase">
-                                    {user.name?.charAt(0)}
+                                <div className="w-full h-full flex items-center justify-center text-xs font-main text-white/60 uppercase">
+                                    {(user.artistName || user.name)?.charAt(0)}
                                 </div>
                             )}
                         </div>
-                        <div className="text-sm font-sans text-white/60 uppercase tracking-widest">My Account</div>
+                        <h1 className="font-main text-4xl text-white uppercase leading-none overflow-hidden text-ellipsis whitespace-nowrap tracking-wide">
+                            {user.artistName || user.name}
+                        </h1>
                     </div>
-                    <h1 className="font-main text-4xl text-white uppercase leading-none break-words tracking-wide mb-2">
-                        {user.artistName || user.name}
-                    </h1>
+
+                    <button
+                        onClick={() => window.open('/', '_blank')}
+                        className="mt-6 w-full flex items-center justify-start gap-4 py-4 px-5 rounded-xl bg-primary text-black font-sans text-sm uppercase tracking-wider font-bold hover:bg-white transition-all duration-300 group shadow-[0_0_20px_rgba(212,175,55,0.15)] border border-white/10"
+                    >
+                        <Globe className="w-5 h-5 flex-shrink-0" />
+                        <div className="flex items-center justify-between flex-1">
+                            <span>View Site</span>
+                            <ArrowUpRight className="w-4 h-4 opacity-30 group-hover:opacity-100 transition-opacity" />
+                        </div>
+                    </button>
                 </div>
 
-                <nav className="space-y-2">
+                <div className="px-2">
+                    <nav className="space-y-2">
                     {user.type === "ADMIN" ? (
                         <>
                             <NavItem
@@ -234,14 +252,91 @@ export default function RightSidebar({ user, activeTab, onNavigate, onSignOut }:
                     )}
                 </nav>
 
-                <div className="mt-12">
-                    <div className="space-y-2">
+                {user.type === "ADMIN" ? (
+                    /* Admin: Collapsible More Section */
+                    <div className="pt-4 border-t border-white/5 mt-4">
+                        <button
+                            onClick={() => setShowMore(!showMore)}
+                            className="w-full flex items-center justify-between py-4 px-5 text-xs font-mono text-white/30 uppercase tracking-wider hover:text-white transition-colors group rounded-xl hover:bg-white/5"
+                        >
+                            <div className="flex items-center gap-4">
+                                <div className="w-5 flex justify-center">
+                                    <div className={`w-1.5 h-1.5 rounded-full bg-primary transition-opacity ${showMore ? 'opacity-100' : 'opacity-40'}`} />
+                                </div>
+                                <span>More Resources</span>
+                            </div>
+                            {showMore ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                        </button>
+
+                        <AnimatePresence>
+                            {showMore && (
+                                <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: "auto", opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                                    className="overflow-hidden space-y-1 mt-2"
+                                >
+                                    <NavItem
+                                        id="sounds"
+                                        label="Browse Sounds"
+                                        icon={Music}
+                                        active={false}
+                                        onClick={() => {
+                                            onNavigate("sounds");
+                                            window.open('/browse/sounds', '_blank');
+                                        }}
+                                        external
+                                    />
+                                    <NavItem
+                                        id="bundles"
+                                        label="Browse Bundles"
+                                        icon={Package}
+                                        active={false}
+                                        onClick={() => {
+                                            onNavigate("bundles");
+                                            window.open('/browse/bundles', '_blank');
+                                        }}
+                                        external
+                                    />
+                                    <NavItem
+                                        id="merch"
+                                        label="Browse Merch"
+                                        icon={ShoppingBag}
+                                        active={false}
+                                        onClick={() => {
+                                            onNavigate("merch");
+                                            window.open('/browse/merch', '_blank');
+                                        }}
+                                        external
+                                    />
+                                    <NavItem
+                                        id="free-content"
+                                        label="Free Packs"
+                                        icon={ArrowUpRight}
+                                        active={false}
+                                        onClick={() => {
+                                            onNavigate("free-content");
+                                            window.open('/free/content', '_blank');
+                                        }}
+                                        external
+                                    />
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+                ) : (
+                    /* Others: Flat List (Old Version) */
+                    <div className="mt-12 space-y-2 px-2">
                         <NavItem
                             id="sounds"
                             label="Browse Sounds"
                             icon={Music}
                             active={false}
-                            onClick={() => onNavigate("sounds")}
+                            onClick={() => {
+                                onNavigate("sounds");
+                                window.open('/browse/sounds', '_blank');
+                            }}
                             external
                         />
                         <NavItem
@@ -249,7 +344,10 @@ export default function RightSidebar({ user, activeTab, onNavigate, onSignOut }:
                             label="Browse Bundles"
                             icon={Package}
                             active={false}
-                            onClick={() => onNavigate("bundles")}
+                            onClick={() => {
+                                onNavigate("bundles");
+                                window.open('/browse/bundles', '_blank');
+                            }}
                             external
                         />
                         <NavItem
@@ -257,30 +355,37 @@ export default function RightSidebar({ user, activeTab, onNavigate, onSignOut }:
                             label="Browse Merch"
                             icon={ShoppingBag}
                             active={false}
-                            onClick={() => onNavigate("merch")}
+                            onClick={() => {
+                                onNavigate("merch");
+                                window.open('/browse/merch', '_blank');
+                            }}
                             external
                         />
-                        {(user.type === "ARTIST" || user.type === "ADMIN") && (
+                        {user.type === "ARTIST" && (
                             <NavItem
                                 id="free-content"
                                 label="Free Packs"
                                 icon={ArrowUpRight}
                                 active={false}
-                                onClick={() => onNavigate("free-content")}
+                                onClick={() => {
+                                    onNavigate("free-content");
+                                    window.open('/free/content', '_blank');
+                                }}
                                 external
                             />
                         )}
                     </div>
+                )}
                 </div>
             </div>
 
-            <div className="mt-12">
+            <div className="mt-12 px-2">
                 <button
                     onClick={onSignOut}
                     className="group w-full flex items-center justify-start gap-4 py-4 px-5 rounded-xl border border-transparent transition-all duration-300 text-white/40 hover:text-red-400 hover:bg-white/5"
                 >
                     <LogOut className="w-5 h-5 transition-colors" />
-                    <span className="text-sm font-sans uppercase tracking-widest font-medium">Sign Out</span>
+                    <span className="text-sm font-sans uppercase tracking-wider font-medium">Sign Out</span>
                 </button>
             </div>
         </aside>

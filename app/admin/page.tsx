@@ -159,7 +159,7 @@ export default function AdminDashboardPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <ActionCard
-                title="Review Requests"
+                title="Review Applications"
                 description="Process pending producer applications"
                 href="/admin/applications"
                 icon={FileText}
@@ -179,7 +179,7 @@ export default function AdminDashboardPage() {
                 icon={Radio}
               />
               <ActionCard
-                title="Verified Network"
+                title="Circle Members"
                 description="Manage approved producers"
                 href="/admin/producers"
                 icon={Shield}

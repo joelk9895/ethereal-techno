@@ -119,7 +119,7 @@ export default function AdminApplicationsPage() {
             <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
                 <div>
                     <h1 className="font-main text-6xl md:text-7xl uppercase leading-[0.85] mb-2">
-                        Artist Requests
+                        Artist Applications
                     </h1>
                     <p className="text-white/40 font-light text-lg">Manage incoming producer applications.</p>
                 </div>

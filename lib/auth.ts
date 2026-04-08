@@ -108,15 +108,39 @@ export async function authenticatedFetch(
   const token = getAuthToken();
 
   const makeRequest = async (t: string | null) => {
+    // Standardize headers as a plain object for consistent merging
+    const headers: Record<string, string> = {};
+
+    // Copy existing headers from options
+    if (options.headers) {
+      if (options.headers instanceof Headers) {
+        options.headers.forEach((value, key) => {
+          headers[key] = value;
+        });
+      } else if (Array.isArray(options.headers)) {
+        options.headers.forEach(([key, value]) => {
+          headers[key] = value;
+        });
+      } else {
+        Object.assign(headers, options.headers);
+      }
+    }
+
+    // Add Authorization if token exists
+    if (t) {
+      headers["Authorization"] = `Bearer ${t}`;
+    }
+
+    // Add Content-Type for JSON body if not already set
+    if (options.body && !(options.body instanceof FormData)) {
+      if (!headers["Content-Type"]) {
+        headers["Content-Type"] = "application/json";
+      }
+    }
+
     return fetch(url, {
       ...options,
-      headers: {
-        ...options.headers,
-        ...(t ? { Authorization: `Bearer ${t}` } : {}),
-        ...(options.body instanceof FormData
-          ? {}
-          : { "Content-Type": "application/json" }),
-      },
+      headers,
     });
   };
 
@@ -124,7 +148,6 @@ export async function authenticatedFetch(
 
   if (response.status === 401) {
     console.log(`[AUTH] 401 on ${url}, attempting refresh...`);
-    // Create a retry logic
     const newToken = await stickyRefresh();
     if (newToken) {
       console.log(`[AUTH] Refresh success for ${url}, retrying...`);
