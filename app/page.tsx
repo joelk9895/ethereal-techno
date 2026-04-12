@@ -64,16 +64,16 @@ export default function Home() {
       <main className="min-h-screen bg-black text-white relative overflow-hidden font-sans selection:bg-primary selection:text-black">
 
         {/* Background Effects */}
-        <div className="fixed inset-0 pointer-events-none z-0">
-          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] mix-blend-overlay"></div>
-          <div className="absolute top-[-20%] right-[-10%] w-[60vw] h-[60vw] bg-primary/10 blur-[150px] rounded-full opacity-30 animate-pulse-slow" />
-          <div className="absolute bottom-[-20%] left-[-10%] w-[50vw] h-[50vw] bg-tertiary/10 blur-[150px] rounded-full opacity-20" />
+        <div className="absolute inset-0 pointer-events-none z-0" style={{ willChange: 'transform', transform: 'translateZ(0)' }}>
+          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03]"></div>
+          <div className="absolute top-[-20%] right-[-10%] w-[60vw] h-[60vw] max-w-[900px] max-h-[900px] bg-primary/10 blur-[150px] rounded-full opacity-30" style={{ transform: 'translateZ(0)' }} />
+          <div className="absolute bottom-[-20%] left-[-10%] w-[50vw] h-[50vw] max-w-[750px] max-h-[750px] bg-tertiary/10 blur-[150px] rounded-full opacity-20" style={{ transform: 'translateZ(0)' }} />
         </div>
 
         {/* Navigation removed in favor of site-wide layout navbar */}
 
         {/* Hero Section */}
-        <section className="relative z-10 flex flex-col items-center justify-center min-h-[80vh] px-6 text-center pt-12 md:pt-0" aria-labelledby="hero-heading">
+        <section className="relative z-10 flex flex-col items-center justify-center min-h-screen px-6 text-center pt-12 md:pt-0" aria-labelledby="hero-heading">
           <div className="max-w-5xl mx-auto flex flex-col items-center">
 
             <MotionDiv

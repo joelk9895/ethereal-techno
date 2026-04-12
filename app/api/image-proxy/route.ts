@@ -9,7 +9,6 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: "Key is required" }, { status: 400 });
     }
 
-    // Security check: Only allow access to known public content prefixes
     const allowedPrefixes = ["artist-applications/", "profile-photos/"];
     if (!allowedPrefixes.some(prefix => key.startsWith(prefix))) {
         console.warn(`Blocked access to restricted key: ${key}`);
@@ -19,7 +18,6 @@ export async function GET(request: NextRequest) {
     try {
         const url = await getStreamUrl(key);
 
-        // Fetch the image from S3
         const imageResponse = await fetch(url);
 
         if (!imageResponse.ok) {
@@ -30,11 +28,10 @@ export async function GET(request: NextRequest) {
         const contentType = imageResponse.headers.get("content-type") || "application/octet-stream";
         const arrayBuffer = await imageResponse.arrayBuffer();
 
-        // Return the image data directly
         return new NextResponse(arrayBuffer, {
             headers: {
                 "Content-Type": contentType,
-                "Cache-Control": "public, max-age=31536000, immutable", // Cache heavily
+                "Cache-Control": "public, max-age=31536000, immutable",
             },
         });
 

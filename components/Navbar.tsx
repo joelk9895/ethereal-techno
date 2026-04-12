@@ -40,7 +40,6 @@ export default function Navbar({ variant = "default", fixed = true }: NavbarProp
         setMobileMenuOpen(false);
     };
 
-    // Navigation items based on user type
     const getNavItems = () => {
         const baseItems = [
             { label: "Home", href: "/", icon: Home },
@@ -56,10 +55,8 @@ export default function Navbar({ variant = "default", fixed = true }: NavbarProp
             ];
         }
 
-        // Authenticated user items
         const authItems = [...baseItems];
 
-        // Add role-specific items
         switch (user.type) {
             case "ADMIN":
                 authItems.push(
@@ -211,7 +208,6 @@ export default function Navbar({ variant = "default", fixed = true }: NavbarProp
                                 );
                             })}
 
-                            {/* Mobile User Info & Logout */}
                             {user && (
                                 <div className="pt-4 border-t border-white/10 space-y-4">
                                     <div className="flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl">

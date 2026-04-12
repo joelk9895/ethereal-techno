@@ -10,7 +10,7 @@ const navLinks = [
   { label: "HOME", href: "/" },
   { label: "SOUNDS", href: "/sounds" },
   { label: "BUNDLES", href: "/bundles" },
-  { label: "CIRCLE", href: "/circle" },
+  { label: "CIRCLE", href: "/community" },
   { label: "MUSIC", href: "/music" },
   { label: "MERCH", href: "/merch" },
   { label: "LOGIN", href: "/signin" },
@@ -27,7 +27,6 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Lock body scroll when menu is open
   useEffect(() => {
     if (menuOpen) {
       document.body.style.overflow = "hidden";
@@ -39,7 +38,6 @@ export default function Navbar() {
     };
   }, [menuOpen]);
 
-  // Animation variants
   const menuVariants = {
     closed: {
       clipPath: "circle(0% at calc(100% - 3rem) 3rem)",
@@ -70,7 +68,6 @@ export default function Navbar() {
         className="fixed top-0 left-0 right-0 z-[100] bg-black/90 backdrop-blur-md border-b border-white/10 transition-colors duration-500 transform-gpu"
       >
         <div className="max-w-[1600px] mx-auto px-6 py-6 flex items-center justify-between">
-          {/* Logo */}
           <Link
             href="/"
             onClick={() => setMenuOpen(false)}
@@ -79,7 +76,6 @@ export default function Navbar() {
             <img src="https://ethereal-misc.s3.eu-west-1.amazonaws.com/Ethereal-Techno-Logo.png" alt="Ethereal Techno" width={140} height={30} />
           </Link>
 
-          {/* Right Actions */}
           <div className="flex items-center gap-6 relative z-[110]">
             <button className="text-white hover:text-white/80 transition-colors p-2 drop-shadow-md">
               <ShoppingCart className="w-5 h-5" />
@@ -107,51 +103,48 @@ export default function Navbar() {
         </div>
       </header>
 
-      {/* Full Screen Overlay */}
       <motion.div
         initial="closed"
         animate={menuOpen ? "open" : "closed"}
         variants={menuVariants}
         className="fixed inset-0 z-[90] bg-[#0A0A0A] overflow-hidden"
       >
-        {/* Background Visual Element (Matching the large shape aesthetic) */}
         <div className="absolute top-1/2 right-1/4 -translate-y-1/2 w-[80vw] h-[80vw] bg-white/5 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 right-0 text-[20vw] font-main text-white/[0.02] leading-none pointer-events-none select-none">
           ETHEREAL
         </div>
 
         <div className="h-[100dvh] w-full pt-[100px] pb-8 flex flex-col justify-center">
-          <div className="max-w-[1600px] w-full mx-auto px-6 relative z-10 flex flex-col md:flex-row justify-between h-full">
-            <nav className="flex flex-col justify-center gap-2 md:gap-4 lg:ml-24 max-h-full overflow-y-auto no-scrollbar pr-8 w-full py-4">
-            {navLinks.map((link, i) => (
-              <motion.div
-                custom={i}
-                variants={itemVariants}
-                key={link.label}
-                className="overflow-hidden"
-              >
-                <Link
-                  href={link.href}
-                  onClick={() => setMenuOpen(false)}
-                  className="group relative inline-flex items-center"
+          <div className="max-w-[1600px] w-full mx-auto px-6 relative z-10 flex flex-col justify-center h-full">
+            <nav className="flex flex-col justify-center gap-2 md:gap-4 pl-8 md:pl-24 lg:pl-48 max-h-full overflow-y-auto no-scrollbar pr-8 w-full py-4">
+              {navLinks.map((link, i) => (
+                <motion.div
+                  custom={i}
+                  variants={itemVariants}
+                  key={link.label}
+                  className="overflow-hidden"
                 >
-                  <span
-                    className={`font-main text-4xl md:text-5xl lg:text-6xl uppercase leading-none tracking-tight transition-colors duration-500
-                      ${pathname === link.href
-                        ? "text-white"
-                        : "text-white/40 group-hover:text-white"
-                      }
-                    `}
+                  <Link
+                    href={link.href}
+                    onClick={() => setMenuOpen(false)}
+                    className="group relative inline-flex items-center"
                   >
-                    {link.label}
-                  </span>
-                  {/* Active Indicator or Hover underline */}
-                  <span className="absolute -left-6 md:-left-10 h-[4px] w-[0px] bg-white top-1/2 -translate-y-1/2 transition-all duration-300 group-hover:w-[12px] md:group-hover:w-[20px]" />
-                </Link>
-              </motion.div>
-            ))}
-          </nav>
-        </div>
+                    <span
+                      className={`font-main text-3xl md:text-4xl lg:text-5xl uppercase leading-none tracking-tight transition-colors duration-500
+                        ${pathname === link.href
+                          ? "text-white"
+                          : "text-white/40 group-hover:text-white"
+                        }
+                      `}
+                    >
+                      {link.label}
+                    </span>
+                    <span className="absolute -left-6 md:-left-10 h-[4px] w-[0px] bg-white top-1/2 -translate-y-1/2 transition-all duration-300 group-hover:w-[12px] md:group-hover:w-[20px]" />
+                  </Link>
+                </motion.div>
+              ))}
+            </nav>
+          </div>
         </div>
       </motion.div>
     </>
