@@ -206,7 +206,7 @@ export default function FreeContentPage() {
                 />
 
                 <main className="flex-1 h-full overflow-y-auto overflow-x-hidden pb-32 lg:pb-12 no-scrollbar relative z-10">
-                    <div className="max-w-7xl mx-auto w-full min-h-full flex flex-col pt-24 px-6 md:px-12">
+                    <div className=" mx-auto w-full min-h-full flex flex-col pt-24 px-6 md:px-12">
 
                         <header className="mb-8">
                             <h1 className="font-main text-5xl md:text-6xl text-white mb-6">

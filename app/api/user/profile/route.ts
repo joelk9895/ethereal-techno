@@ -137,3 +137,64 @@ export async function PATCH(request: NextRequest) {
 
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const authHeader = request.headers.get("authorization");
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const token = authHeader.substring(7);
+    let decoded: JWTPayload;
+
+    try {
+      decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid or expired token" },
+        { status: 401 }
+      );
+    }
+
+    // Fetch the user before deleting to get their email and name for the confirmation email
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // First delete all related messages (SentMessages, ReceivedMessages)
+    await prisma.message.deleteMany({
+      where: {
+        OR: [
+          { senderId: decoded.userId },
+          { receiverId: decoded.userId },
+        ],
+      },
+    });
+
+    // Then delete the user from the database
+    // Prisma's onDelete: Cascade will handle related ArtistApplications, Sessions, RiskLogs
+    await prisma.user.delete({
+      where: { id: decoded.userId },
+    });
+
+    // Send confirmation email asynchronously
+    const { sendAccountDeletionEmail } = await import("@/app/services/emailService");
+    void sendAccountDeletionEmail(user.email, user.name || "User").catch((err) => {
+      console.error("Failed to send account deletion email:", err);
+    });
+
+    return NextResponse.json({ success: true, message: "Account deleted successfully." });
+  } catch (error) {
+    console.error("Profile DELETE Error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}

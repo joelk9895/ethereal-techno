@@ -273,7 +273,17 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Delete the user from the database
+    // First delete all related messages (SentMessages, ReceivedMessages)
+    await prisma.message.deleteMany({
+      where: {
+        OR: [
+          { senderId: decoded.userId },
+          { receiverId: decoded.userId },
+        ],
+      },
+    });
+
+    // Then delete the user from the database
     // Prisma's onDelete: Cascade will handle related ArtistApplications, Sessions, RiskLogs
     await prisma.user.delete({
       where: { id: decoded.userId },

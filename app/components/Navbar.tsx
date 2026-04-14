@@ -20,6 +20,19 @@ export default function Navbar() {
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [hasToken, setHasToken] = useState(false);
+
+  useEffect(() => {
+    setHasToken(!!localStorage.getItem("token"));
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setHasToken(false);
+    setMenuOpen(false);
+    window.location.reload();
+  };
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -117,32 +130,57 @@ export default function Navbar() {
         <div className="h-[100dvh] w-full pt-[100px] pb-8 flex flex-col justify-center">
           <div className="max-w-[1600px] w-full mx-auto px-6 relative z-10 flex flex-col justify-center h-full">
             <nav className="flex flex-col justify-center gap-2 md:gap-4 pl-8 md:pl-24 lg:pl-48 max-h-full overflow-y-auto no-scrollbar pr-8 w-full py-4">
-              {navLinks.map((link, i) => (
-                <motion.div
-                  custom={i}
-                  variants={itemVariants}
-                  key={link.label}
-                  className="overflow-hidden"
-                >
-                  <Link
-                    href={link.href}
-                    onClick={() => setMenuOpen(false)}
-                    className="group relative inline-flex items-center"
-                  >
-                    <span
-                      className={`font-main text-3xl md:text-4xl lg:text-5xl uppercase leading-none tracking-tight transition-colors duration-500
-                        ${pathname === link.href
-                          ? "text-white"
-                          : "text-white/40 group-hover:text-white"
-                        }
-                      `}
+              {navLinks.map((link, i) => {
+                if (link.label === "LOGIN" && hasToken) {
+                  return (
+                    <motion.div
+                      custom={i}
+                      variants={itemVariants}
+                      key="LOGOUT"
+                      className="overflow-hidden"
                     >
-                      {link.label}
-                    </span>
-                    <span className="absolute -left-6 md:-left-10 h-[4px] w-[0px] bg-white top-1/2 -translate-y-1/2 transition-all duration-300 group-hover:w-[12px] md:group-hover:w-[20px]" />
-                  </Link>
-                </motion.div>
-              ))}
+                      <button
+                        onClick={handleLogout}
+                        className="group relative inline-flex items-center text-left"
+                      >
+                        <span
+                          className={`font-main text-3xl md:text-4xl lg:text-5xl uppercase leading-none tracking-tight transition-colors duration-500 text-white/40 group-hover:text-white`}
+                        >
+                          LOGOUT
+                        </span>
+                        <span className="absolute -left-6 md:-left-10 h-[4px] w-[0px] bg-white top-1/2 -translate-y-1/2 transition-all duration-300 group-hover:w-[12px] md:group-hover:w-[20px]" />
+                      </button>
+                    </motion.div>
+                  );
+                }
+
+                return (
+                  <motion.div
+                    custom={i}
+                    variants={itemVariants}
+                    key={link.label}
+                    className="overflow-hidden"
+                  >
+                    <Link
+                      href={link.href}
+                      onClick={() => setMenuOpen(false)}
+                      className="group relative inline-flex items-center"
+                    >
+                      <span
+                        className={`font-main text-3xl md:text-4xl lg:text-5xl uppercase leading-none tracking-tight transition-colors duration-500
+                          ${pathname === link.href
+                            ? "text-white"
+                            : "text-white/40 group-hover:text-white"
+                          }
+                        `}
+                      >
+                        {link.label}
+                      </span>
+                      <span className="absolute -left-6 md:-left-10 h-[4px] w-[0px] bg-white top-1/2 -translate-y-1/2 transition-all duration-300 group-hover:w-[12px] md:group-hover:w-[20px]" />
+                    </Link>
+                  </motion.div>
+                );
+              })}
             </nav>
           </div>
         </div>
