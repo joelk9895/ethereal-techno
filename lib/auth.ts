@@ -161,5 +161,79 @@ export async function authenticatedFetch(
     }
   }
 
+  // After every successful auth call, trigger a background role sync
+  if (response.ok && typeof window !== "undefined") {
+    scheduleRoleSync();
+  }
+
   return response;
 }
+
+// --- Background Role Sync ---
+// Periodically checks if the user's role changed server-side and redirects if needed.
+let lastRoleSyncTime = 0;
+const ROLE_SYNC_INTERVAL = 30_000; // 30 seconds minimum between syncs
+let roleSyncPending = false;
+
+function scheduleRoleSync() {
+  const now = Date.now();
+  if (now - lastRoleSyncTime < ROLE_SYNC_INTERVAL || roleSyncPending) return;
+
+  roleSyncPending = true;
+  lastRoleSyncTime = now;
+
+  // Run async without blocking
+  syncUserRole().finally(() => {
+    roleSyncPending = false;
+  });
+}
+
+async function syncUserRole() {
+  try {
+    const token = getAuthToken();
+    if (!token) return;
+
+    const storedUser = localStorage.getItem("user");
+    if (!storedUser) return;
+
+    const parsed = JSON.parse(storedUser);
+    const currentType = parsed.type;
+
+    // Lightweight call to check the user's current role
+    const res = await fetch("/api/auth/verify", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!res.ok) return;
+
+    const data = await res.json();
+    const serverType = data.user?.type;
+
+    if (!serverType || serverType === currentType) return;
+
+    // Role changed — update localStorage
+    parsed.type = serverType;
+    localStorage.setItem("user", JSON.stringify(parsed));
+
+    // Redirect to the correct dashboard
+    const currentPath = window.location.pathname;
+    const isDashboard = currentPath.startsWith("/dashboard") || currentPath.startsWith("/admin");
+
+    if (isDashboard) {
+      switch (serverType) {
+        case "ADMIN":
+          window.location.href = "/admin";
+          break;
+        case "ARTIST":
+          window.location.href = "/dashboard/producer";
+          break;
+        default:
+          window.location.href = "/dashboard";
+          break;
+      }
+    }
+  } catch {
+    // Silently fail — this is a background sync
+  }
+}
+

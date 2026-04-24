@@ -410,15 +410,12 @@ export function genericEmail(subject: string, bodyHtml: string, tags?: string[])
   };
 }
 
-// ─── Convenience Helpers ─────────────────────────────
 
-/** Send application confirmation to the applicant */
 export async function sendApplicationConfirmation(applicantEmail: string, artistName: string) {
   const email = applicationConfirmationEmail(artistName);
   return sendEmail({ to: applicantEmail, ...email });
 }
 
-/** Send notification to admin about a new application */
 export async function sendAdminNotification(
   artistName: string,
   applicantEmail: string,
@@ -428,19 +425,15 @@ export async function sendAdminNotification(
   return sendEmail({ to: ADMIN_EMAIL, ...email });
 }
 
-/** Send approval notification to the applicant */
 export async function sendApprovalNotification(applicantEmail: string, artistName: string) {
   const email = applicationApprovedEmail(artistName);
   return sendEmail({ to: applicantEmail, ...email });
 }
-
-/** Send rejection notification to the applicant */
 export async function sendRejectionNotification(applicantEmail: string, artistName: string) {
   const email = applicationRejectedEmail(artistName);
   return sendEmail({ to: applicantEmail, ...email });
 }
 
-/** Send OTP verification email */
 export async function sendOtpEmail(recipientEmail: string, name: string, otp: string) {
   const email = otpVerificationEmail(name, otp);
   return sendEmail({ to: recipientEmail, ...email });

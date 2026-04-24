@@ -28,6 +28,24 @@ function SignInContent() {
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [showSuccess, setShowSuccess] = useState(false);
 
+    // Redirect already-authenticated users to their dashboard
+    useEffect(() => {
+        const token = localStorage.getItem("accessToken");
+        const userData = localStorage.getItem("user");
+        if (token && userData) {
+            try {
+                const user = JSON.parse(userData);
+                switch (user.type) {
+                    case "ADMIN": router.replace("/admin"); break;
+                    case "ARTIST": router.replace("/dashboard/producer"); break;
+                    default: router.replace("/dashboard"); break;
+                }
+            } catch {
+                // Invalid user data, let them log in again
+            }
+        }
+    }, [router]);
+
     useEffect(() => {
         if (registered === "true") {
             setShowSuccess(true);

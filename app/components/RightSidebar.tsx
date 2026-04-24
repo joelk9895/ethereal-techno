@@ -81,7 +81,6 @@ const NavItem: React.FC<NavItemProps> = ({ label, icon: Icon, active, onClick, e
 
 export default function RightSidebar({ user, activeTab, onNavigate, onSignOut }: RightSidebarProps) {
     const [hasApplication, setHasApplication] = useState(false);
-    const [showMore, setShowMore] = useState(false);
 
     useEffect(() => {
         if (user.type !== "USER") return;
@@ -122,13 +121,19 @@ export default function RightSidebar({ user, activeTab, onNavigate, onSignOut }:
                     </div>
 
                     <button
-                        onClick={() => window.open('/', '_blank')}
+                        onClick={() => {
+                            if (user.type === "ADMIN") {
+                                window.open('/', '_blank');
+                            } else {
+                                window.location.href = '/';
+                            }
+                        }}
                         className="mt-6 w-full flex items-center justify-start gap-4 py-4 px-5 rounded-xl bg-primary text-black font-sans text-sm uppercase tracking-wider font-bold hover:bg-white transition-all duration-300 group shadow-[0_0_20px_rgba(212,175,55,0.15)] border border-white/10"
                     >
                         <Globe className="w-5 h-5 flex-shrink-0" />
                         <div className="flex items-center justify-between flex-1">
                             <span>View Site</span>
-                            <ArrowUpRight className="w-4 h-4 opacity-30 group-hover:opacity-100 transition-opacity" />
+                            {user.type === "ADMIN" && <ArrowUpRight className="w-4 h-4 opacity-30 group-hover:opacity-100 transition-opacity" />}
                         </div>
                     </button>
                 </div>
@@ -259,10 +264,7 @@ export default function RightSidebar({ user, activeTab, onNavigate, onSignOut }:
                             label="Browse Sounds"
                             icon={Music}
                             active={false}
-                            onClick={() => {
-                                onNavigate("sounds");
-                                window.open('/browse/sounds', '_blank');
-                            }}
+                            onClick={() => onNavigate("sounds")}
                             external
                         />
                         <NavItem
@@ -270,10 +272,7 @@ export default function RightSidebar({ user, activeTab, onNavigate, onSignOut }:
                             label="Browse Bundles"
                             icon={Package}
                             active={false}
-                            onClick={() => {
-                                onNavigate("bundles");
-                                window.open('/browse/bundles', '_blank');
-                            }}
+                            onClick={() => onNavigate("bundles")}
                             external
                         />
                         <NavItem
@@ -281,22 +280,16 @@ export default function RightSidebar({ user, activeTab, onNavigate, onSignOut }:
                             label="Browse Merch"
                             icon={ShoppingBag}
                             active={false}
-                            onClick={() => {
-                                onNavigate("merch");
-                                window.open('/browse/merch', '_blank');
-                            }}
+                            onClick={() => onNavigate("merch")}
                             external
                         />
                         {user.type === "ARTIST" && (
                             <NavItem
                                 id="free-content"
-                                label="Free Packs"
+                                label="Explore Sounds"
                                 icon={ArrowUpRight}
-                                active={false}
-                                onClick={() => {
-                                    onNavigate("free-content");
-                                    window.open('/free/content', '_blank');
-                                }}
+                                active={activeTab === "free-content"}
+                                onClick={() => onNavigate("free-content")}
                                 external
                             />
                         )}

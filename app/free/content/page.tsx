@@ -210,7 +210,7 @@ export default function FreeContentPage() {
 
                         <header className="mb-8">
                             <h1 className="font-main text-5xl md:text-6xl text-white mb-6">
-                                Free Packs
+                                Explore Sounds
                             </h1>
 
                             {/* Minimal Controls */}

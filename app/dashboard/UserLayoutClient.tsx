@@ -59,6 +59,30 @@ export default function UserLayoutClient({ children }: { children: React.ReactNo
             if (response.ok) {
                 const data = await response.json();
                 setUser(data.user);
+
+                // Check if the user's role changed server-side (e.g. approved as ARTIST)
+                const storedUser = localStorage.getItem("user");
+                if (storedUser && data.user?.type) {
+                    try {
+                        const parsed = JSON.parse(storedUser);
+                        if (parsed.type !== data.user.type) {
+                            // Update localStorage with new type
+                            parsed.type = data.user.type;
+                            localStorage.setItem("user", JSON.stringify(parsed));
+
+                            // Redirect to the correct dashboard
+                            if (data.user.type === "ARTIST") {
+                                router.replace("/dashboard/producer");
+                                return;
+                            } else if (data.user.type === "ADMIN") {
+                                router.replace("/admin");
+                                return;
+                            }
+                        }
+                    } catch {
+                        // Invalid stored data, ignore
+                    }
+                }
             }
         } catch (error) {
             console.error("Error fetching user:", error);
@@ -107,13 +131,10 @@ export default function UserLayoutClient({ children }: { children: React.ReactNo
     }, [router, fetchUserData, fetchApplications]);
 
     const handleNavigation = (id: string) => {
-        if (id === "sounds") return router.push("/libraries");
+        if (id === "sounds") return router.push("/sounds");
         if (id === "bundles") return router.push("/bundles");
         if (id === "merch") return router.push("/merch");
-        if (id === "free-content" && user && (user.type === "ARTIST" || user.type === "ADMIN")) {
-            return router.push("/free/content");
-        }
-        if (id === "community") return router.push("/community");
+        if (id === "free-content") return router.push("/free/content");
 
         // Internal routing mapped to URLs
         switch (id) {

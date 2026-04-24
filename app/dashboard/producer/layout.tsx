@@ -39,6 +39,36 @@ export default function ProducerLayout({ children }: { children: React.ReactNode
             if (res.ok) {
                 const data = await res.json();
                 setProducer(data.producer);
+
+                // Check if the user's role changed server-side (e.g. dismissed from producer)
+                if (data.producer?.type && data.producer.type !== "ARTIST") {
+                    const storedUser = localStorage.getItem("user");
+                    if (storedUser) {
+                        try {
+                            const parsed = JSON.parse(storedUser);
+                            parsed.type = data.producer.type;
+                            localStorage.setItem("user", JSON.stringify(parsed));
+                        } catch {
+                            // ignore
+                        }
+                    }
+                    router.replace("/dashboard");
+                    return;
+                }
+            } else if (res.status === 403 || res.status === 401) {
+                // User is no longer a producer — update localStorage and redirect
+                const storedUser = localStorage.getItem("user");
+                if (storedUser) {
+                    try {
+                        const parsed = JSON.parse(storedUser);
+                        parsed.type = "USER";
+                        localStorage.setItem("user", JSON.stringify(parsed));
+                    } catch {
+                        // ignore
+                    }
+                }
+                router.replace("/dashboard");
+                return;
             } else {
                 console.error("Failed to fetch producer profile");
             }
@@ -49,7 +79,7 @@ export default function ProducerLayout({ children }: { children: React.ReactNode
     }, [router]);
 
     const handleNavigation = (id: string) => {
-        if (id === "sounds") return router.push("/libraries");
+        if (id === "sounds") return router.push("/sounds");
         if (id === "bundles") return router.push("/bundles");
         if (id === "merch") return router.push("/merch");
         if (id === "free-content") return router.push("/free/content");

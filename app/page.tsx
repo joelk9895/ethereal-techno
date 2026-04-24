@@ -70,9 +70,7 @@ export default function Home() {
           <div className="absolute bottom-[-20%] left-[-10%] w-[50vw] h-[50vw] max-w-[750px] max-h-[750px] bg-tertiary/10 blur-[150px] rounded-full opacity-20" style={{ transform: 'translateZ(0)' }} />
         </div>
 
-        {/* Navigation removed in favor of site-wide layout navbar */}
 
-        {/* Hero Section */}
         <section className="relative z-10 flex flex-col items-center justify-center min-h-screen px-6 text-center pt-12 md:pt-0" aria-labelledby="hero-heading">
           <div className="max-w-5xl mx-auto flex flex-col items-center">
 
@@ -154,6 +152,174 @@ export default function Home() {
             <Link href="/signup" className="flex items-center justify-center gap-2 bg-primary text-black px-10 py-5 rounded-full font-bold uppercase tracking-widest text-sm hover:scale-105 transition-transform shadow-[0_0_40px_rgba(232,209,36,0.2)]">
               Create Free Account <ArrowRight className="w-4 h-4" aria-hidden="true" />
             </Link>
+          </div>
+        </section>
+
+        {/* The Vision Section */}
+        <section className="relative z-10 py-32 px-6 border-t border-white/5 bg-black" aria-labelledby="vision-heading">
+          <div className="max-w-4xl mx-auto text-center relative">
+            {/* Background Text */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[15vw] font-main text-white/[0.02] leading-none pointer-events-none select-none z-0">
+              ETHEREAL
+            </div>
+
+            <div className="relative z-10">
+              <MotionDiv
+                initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.8 }}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/20 bg-primary/5 text-[10px] font-mono uppercase tracking-widest text-primary mb-12"
+              >
+                THE VISION
+              </MotionDiv>
+
+              <MotionH1
+                id="vision-heading"
+                initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.8, delay: 0.1 }}
+                className="font-sans font-bold text-4xl md:text-5xl lg:text-6xl mb-12 tracking-tight"
+              >
+                A sound that was never designed<br />
+                <span className="text-transparent font-light bg-clip-text bg-gradient-to-r from-primary via-primary/80 to-primary/70 italic">— only discovered.</span>
+              </MotionH1>
+
+              <div className="space-y-8 text-white/50 text-lg md:text-xl font-light leading-relaxed max-w-3xl mx-auto">
+                <MotionP initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.8, delay: 0.2 }}>
+                  Ethereal Techno didn&apos;t start as a genre. It emerged over time — shaped by atmosphere, emotion, and a deeper approach to electronic music.
+                </MotionP>
+                <MotionP initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.8, delay: 0.3 }}>
+                  What began within Steyoyoke as something undefined was eventually recognized for what it truly was: a sound that lives between structure and feeling, between techno and something more ethereal.
+                </MotionP>
+                <MotionP initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.8, delay: 0.4 }} className="text-white border-y-[1px] border-white/10 py-10">
+                  Today, Ethereal Techno is no longer just a sound.<br />
+                  <span className="text-primary font-medium">It is an identity.</span>
+                </MotionP>
+                <MotionP initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.8, delay: 0.5 }}>
+                  This project exists to give that identity a home — connecting music, sound design, and a curated circle of artists who share the same vision.
+                </MotionP>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* The Team Section */}
+        <section className="relative z-10 py-32 px-6 border-t border-white/5 bg-black" aria-labelledby="team-heading">
+          <div className="max-w-6xl mx-auto text-center">
+            <MotionDiv
+              initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.8 }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/20 bg-primary/5 text-[10px] font-mono uppercase tracking-widest text-primary mb-8"
+            >
+              THE TEAM
+            </MotionDiv>
+
+            <MotionH1
+              id="team-heading"
+              initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.8, delay: 0.1 }}
+              className="font-main text-4xl md:text-5xl lg:text-6xl uppercase tracking-tight mb-4"
+            >
+              BEHIND THE SOUND
+            </MotionH1>
+
+            <MotionP
+              initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.8, delay: 0.2 }}
+              className="text-white/50 text-lg md:text-xl font-light max-w-2xl mx-auto mb-20"
+            >
+              A collective of artists shaping the sound and identity of Ethereal Techno.
+            </MotionP>
+
+            {/* Core Team */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-12 md:gap-24 mb-20 max-w-3xl mx-auto justify-items-center">
+              <MotionDiv initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ duration: 0.5, delay: 0.3 }} className="flex flex-col items-center gap-4">
+                <div className="w-48 h-48 md:w-56 md:h-56 rounded-full overflow-hidden border border-white/10 bg-white/5">
+                  <div className="w-full h-full bg-white/10 flex items-center justify-center text-white/20">
+                    <Users className="w-12 h-12" />
+                  </div>
+                </div>
+                <div>
+                  <h3 className="font-sans font-bold text-2xl uppercase tracking-wide">Soul Button</h3>
+                  <p className="text-primary text-xs font-mono uppercase tracking-widest">THE VISION</p>
+                </div>
+              </MotionDiv>
+
+              <MotionDiv initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ duration: 0.5, delay: 0.4 }} className="flex flex-col items-center gap-4">
+                <div className="w-48 h-48 md:w-56 md:h-56 rounded-full overflow-hidden border border-white/10 bg-white/5">
+                  <div className="w-full h-full bg-white/10 flex items-center justify-center text-white/20">
+                    <Users className="w-12 h-12" />
+                  </div>
+                </div>
+                <div>
+                  <h3 className="font-sans font-bold text-2xl uppercase tracking-wide">Joel</h3>
+                  <p className="text-primary text-xs font-mono uppercase tracking-widest">THE ENGINE</p>
+                </div>
+              </MotionDiv>
+            </div>
+
+            {/* Collective Team Divider */}
+            <div className="flex items-center justify-center gap-4 mb-16 opacity-50">
+              <div className="h-[2px] w-6 bg-white/50"></div>
+              <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-white/100">THE COLLECTIVE</span>
+              <div className="h-[2px] w-6 bg-white/50"></div>
+            </div>
+
+            {/* Collective Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-4 sm:gap-x-8 gap-y-12 max-w-5xl mx-auto justify-items-center">
+              {['Monarke', 'Navid Kaya', 'Clawz SG', 'Deviu', 'René Diehl', 'Martín Dubiansky', 'MPathy', 'Soelaas', 'Artist 9', 'Artist 10'].map((name, i) => (
+                <MotionDiv key={name} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5, delay: 0.1 * i }} className="flex flex-col items-center gap-4 w-28 md:w-36">
+                  <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border border-white/10 bg-white/5">
+                    <div className="w-full h-full bg-white/10 flex items-center justify-center text-white/20">
+                      <Users className="w-6 h-6" />
+                    </div>
+                  </div>
+                  <h3 className="font-sans font-semibold text-base uppercase text-center tracking-wide">{name}</h3>
+                </MotionDiv>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Newsletter Section */}
+        <section className="relative z-10 py-32 px-6 border-t border-white/5 bg-black overflow-hidden" aria-labelledby="newsletter-heading">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[20vw] font-main text-white/[0.015] leading-none pointer-events-none select-none z-0">
+            SIGNAL
+          </div>
+
+          <div className="relative z-10 max-w-3xl mx-auto text-center">
+            <MotionDiv
+              initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.8 }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/20 bg-primary/5 text-[10px] font-mono uppercase tracking-widest text-primary mb-8"
+            >
+              JOIN THE SIGNAL
+            </MotionDiv>
+
+            <MotionH1
+              id="newsletter-heading"
+              initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.8, delay: 0.1 }}
+              className="font-main text-5xl md:text-7xl uppercase tracking-tight mb-6"
+            >
+              STAY IN THE LOOP
+            </MotionH1>
+
+            <MotionP
+              initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.8, delay: 0.2 }}
+              className="text-white/50 text-lg md:text-xl font-light mb-12"
+            >
+              New drops, exclusive samples, and Circle updates — straight to your inbox.
+            </MotionP>
+
+            <MotionDiv
+              initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.8, delay: 0.3 }}
+              className="w-full max-w-xl mx-auto"
+            >
+              <form className="flex flex-col sm:flex-row gap-4" onSubmit={(e) => e.preventDefault()}>
+                <input
+                  type="email"
+                  placeholder="your@email.com"
+                  className="flex-1 bg-white/5 border border-white/10 rounded-full px-6 py-4 text-white placeholder:text-white/30 focus:outline-none focus:border-primary/50 transition-colors"
+                  required
+                />
+                <button type="submit" className="bg-primary text-black px-8 py-4 rounded-full font-bold uppercase tracking-widest text-sm hover:scale-105 transition-transform whitespace-nowrap">
+                  SUBSCRIBE <ArrowRight className="w-4 h-4 inline-block ml-1 -mt-1" />
+                </button>
+              </form>
+              <p className="mt-6 text-[10px] text-white/30 font-mono uppercase tracking-widest">No spam. Unsubscribe anytime.</p>
+            </MotionDiv>
           </div>
         </section>
 

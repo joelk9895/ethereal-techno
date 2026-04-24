@@ -2,18 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ShoppingCart, Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
+import Image from "next/image";
+import { getAuthUser } from "@/lib/auth";
 
-const navLinks = [
+const baseNavLinks = [
   { label: "HOME", href: "/" },
   { label: "SOUNDS", href: "/sounds" },
   { label: "BUNDLES", href: "/bundles" },
   { label: "CIRCLE", href: "/community" },
   { label: "MUSIC", href: "/music" },
   { label: "MERCH", href: "/merch" },
-  { label: "LOGIN", href: "/signin" },
 ];
 
 export default function Navbar() {
@@ -21,17 +21,34 @@ export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [hasToken, setHasToken] = useState(false);
+  const [dashboardHref, setDashboardHref] = useState("/dashboard");
 
   useEffect(() => {
-    setHasToken(!!localStorage.getItem("token"));
-  }, []);
+    const user = getAuthUser();
+    const token = localStorage.getItem("accessToken");
+    setHasToken(!!token && !!user);
+    if (user) {
+      switch (user.type) {
+        case "ADMIN": setDashboardHref("/admin"); break;
+        case "ARTIST": setDashboardHref("/dashboard/producer"); break;
+        default: setDashboardHref("/dashboard"); break;
+      }
+    } else {
+      setHasToken(false);
+    }
+  }, [pathname]);
+
+  // Build final nav links based on auth state
+  const navLinks = hasToken
+    ? [...baseNavLinks, { label: "DASHBOARD", href: dashboardHref }, { label: "LOGOUT", href: "" }]
+    : [...baseNavLinks, { label: "LOGIN", href: "/signin" }];
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
+    localStorage.removeItem("accessToken");
     localStorage.removeItem("user");
     setHasToken(false);
     setMenuOpen(false);
-    window.location.reload();
+    window.location.href = "/signin";
   };
 
   useEffect(() => {
@@ -78,7 +95,7 @@ export default function Navbar() {
   return (
     <>
       <header
-        className="fixed top-0 left-0 right-0 z-[100] bg-black/90 backdrop-blur-md border-b border-white/10 transition-colors duration-500 transform-gpu"
+        className="fixed top-0 left-0 right-0 z-[100] bg-black/90 backdrop-blur-md transition-colors duration-500 transform-gpu"
       >
         <div className="max-w-[1600px] mx-auto px-6 py-6 flex items-center justify-between">
           <Link
@@ -86,13 +103,30 @@ export default function Navbar() {
             onClick={() => setMenuOpen(false)}
             className="font-main text-2xl uppercase tracking-wider text-white relative z-[110] drop-shadow-md"
           >
-            <img src="https://ethereal-misc.s3.eu-west-1.amazonaws.com/Ethereal-Techno-Logo.png" alt="Ethereal Techno" width={140} height={30} />
+            <div className="w-36 sm:w-52">
+              <Image src="/logo.svg" alt="Logo" width={300} height={300} className="w-full h-auto" />
+            </div>
           </Link>
 
-          <div className="flex items-center gap-6 relative z-[110]">
-            <button className="text-white hover:text-white/80 transition-colors p-2 drop-shadow-md">
-              <ShoppingCart className="w-5 h-5" />
-            </button>
+          <div className="flex items-center gap-4 relative z-[110]">
+            {hasToken ? (
+              !pathname.startsWith("/dashboard") && !pathname.startsWith("/admin") && (
+                <Link
+                  href={dashboardHref}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full border border-primary/30 bg-primary/10 text-primary text-xs font-sans uppercase tracking-widest font-semibold hover:bg-primary/20 hover:border-primary/50 transition-all duration-300"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="9" x="3" y="3" rx="1" /><rect width="7" height="5" x="14" y="3" rx="1" /><rect width="7" height="9" x="14" y="12" rx="1" /><rect width="7" height="5" x="3" y="16" rx="1" /></svg>
+                  <span className="hidden sm:inline">Dashboard</span>
+                </Link>
+              )
+            ) : (
+              <Link
+                href="/signin"
+                className="px-4 py-2 rounded-full border border-white/20 text-white text-xs font-sans uppercase tracking-widest font-semibold hover:bg-white/10 hover:border-white/40 transition-all duration-300"
+              >
+                Login
+              </Link>
+            )}
             <button
               onClick={() => setMenuOpen(!menuOpen)}
               className="text-white hover:text-white/80 transition-transform p-2 drop-shadow-md"
@@ -131,7 +165,8 @@ export default function Navbar() {
           <div className="max-w-[1600px] w-full mx-auto px-6 relative z-10 flex flex-col justify-center h-full">
             <nav className="flex flex-col justify-center gap-2 md:gap-4 pl-8 md:pl-24 lg:pl-48 max-h-full overflow-y-auto no-scrollbar pr-8 w-full py-4">
               {navLinks.map((link, i) => {
-                if (link.label === "LOGIN" && hasToken) {
+                // LOGOUT is a button, not a link
+                if (link.label === "LOGOUT") {
                   return (
                     <motion.div
                       custom={i}
@@ -143,12 +178,10 @@ export default function Navbar() {
                         onClick={handleLogout}
                         className="group relative inline-flex items-center text-left"
                       >
-                        <span
-                          className={`font-main text-3xl md:text-4xl lg:text-5xl uppercase leading-none tracking-tight transition-colors duration-500 text-white/40 group-hover:text-white`}
-                        >
+                        <span className="font-main text-3xl md:text-4xl lg:text-5xl uppercase leading-none tracking-tight transition-colors duration-500 text-white/20 group-hover:text-red-400">
                           LOGOUT
                         </span>
-                        <span className="absolute -left-6 md:-left-10 h-[4px] w-[0px] bg-white top-1/2 -translate-y-1/2 transition-all duration-300 group-hover:w-[12px] md:group-hover:w-[20px]" />
+                        <span className="absolute -left-6 md:-left-10 h-[4px] w-[0px] bg-red-400 top-1/2 -translate-y-1/2 transition-all duration-300 group-hover:w-[12px] md:group-hover:w-[20px]" />
                       </button>
                     </motion.div>
                   );
@@ -170,13 +203,15 @@ export default function Navbar() {
                         className={`font-main text-3xl md:text-4xl lg:text-5xl uppercase leading-none tracking-tight transition-colors duration-500
                           ${pathname === link.href
                             ? "text-white"
-                            : "text-white/40 group-hover:text-white"
+                            : link.label === "DASHBOARD"
+                              ? "text-primary/80 group-hover:text-primary"
+                              : "text-white/40 group-hover:text-white"
                           }
                         `}
                       >
                         {link.label}
                       </span>
-                      <span className="absolute -left-6 md:-left-10 h-[4px] w-[0px] bg-white top-1/2 -translate-y-1/2 transition-all duration-300 group-hover:w-[12px] md:group-hover:w-[20px]" />
+                      <span className={`absolute -left-6 md:-left-10 h-[4px] w-[0px] ${link.label === "DASHBOARD" ? "bg-primary" : "bg-white"} top-1/2 -translate-y-1/2 transition-all duration-300 group-hover:w-[12px] md:group-hover:w-[20px]`} />
                     </Link>
                   </motion.div>
                 );
