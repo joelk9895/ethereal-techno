@@ -228,9 +228,7 @@ export default function Home() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-12 md:gap-24 mb-20 max-w-3xl mx-auto justify-items-center">
               <MotionDiv initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ duration: 0.5, delay: 0.3 }} className="flex flex-col items-center gap-4">
                 <div className="w-48 h-48 md:w-56 md:h-56 rounded-full overflow-hidden border border-white/10 bg-white/5">
-                  <div className="w-full h-full bg-white/10 flex items-center justify-center text-white/20">
-                    <Users className="w-12 h-12" />
-                  </div>
+                  <Image src="/Photo%20Artists/Soul-Button.jpg" alt="Soul Button" width={224} height={224} className="w-full h-full object-cover" />
                 </div>
                 <div>
                   <h3 className="font-sans font-bold text-2xl uppercase tracking-wide">Soul Button</h3>
@@ -240,9 +238,7 @@ export default function Home() {
 
               <MotionDiv initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ duration: 0.5, delay: 0.4 }} className="flex flex-col items-center gap-4">
                 <div className="w-48 h-48 md:w-56 md:h-56 rounded-full overflow-hidden border border-white/10 bg-white/5">
-                  <div className="w-full h-full bg-white/10 flex items-center justify-center text-white/20">
-                    <Users className="w-12 h-12" />
-                  </div>
+                  <Image src="/Photo%20Artists/Joel.jpg" alt="Joel" width={224} height={224} className="w-full h-full object-cover" />
                 </div>
                 <div>
                   <h3 className="font-sans font-bold text-2xl uppercase tracking-wide">Joel</h3>
@@ -260,14 +256,23 @@ export default function Home() {
 
             {/* Collective Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-4 sm:gap-x-8 gap-y-12 max-w-5xl mx-auto justify-items-center">
-              {['Monarke', 'Navid Kaya', 'Clawz SG', 'Deviu', 'René Diehl', 'Martín Dubiansky', 'MPathy', 'Soelaas', 'Artist 9', 'Artist 10'].map((name, i) => (
-                <MotionDiv key={name} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5, delay: 0.1 * i }} className="flex flex-col items-center gap-4 w-28 md:w-36">
+              {[
+                { name: 'Monarke', file: 'Monarke.jpg' },
+                { name: 'Navid Kaya', file: 'Navid-Kaya.jpg' },
+                { name: 'Clawz SG', file: 'Clawz-SG.jpg' },
+                { name: 'Deviu', file: 'Deviu.jpg' },
+                { name: 'René Diehl', file: 'Rene-Diehl.jpg' },
+                { name: 'Martín Dubiansky', file: 'Martín-Dubiansky.jpg' },
+                { name: 'MPathy', file: 'MPathy.jpg' },
+                { name: 'Soelaas', file: 'Soelaas.jpg' },
+                { name: 'Nick Devon', file: 'Nick-Devon.jpg' },
+                { name: 'Seismal D', file: 'Seismal-D.jpg' },
+              ].map((artist, i) => (
+                <MotionDiv key={artist.name} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5, delay: 0.1 * i }} className="flex flex-col items-center gap-4 w-28 md:w-36">
                   <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border border-white/10 bg-white/5">
-                    <div className="w-full h-full bg-white/10 flex items-center justify-center text-white/20">
-                      <Users className="w-6 h-6" />
-                    </div>
+                    <Image src={`/Photo%20Artists/${artist.file}`} alt={artist.name} width={128} height={128} className="w-full h-full object-cover" />
                   </div>
-                  <h3 className="font-sans font-semibold text-base uppercase text-center tracking-wide">{name}</h3>
+                  <h3 className="font-sans font-semibold text-base uppercase text-center tracking-wide">{artist.name}</h3>
                 </MotionDiv>
               ))}
             </div>

@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import Link from "next/link";
-import { Play, ArrowUpRight, Loader2, Package, Music } from "lucide-react";
+import { Play, ArrowUpRight, Loader2 } from "lucide-react";
 import Image from "next/image";
 
 interface SoundProduct {

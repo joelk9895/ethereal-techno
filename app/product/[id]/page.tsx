@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Loader2, X, ShoppingCart, Play, Pause } from "lucide-react";
+import { Loader2, X, ShoppingCart, Play } from "lucide-react";
 import { getFileName } from "@/app/services/getFileName";
 import UrlAudioPlayer from "@/app/components/general/UrlAudioPlayer";
 
@@ -22,7 +22,7 @@ interface ProductData {
     tags: string[];
     specs: string[];
     defaultFullLoopId: string | null;
-    contents: any[];
+    contents: { id: string; contentType: string; contentName: string; soundGroup?: string; subGroup?: string; file?: { awsKey: string }; metadata?: { key?: string; bpm?: string } }[];
 }
 
 export default function ProductPage({ params }: { params: Promise<{ id: string }> }) {
@@ -34,7 +34,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
     const [artworkSignedUrl, setArtworkSignedUrl] = useState<string | null>(null);
     const [boxCoverSignedUrl, setBoxCoverSignedUrl] = useState<string | null>(null);
     const [trackUrls, setTrackUrls] = useState<Record<string, string>>({});
-    const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
+    const [relatedProducts, setRelatedProducts] = useState<ProductData[]>([]);
 
     const getPresignedUrl = async (key: string): Promise<string | null> => {
         try {
@@ -75,7 +75,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                     const soundsRes = await fetch('/api/sounds');
                     if (soundsRes.ok) {
                         const soundsData = await soundsRes.json();
-                        setRelatedProducts((soundsData.products || []).filter((p: any) => p.id !== data.id).slice(0, 4));
+                        setRelatedProducts((soundsData.products || []).filter((p: ProductData) => p.id !== data.id).slice(0, 4));
                     }
                 }
             } catch (error) {
@@ -87,7 +87,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
         fetchProduct();
     }, [params]);
 
-    const handleTrackPlay = async (track: any) => {
+    const handleTrackPlay = async (track: ProductData["contents"][number]) => {
         if (playingId === track.id) { setPlayingId(null); return; }
         if (!trackUrls[track.id] && track.file?.awsKey) {
             const url = await getPresignedUrl(track.file.awsKey);
@@ -416,7 +416,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                                 <Link href={`/product/${p.id}`} key={p.id} className="group">
                                     <div className="relative aspect-[4/5] bg-neutral-900 overflow-hidden mb-3 hover:scale-[1.03] transition-transform">
                                         {p.boxCoverUrl || p.artworkUrl ? (
-                                            <Image src={p.boxCoverUrl || p.artworkUrl} alt={p.title} fill className="object-cover" unoptimized />
+                                            <Image src={(p.boxCoverUrl || p.artworkUrl)!} alt={p.title} fill className="object-cover" unoptimized />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center">
                                                 <span className="text-neutral-700 text-xs uppercase tracking-widest">No Image</span>

@@ -19,8 +19,7 @@ import {
     Loader2,
     CheckSquare,
     Square,
-    Star,
-    CheckCircle2
+    Star
 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -36,7 +35,7 @@ interface ContentItem {
     soundGroup: string;
     subGroup: string | null;
     file?: { fileName: string, awsKey: string };
-    metadata?: any;
+    metadata?: Record<string, string | undefined>;
 }
 
 interface TreeNode {
@@ -435,7 +434,7 @@ export default function NewProductAdminPage() {
                                     <div className="p-12 text-center flex flex-col items-center justify-center">
                                         <FolderOpen className="w-12 h-12 text-white/10 mb-4" />
                                         <p className="text-white/40 text-sm font-mono uppercase tracking-widest">No tracks added yet</p>
-                                        <p className="text-white/20 text-xs mt-2">Click "Add Content" to browse imported files.</p>
+                                        <p className="text-white/20 text-xs mt-2">Click &quot;Add Content&quot; to browse imported files.</p>
                                     </div>
                                 ) : (
                                     tracks.map((track, idx) => (
@@ -612,12 +611,12 @@ function ContentSelectorModal({ onClose, onAdd }: { onClose: () => void, onAdd: 
                         const kitTypeFolder = "Construction Kits";
                         const pKitType = `root/${kitTypeFolder}`;
                         if (!newTree.children![kitTypeFolder]) newTree.children![kitTypeFolder] = { name: kitTypeFolder, path: pKitType, type: 'folder', children: {} };
-                        data.kits.forEach((kit: any) => {
+                        data.kits.forEach((kit: { id: string; kitName?: string; contents?: ContentItem[] }) => {
                             const kitName = kit.kitName || 'Unnamed Kit';
                             const pKit = `${pKitType}/${kit.id}`;
                             if (!newTree.children![kitTypeFolder].children![kitName]) newTree.children![kitTypeFolder].children![kitName] = { name: kitName, path: pKit, type: 'folder', children: {} };
                             const targetKitFolder = newTree.children![kitTypeFolder].children![kitName];
-                            kit.contents?.forEach((item: any) => {
+                            kit.contents?.forEach((item: ContentItem) => {
                                 const pFile = `${pKit}/${item.id}`;
                                 targetKitFolder.children![item.contentName] = { name: item.contentName, path: pFile, type: 'file', content: item };
                             });
@@ -676,7 +675,7 @@ function ContentSelectorModal({ onClose, onAdd }: { onClose: () => void, onAdd: 
 
     const handleImport = () => onAdd(getSelectedContent(tree));
 
-    const renderTree = (node: TreeNode, depth = 0) => {
+    const renderTree = (node: TreeNode, depth = 0): React.ReactNode => {
         if (node.name === 'Root') return Object.values(node.children || {}).map(child => renderTree(child, 0));
         const isExpanded = expandedPaths.has(node.path);
         const allChildPaths = getAllFilePaths(node);
@@ -690,7 +689,7 @@ function ContentSelectorModal({ onClose, onAdd }: { onClose: () => void, onAdd: 
                 <div 
                     className={`flex items-center gap-2 py-1.5 px-2 hover:bg-white/5 rounded cursor-pointer transition-colors ${node.type === 'file' ? 'text-white/80' : 'text-[#E8D124] font-bold'}`}
                     style={{ paddingLeft: `${depth * 1.5 + 0.5}rem` }}
-                    onClick={() => node.type === 'folder' ? toggleExpand(node.path) : toggleSelection(node, { stopPropagation: () => {} } as any)}
+                    onClick={() => node.type === 'folder' ? toggleExpand(node.path) : toggleSelection(node, { stopPropagation: () => {} } as React.MouseEvent)}
                 >
                     <div className="p-1 cursor-pointer hover:text-[#E8D124] transition-colors flex-shrink-0" onClick={(e) => toggleSelection(node, e)}>
                         {isAllSelected ? <CheckSquare className="w-4 h-4 text-[#E8D124]" /> : 

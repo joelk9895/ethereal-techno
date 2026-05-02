@@ -87,48 +87,25 @@ const fadeVar = {
     exit: { opacity: 0, y: -20, transition: { duration: 0.4 } }
 };
 
-interface SoundCloudTrackData {
-    thumbnail_url: string;
-    title: string;
-}
-
 const SoundCloudEmbed = ({ url }: { url: string }) => {
     const [isPlaying, setIsPlaying] = useState(false);
-    const [trackData, setTrackData] = useState<SoundCloudTrackData | null>(null);
-    const [error, setError] = useState(false);
 
-    useEffect(() => {
-        if (!url) return;
+    let finalUrl = url;
+    if (finalUrl && !finalUrl.startsWith("https://")) {
+        finalUrl = `https://${finalUrl}`;
+    }
 
-        let finalUrl = url;
-        if (!finalUrl.startsWith("https://")) {
-            finalUrl = `https://${finalUrl}`;
-        }
+    if (!finalUrl || !finalUrl.includes("soundcloud") || finalUrl.includes("/sets/")) return null;
 
-        if (!finalUrl.includes("soundcloud") || finalUrl.includes("/sets/")) {
-            setError(true);
-            return;
-        }
+    const cleanPath = finalUrl.split("?")[0].split("#")[0];
+    const trackName = cleanPath.split("/").pop()?.replace(/-/g, " ") || "SoundCloud Track";
 
-        fetch(`/api/soundcloud?url=${encodeURIComponent(finalUrl)}`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.thumbnail_url) {
-                    setTrackData(data);
-                } else {
-                    setError(true);
-                }
-            })
-            .catch(() => setError(true));
-    }, [url]);
+    const src = `https://w.soundcloud.com/player/?url=${encodeURIComponent(cleanPath)}&color=%23ff5500&auto_play=${isPlaying}&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false&visual=true`;
 
-    if (error || !url) return null;
-
-    if (isPlaying) {
-        const src = `https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}&color=%23ff5500&auto_play=true&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false&visual=true`;
-        return (
-            <div className="group space-y-3">
-                <div className="aspect-square w-full border border-white/5 bg-neutral-900 rounded-xl overflow-hidden">
+    return (
+        <div className="group space-y-3">
+            <div className="aspect-square w-full border border-white/5 bg-neutral-900 rounded-xl overflow-hidden">
+                {isPlaying ? (
                     <iframe
                         width="100%"
                         height="100%"
@@ -137,48 +114,29 @@ const SoundCloudEmbed = ({ url }: { url: string }) => {
                         allow="autoplay"
                         src={src}
                     />
-                </div>
-                {trackData?.title && (
-                    <div className="px-1">
-                        <p className="text-white/70 text-xs font-medium line-clamp-2 leading-snug tracking-wide">
-                            {trackData.title}
-                        </p>
-                    </div>
-                )}
-            </div>
-        );
-    }
-
-    return (
-        <div className="group space-y-3 cursor-pointer" onClick={() => setIsPlaying(true)}>
-            <div className="relative aspect-square w-full border border-white/5 bg-neutral-900 rounded-xl overflow-hidden">
-                {trackData?.thumbnail_url ? (
-                    <Image
-                        src={trackData.thumbnail_url}
-                        alt={trackData.title || "SoundCloud Track"}
-                        fill
-                        className="object-cover transition-transform duration-700 group-hover:scale-110 opacity-80 group-hover:opacity-100"
-                    />
                 ) : (
-                    <div className="absolute inset-0 flex items-center justify-center text-white/20">
-                        <Music size={48} />
+                    <div className="relative w-full h-full cursor-pointer" onClick={() => setIsPlaying(true)}>
+                        <iframe
+                            width="100%"
+                            height="100%"
+                            scrolling="no"
+                            frameBorder="no"
+                            src={src}
+                            className="pointer-events-none"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/50 transition-colors">
+                            <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white group-hover:scale-110 transition-transform duration-300 border border-white/20">
+                                <Play size={32} fill="currentColor" className="ml-1" />
+                            </div>
+                        </div>
                     </div>
                 )}
-
-                <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">
-                    <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white group-hover:scale-110 transition-transform duration-300 border border-white/20">
-                        <Play size={32} fill="currentColor" className="ml-1" />
-                    </div>
-                </div>
             </div>
-
-            {trackData?.title && (
-                <div className="px-1">
-                    <p className="text-white/70 group-hover:text-white transition-colors text-xs font-medium line-clamp-2 leading-snug tracking-wide">
-                        {trackData.title}
-                    </p>
-                </div>
-            )}
+            <div className="px-1">
+                <p className="text-white/70 text-xs font-medium line-clamp-2 leading-snug tracking-wide capitalize">
+                    {trackName}
+                </p>
+            </div>
         </div>
     );
 };

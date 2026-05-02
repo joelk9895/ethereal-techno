@@ -103,8 +103,8 @@ export default function Navbar() {
             onClick={() => setMenuOpen(false)}
             className="font-main text-2xl uppercase tracking-wider text-white relative z-[110] drop-shadow-md"
           >
-            <div className="w-36 sm:w-52">
-              <Image src="/logo.svg" alt="Logo" width={300} height={300} className="w-full h-auto" />
+            <div className="h-48 sm:h-12 w-auto">
+              <Image src="/logo.svg" alt="Logo" width={300} height={300} className="w-auto h-full" />
             </div>
           </Link>
 
@@ -113,7 +113,7 @@ export default function Navbar() {
               !pathname.startsWith("/dashboard") && !pathname.startsWith("/admin") && (
                 <Link
                   href={dashboardHref}
-                  className="flex items-center gap-2 px-4 py-2 rounded-full border border-primary/30 bg-primary/10 text-primary text-xs font-sans uppercase tracking-widest font-semibold hover:bg-primary/20 hover:border-primary/50 transition-all duration-300"
+                  className="flex items-center gap-2 px-6 py-3 rounded-full border border-primary/30 bg-primary/10 text-primary text-xs font-sans uppercase tracking-widest font-semibold hover:bg-primary/20 hover:border-primary/50 transition-all duration-300"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="9" x="3" y="3" rx="1" /><rect width="7" height="5" x="14" y="3" rx="1" /><rect width="7" height="9" x="14" y="12" rx="1" /><rect width="7" height="5" x="3" y="16" rx="1" /></svg>
                   <span className="hidden sm:inline">Dashboard</span>
@@ -122,7 +122,7 @@ export default function Navbar() {
             ) : (
               <Link
                 href="/signin"
-                className="px-4 py-2 rounded-full border border-white/20 text-white text-xs font-sans uppercase tracking-widest font-semibold hover:bg-white/10 hover:border-white/40 transition-all duration-300"
+                className="px-6 py-3 rounded-full border border-white/20 text-white text-xs font-sans uppercase tracking-widest font-semibold hover:bg-white/10 hover:border-white/40 transition-all duration-300"
               >
                 Login
               </Link>
