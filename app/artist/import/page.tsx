@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
-import { getAuthUser } from "@/lib/auth";
+import { getAuthUser, authenticatedFetch } from "@/lib/auth";
 import Layout from "@/components/Layout";
 import UploadProgressModal from "@/app/components/import/uploadProgressBar";
 import {
@@ -235,13 +235,12 @@ export default function ImportPage() {
           key: selectedKey || "C",
         };
 
-        const response = await fetch(
+        const response = await authenticatedFetch(
           `${process.env.NEXT_PUBLIC_API_BASE_URL}/import/constructionKit`,
           {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
             },
             body: JSON.stringify(constructionKitData),
           }
@@ -304,14 +303,13 @@ export default function ImportPage() {
           fileType = "application/octet-stream";
         }
 
-        const uploadUrlResponse = await fetch(
+        const uploadUrlResponse = await authenticatedFetch(
           `${process.env.NEXT_PUBLIC_API_BASE_URL}/import/upload`,
           {
             method: "POST",
             body: JSON.stringify({ fileName: file.name, fileType }),
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
             },
           }
         );
@@ -369,14 +367,11 @@ export default function ImportPage() {
       formData.append("processing", JSON.stringify(selectedProcessing));
       formData.append("soundDesign", JSON.stringify(selectedSoundDesign));
 
-      const response = await fetch(
+      const response = await authenticatedFetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/import`,
         {
           method: "POST",
           body: formData,
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-          },
         }
       );
 

@@ -13,7 +13,8 @@ import {
   Activity,
   ArrowUpRight,
   Loader2,
-  Settings
+  Settings,
+  Package
 } from "lucide-react";
 import { motion, Variants } from "framer-motion";
 import Link from "next/link";
@@ -183,6 +184,12 @@ export default function AdminDashboardPage() {
                 description="Manage approved producers"
                 href="/admin/producers"
                 icon={Shield}
+              />
+              <ActionCard
+                title="Product Maker"
+                description="Create new products for the shop"
+                href="/admin/products/new"
+                icon={Package}
               />
             </div>
           </div>

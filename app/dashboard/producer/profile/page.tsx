@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { User, Camera, Save, Loader2, Link2, ExternalLink, Globe, MapPin, Edit2, Instagram, Facebook, Youtube, Mail, Trash2, CheckSquare, Square, Music, Lock, KeyRound, ChevronRight, Play } from "lucide-react";
+import { User, Camera, Save, Loader2, Link2, ExternalLink, Globe, MapPin, Edit2, Instagram, Facebook, Youtube, Mail, Trash2, CheckSquare, Square, Music, Lock, KeyRound, ChevronRight, Play, Check } from "lucide-react";
 import { authenticatedFetch, logout } from "@/lib/auth";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -196,8 +196,10 @@ const InputRow: React.FC<{
     last?: boolean,
     isEditing: boolean,
     error?: string | null,
-    onBlur?: () => void
-}> = ({ label, value, onChange, placeholder, icon, last, isEditing, error, onBlur }) => (
+    onBlur?: () => void,
+    verifying?: boolean,
+    verifiedData?: { title: string | null } | null
+}> = ({ label, value, onChange, placeholder, icon, last, isEditing, error, onBlur, verifying: isVerifying, verifiedData }) => (
     <div className={`flex items-center gap-4 py-4 px-4 bg-white/5 transition-colors ${!last ? 'border-b border-white/5' : ''}`}>
         <div className="w-8 flex items-center justify-center text-white/40">
             {icon || <Link2 className="w-5 h-5" />}
@@ -208,17 +210,32 @@ const InputRow: React.FC<{
             </label>
             {isEditing ? (
                 <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }}>
-                    <input
-                        type="text"
-                        value={value || ""}
-                        onChange={(e) => onChange(e.target.value)}
-                        onBlur={onBlur}
-                        placeholder={placeholder}
-                        className={`w-full bg-black/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 placeholder:text-white/20 transition-all font-medium border ${error ? 'border-red-500/50 focus:ring-red-500/50' : 'border-white/5 focus:ring-primary/50 focus:border-white/10'
-                            }`}
-                    />
+                    <div className="relative">
+                        <input
+                            type="text"
+                            value={value || ""}
+                            onChange={(e) => onChange(e.target.value)}
+                            onBlur={onBlur}
+                            placeholder={placeholder}
+                            className={`w-full bg-black/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 placeholder:text-white/20 transition-all font-medium border pr-8 ${error ? 'border-red-500/50 focus:ring-red-500/50' : verifiedData ? 'border-emerald-500/30 focus:ring-emerald-500/50' : 'border-white/5 focus:ring-primary/50 focus:border-white/10'
+                                }`}
+                        />
+                        {isVerifying && (
+                            <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
+                                <Loader2 className="w-3.5 h-3.5 text-white/40 animate-spin" />
+                            </div>
+                        )}
+                        {verifiedData && !isVerifying && (
+                            <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
+                                <Check className="w-3.5 h-3.5 text-emerald-400" />
+                            </div>
+                        )}
+                    </div>
                     {error && (
                         <p className="text-red-400 text-[10px] font-mono mt-1 tracking-wide">{error}</p>
+                    )}
+                    {verifiedData?.title && !error && (
+                        <p className="text-emerald-400/70 text-[10px] font-mono mt-1 tracking-wide">{verifiedData.title}</p>
                     )}
                 </motion.div>
             ) : (
@@ -238,6 +255,9 @@ export default function ProducerProfilePage() {
     const [saving, setSaving] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+    const [verifying, setVerifying] = useState<Record<string, boolean>>({});
+    const [verifiedLinks, setVerifiedLinks] = useState<Record<string, { title: string | null }>>({});
+    const validationTimeouts = useRef<Record<string, NodeJS.Timeout>>({});
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -307,63 +327,142 @@ export default function ProducerProfilePage() {
         }
     };
 
+    const LINK_FIELDS = ['instagram', 'tiktok', 'facebook', 'youtube', 'x', 'linktree',
+        'spotify', 'soundcloud', 'beatport', 'bandcamp', 'appleMusic',
+        'track1', 'track2', 'track3'];
+
     const validateLinkField = (field: string, value: string): string | null => {
         if (!value || !value.trim()) return null;
+
+        let isValid = true;
+        let customError = "";
+
         switch (field) {
-            case 'instagram':
-                if (!value.includes('instagram.com/')) return 'Expected: instagram.com/yourprofile';
-                break;
-            case 'tiktok':
-                if (!value.includes('tiktok.com/@')) return 'Expected: tiktok.com/@yourprofile';
-                break;
-            case 'facebook':
-                if (!value.includes('facebook.com/')) return 'Expected: facebook.com/yourpage';
-                break;
-            case 'youtube':
-                if (!value.includes('youtube.com/@')) return 'Expected: youtube.com/@yourchannel';
-                break;
-            case 'x':
-                if (!value.includes('x.com/')) return 'Expected: x.com/yourprofile';
-                break;
-            case 'linktree':
-                if (!value.includes('.')) return 'Expected: a valid URL (yourwebsite.com)';
-                break;
-            case 'spotify':
-                if (!value.includes('spotify.com/')) return 'Expected: open.spotify.com/artist/...';
-                break;
-            case 'soundcloud':
-                if (!value.includes('soundcloud.com/')) return 'Expected: soundcloud.com/yourprofile';
-                break;
-            case 'beatport':
-                if (!value.includes('beatport.com/artist/')) return 'Expected: beatport.com/artist/yourname';
-                break;
-            case 'bandcamp':
-                if (!value.includes('.bandcamp.com')) return 'Expected: yourname.bandcamp.com';
-                break;
-            case 'appleMusic':
-                if (!value.includes('music.apple.com/') || !value.includes('/artist/')) return 'Expected: music.apple.com/.../artist/...';
-                break;
+            case 'instagram': isValid = value.includes('instagram.com/'); break;
+            case 'tiktok': isValid = value.includes('tiktok.com/@'); break;
+            case 'facebook': isValid = value.includes('facebook.com/'); break;
+            case 'youtube': isValid = value.includes('youtube.com/') || value.includes('music.youtube.com/'); break;
+            case 'x': isValid = value.includes('x.com/'); break;
+            case 'linktree': isValid = value.includes('.'); break;
+            case 'spotify': isValid = value.includes('spotify.com/'); break;
+            case 'soundcloud': isValid = value.includes('soundcloud.com/'); break;
+            case 'beatport': isValid = value.includes('beatport.com/artist/'); break;
+            case 'bandcamp': isValid = value.includes('.bandcamp.com'); break;
+            case 'appleMusic': isValid = value.includes('music.apple.com/') && value.includes('/artist/'); break;
             case 'track1':
             case 'track2':
             case 'track3':
-                if (!value.includes('soundcloud.com/')) return 'Only SoundCloud track links are accepted.';
-                if (value.includes('/sets/')) return 'Individual tracks only. Playlists/sets not accepted.';
+                if (!value.includes('soundcloud.com/')) {
+                    isValid = false;
+                    customError = 'For consistency, we accept SoundCloud links only.';
+                } else if (value.includes('/sets/')) {
+                    isValid = false;
+                    customError = 'Individual tracks only. Playlists/sets not accepted.';
+                }
                 break;
+        }
+
+        if (!isValid) {
+            if (field === 'youtube') return 'Invalid Link.';
+            return customError || `Invalid format. Expected: ${getPlaceholder(field)}`;
         }
         return null;
     };
 
-    const handleFieldBlur = (field: string, value: string | null | undefined) => {
+    const getPlaceholder = (field: string): string => {
+        switch (field) {
+            case 'instagram': return 'instagram.com/yourprofile';
+            case 'tiktok': return 'tiktok.com/@yourprofile';
+            case 'facebook': return 'facebook.com/yourprofile';
+            case 'youtube': return 'youtube.com/@yourchannel or music.youtube.com/...';
+            case 'x': return 'x.com/yourprofile';
+            case 'linktree': return 'yourwebsite.com';
+            case 'spotify': return 'open.spotify.com/artist/...';
+            case 'soundcloud': return 'soundcloud.com/yourprofile';
+            case 'beatport': return 'beatport.com/artist/yourname';
+            case 'bandcamp': return 'yourname.bandcamp.com';
+            case 'appleMusic': return 'music.apple.com/artist/yourname';
+            default: return '';
+        }
+    };
+
+    const handleProfileFieldChange = (field: keyof ProfileFormData, value: string) => {
+        setProfileForm(prev => ({ ...prev, [field]: value }));
+
+        // Clear verified status when value changes
+        if (verifiedLinks[field]) {
+            setVerifiedLinks(prev => {
+                const n = { ...prev };
+                delete n[field];
+                return n;
+            });
+        }
+
+        // Debounced validation for link fields
+        if (LINK_FIELDS.includes(field)) {
+            if (validationTimeouts.current[field]) {
+                clearTimeout(validationTimeouts.current[field]);
+            }
+            validationTimeouts.current[field] = setTimeout(() => {
+                const err = validateLinkField(field, value);
+                if (err) {
+                    setFieldErrors(prev => ({ ...prev, [field]: err }));
+                } else {
+                    setFieldErrors(prev => {
+                        const n = { ...prev };
+                        delete n[field];
+                        return n;
+                    });
+                }
+            }, 800);
+        }
+    };
+
+    const handleFieldBlur = async (field: string, value: string | null | undefined) => {
         const v = value?.trim() || '';
         if (!v) {
             setFieldErrors(prev => { const n = { ...prev }; delete n[field]; return n; });
+            setVerifiedLinks(prev => { const n = { ...prev }; delete n[field]; return n; });
             return;
         }
+
+        // Run format validation first
         const err = validateLinkField(field, v);
         if (err) {
             setFieldErrors(prev => ({ ...prev, [field]: err }));
+            return;
         } else {
             setFieldErrors(prev => { const n = { ...prev }; delete n[field]; return n; });
+        }
+
+        // Only verify URL for platform links (not tracks)
+        if (!['instagram', 'tiktok', 'facebook', 'youtube', 'x', 'linktree', 'spotify', 'soundcloud', 'beatport', 'bandcamp', 'appleMusic'].includes(field)) return;
+
+        // Server-side URL verification
+        setVerifying(prev => ({ ...prev, [field]: true }));
+        try {
+            let urlToVerify = v;
+            if (!urlToVerify.startsWith('http')) {
+                urlToVerify = `https://${urlToVerify}`;
+            }
+
+            const response = await fetch('/api/verify-url', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: urlToVerify })
+            });
+
+            const data = await response.json();
+
+            if (data.valid) {
+                setVerifiedLinks(prev => ({ ...prev, [field]: { title: data.title } }));
+            } else {
+                setFieldErrors(prev => ({ ...prev, [field]: 'Link is unreachable or invalid.' }));
+            }
+        } catch (error) {
+            console.error('Verification failed', error);
+        } finally {
+            setVerifying(prev => ({ ...prev, [field]: false }));
         }
     };
 

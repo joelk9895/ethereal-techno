@@ -7,8 +7,12 @@ export async function GET(
 ) {
   const { id } = await params;
   try {
-    const constructionKit = await prisma.constructionkit.findUnique({
-      where: { id },
+    // Look up by kitName first (the [id] param is the UUID stored as kitName),
+    // then fall back to actual id for backward compatibility
+    const constructionKit = await prisma.constructionkit.findFirst({
+      where: {
+        OR: [{ kitName: id }, { id }],
+      },
       select: {
         id: true,
         kitName: true,
@@ -68,8 +72,10 @@ export async function POST(
 
   try {
     return await prisma.$transaction(async (tx) => {
-      const constructionKit = await tx.constructionkit.findUnique({
-        where: { id },
+      const constructionKit = await tx.constructionkit.findFirst({
+        where: {
+          OR: [{ kitName: id }, { id }],
+        },
       });
 
       if (!constructionKit) {

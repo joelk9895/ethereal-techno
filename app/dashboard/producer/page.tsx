@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import Loading from "@/app/components/general/loading";
 import NewsFeed from "./components/NewsFeed";
 import ProducerList from "./components/ProducerList";
-import { MessageCircle, Trophy, Shield, Unlock, ShoppingBag, ArrowUpRight, Loader2 } from "lucide-react";
+import { MessageCircle, Trophy, Shield, Unlock, ShoppingBag, ArrowUpRight, Loader2, Pencil } from "lucide-react";
 import Link from "next/link";
 
 interface ProducerData {
@@ -110,6 +110,14 @@ export default function ProducerOverviewPage() {
                 <h2 className="font-main text-6xl md:text-8xl uppercase text-white tracking-tight">
                     {greeting}, <span className="text-white/40">{producer?.artistName || producer?.name || "Producer"}</span>.
                 </h2>
+                <div className="flex items-center gap-4 mt-2">
+                    <Link href="/dashboard/producer/profile">
+                        <button className="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white text-[10px] font-bold uppercase tracking-widest px-5 py-3 rounded-full transition-colors border border-white/10 hover:border-white/20">
+                            <Pencil className="w-3.5 h-3.5" />
+                            Edit Profile
+                        </button>
+                    </Link>
+                </div>
             </div>
 
             {/* News Feed */}

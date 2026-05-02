@@ -1,7 +1,30 @@
 import prisma from "@/app/lib/database";
 import { NextResponse, NextRequest } from "next/server";
+import jwt from "jsonwebtoken";
+
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
+
+interface JWTPayload {
+  userId: string;
+  iat?: number;
+  exp?: number;
+}
 
 export async function POST(req: NextRequest) {
+  // Authenticate user
+  const authHeader = req.headers.get("authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const token = authHeader.substring(7);
+
+  try {
+    jwt.verify(token, JWT_SECRET) as JWTPayload;
+  } catch {
+    return NextResponse.json({ error: "Invalid or expired token" }, { status: 401 });
+  }
+
   const body = await req.json();
 
   const { id, kitName, description, styles, moods, bpm, key } = body;
@@ -21,58 +44,52 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // Check if metadata already exists
-    const existingMetadata = await prisma.metadata.findUnique({
+    // At this stage, we only persist the metadata.
+    // The actual constructionkit record is created by POST /api/import/constructionKit/[id]
+    // once files have been uploaded and a defaultFullLoop content exists.
+    const metadata = await prisma.metadata.upsert({
       where: { id },
+      update: {
+        bpm: bpm || "120",
+        key: key || "C",
+        styles: styles || [],
+        moods: moods || [],
+      },
+      create: {
+        id,
+        bpm: bpm || "120",
+        key: key || "C",
+        styles: styles || [],
+        moods: moods || [],
+      },
     });
 
-    let newKit;
+    // If a constructionkit already exists (e.g. re-saving metadata), update it
+    const existingKit = await prisma.constructionkit.findFirst({
+      where: { OR: [{ id }, { kitName: id }] },
+    });
 
-    if (existingMetadata) {
-      // If metadata exists, update both the construction kit and metadata
-      newKit = await prisma.constructionkit.update({
-        where: { id },
+    if (existingKit) {
+      const updatedKit = await prisma.constructionkit.update({
+        where: { id: existingKit.id },
         data: {
           kitName,
           description,
-          metadata: {
-            update: {
-              bpm: bpm || "120",
-              key: key || "C",
-              styles: styles || [],
-              moods: moods || [],
-            },
-          },
         },
-        include: {
-          metadata: true,
-        },
+        include: { metadata: true },
       });
-    } else {
-      newKit = await prisma.constructionkit.update({
-        where: { id },
-        data: {
-          kitName,
-          description,
-          metadata: {
-            create: {
-              id: id,
-              bpm: bpm || "120",
-              key: key || "C",
-              styles: styles || [],
-              moods: moods || [],
-            },
-          },
-        },
-        include: {
-          metadata: true,
-        },
-      });
+      return NextResponse.json(updatedKit);
     }
 
-    return NextResponse.json(newKit);
+    // Return the metadata + kitName so the client knows the save succeeded
+    return NextResponse.json({
+      id,
+      kitName,
+      description,
+      metadata,
+    });
   } catch (error) {
-    console.error("Error updating construction kit:", error);
+    console.error("Error creating/updating construction kit:", error);
     return NextResponse.json(
       {
         error: "Server error",

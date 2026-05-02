@@ -89,7 +89,7 @@ export default function ProducerLayout({ children }: { children: React.ReactNode
                 router.push("/dashboard/producer");
                 break;
             case "profile":
-                router.push("/dashboard/producer/profile");
+                router.push(`/artist/${producer?.username}`);
                 break;
             case "billing":
                 router.push("/dashboard/producer/billing");

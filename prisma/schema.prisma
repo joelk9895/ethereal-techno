@@ -38,6 +38,8 @@ model Content {
   usedAsDefaultIn Constructionkit[] @relation("DefaultFullLoop")
 
   orderItems OrderItem[]
+  productIds String[]
+  products   Product[]     @relation("ProductContents", fields: [productIds], references: [id])
 }
 
 model Loopandmidi {
@@ -192,6 +194,7 @@ model User {
   telegramConnectionToken String?
   profileViews            Int     @default(0)
   messageClicks           Int     @default(0)
+  products                Product[]
 }
 
 model Session {
@@ -335,4 +338,34 @@ model Message {
 
   @@index([senderId])
   @@index([receiverId])
+}
+
+model Product {
+  id                String        @id @default(uuid()) @map("_id")
+  title             String
+  subtitle          String?
+  description       String?
+  price             Float         @default(0)
+  artworkUrl        String?
+  artworkKey        String?
+  boxCoverUrl       String?
+  boxCoverKey       String?
+  demoAudioUrls    String[]
+  demoAudioKeys    String[]
+  demoAudioNames   String[]
+  tags              String[]
+  specs             String[]
+  status            ContentStatus @default(PENDING)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  userId            String?       @db.ObjectId
+  user              User?         @relation(fields: [userId], references: [id])
+
+  isEssential       Boolean       @default(false)
+
+  contentIds        String[]
+  contents          Content[]     @relation("ProductContents", fields: [contentIds], references: [id])
+  
+  defaultFullLoopId String?
 }

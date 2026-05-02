@@ -9,7 +9,6 @@ const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@etherealtechno.com";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 const LOGO_URL = "https://ethereal-misc.s3.eu-west-1.amazonaws.com/Ethereal-Techno-Logo.png";
 
-// ─── Types ───────────────────────────────────────────
 
 interface SendEmailParams {
   to: string | string[];
@@ -31,7 +30,6 @@ interface EmailContent {
   tags?: string[];
 }
 
-// ─── Core: Send Email ────────────────────────────────
 
 export async function sendEmail({ to, subject, htmlContent, tags, sender }: SendEmailParams) {
   const apiKey = BREVO_API_KEY();
@@ -47,6 +45,8 @@ export async function sendEmail({ to, subject, htmlContent, tags, sender }: Send
   try {
     const res = await fetch(`${PROXY_BASE}/v3/smtp/email`, {
       method: "POST",
+      cache: "no-store",
+      keepalive: true,
       headers: {
         "api-key": apiKey,
         "X-Proxy-Token": proxyToken,
@@ -157,6 +157,8 @@ export async function addOrUpdateContact({ email, listIds = [], attributes = {} 
   try {
     const res = await fetch(`${PROXY_BASE}/v3/contacts`, {
       method: "POST",
+      cache: "no-store",
+      keepalive: true,
       headers: {
         "api-key": apiKey,
         "X-Proxy-Token": proxyToken,
