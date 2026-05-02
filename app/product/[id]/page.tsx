@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Play, Pause, Loader2, X, ShoppingCart } from "lucide-react";
+import { Loader2, X, ShoppingCart, Play, Pause } from "lucide-react";
 import { getFileName } from "@/app/services/getFileName";
+import UrlAudioPlayer from "@/app/components/general/UrlAudioPlayer";
 
 interface ProductData {
     id: string;
@@ -22,189 +23,6 @@ interface ProductData {
     specs: string[];
     defaultFullLoopId: string | null;
     contents: any[];
-}
-
-// --- Waveform Component (big, for demos) ---
-function Waveform({ audioUrl, label, isActive, onPlay, onPause }: {
-    audioUrl: string | null;
-    label: string;
-    isActive: boolean;
-    onPlay: () => void;
-    onPause: () => void;
-}) {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const containerRef = useRef<HTMLDivElement>(null);
-    const audioRef = useRef<HTMLAudioElement | null>(null);
-    const animFrameRef = useRef<number>(0);
-    const [waveformData, setWaveformData] = useState<number[]>([]);
-    const [progress, setProgress] = useState(0);
-    const [isLoading, setIsLoading] = useState(false);
-
-    useEffect(() => {
-        if (!audioUrl) return;
-        setIsLoading(true);
-
-        const audio = new Audio(audioUrl);
-        audio.crossOrigin = "anonymous";
-        audioRef.current = audio;
-
-        const audioContext = new AudioContext();
-        fetch(audioUrl)
-            .then(res => res.arrayBuffer())
-            .then(buffer => audioContext.decodeAudioData(buffer))
-            .then(audioBuffer => {
-                const rawData = audioBuffer.getChannelData(0);
-                const samples = 120;
-                const blockSize = Math.floor(rawData.length / samples);
-                const filteredData: number[] = [];
-                for (let i = 0; i < samples; i++) {
-                    let sum = 0;
-                    for (let j = 0; j < blockSize; j++) {
-                        sum += Math.abs(rawData[i * blockSize + j]);
-                    }
-                    filteredData.push(sum / blockSize);
-                }
-                const maxVal = Math.max(...filteredData);
-                setWaveformData(filteredData.map(v => v / maxVal));
-                setIsLoading(false);
-                audioContext.close();
-            })
-            .catch(() => {
-                setWaveformData(Array.from({ length: 120 }, () => Math.random() * 0.7 + 0.3));
-                setIsLoading(false);
-            });
-
-        return () => {
-            audio.pause();
-            audio.src = "";
-            audioContext.close().catch(() => { });
-        };
-    }, [audioUrl]);
-
-    useEffect(() => {
-        const audio = audioRef.current;
-        if (!audio || !audioUrl) return;
-        if (isActive) {
-            audio.play().catch(() => { });
-            const update = () => {
-                if (audio.duration) setProgress(audio.currentTime / audio.duration);
-                animFrameRef.current = requestAnimationFrame(update);
-            };
-            update();
-        } else {
-            audio.pause();
-            cancelAnimationFrame(animFrameRef.current);
-        }
-        return () => cancelAnimationFrame(animFrameRef.current);
-    }, [isActive, audioUrl]);
-
-    useEffect(() => {
-        const canvas = canvasRef.current;
-        const container = containerRef.current;
-        if (!canvas || !container || waveformData.length === 0) return;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return;
-
-        const dpr = window.devicePixelRatio || 1;
-        const rect = container.getBoundingClientRect();
-        canvas.width = rect.width * dpr;
-        canvas.height = rect.height * dpr;
-        canvas.style.width = `${rect.width}px`;
-        canvas.style.height = `${rect.height}px`;
-        ctx.scale(dpr, dpr);
-
-        const width = rect.width;
-        const height = rect.height;
-        const barWidth = width / waveformData.length;
-        const barGap = 1.5;
-
-        ctx.clearRect(0, 0, width, height);
-        waveformData.forEach((value, index) => {
-            const barHeight = value * height * 0.9;
-            const x = index * barWidth;
-            const y = (height - barHeight) / 2;
-            const isPlayed = index / waveformData.length <= progress;
-            ctx.fillStyle = isPlayed ? "#eab308" : "#a89d85";
-            ctx.fillRect(x, y, barWidth - barGap, barHeight);
-        });
-    }, [waveformData, progress]);
-
-    const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-        const container = containerRef.current;
-        const audio = audioRef.current;
-        if (!container || !audio || !audio.duration) return;
-        const rect = container.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const position = Math.max(0, Math.min(1, x / rect.width));
-        audio.currentTime = position * audio.duration;
-        setProgress(position);
-    };
-
-    return (
-        <div className="bg-black border border-neutral-900 rounded-sm px-6 py-5">
-            <div className="flex items-center gap-4">
-                <button
-                    onClick={() => isActive ? onPause() : onPlay()}
-                    className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 bg-transparent border border-neutral-700 text-neutral-400 hover:text-white hover:border-neutral-500 transition-all"
-                >
-                    {isActive ? <Pause className="w-3 h-3" fill="currentColor" /> : <Play className="w-3 h-3 ml-0.5" fill="currentColor" />}
-                </button>
-
-                <div className="flex-1 min-w-0">
-                    {isLoading ? (
-                        <div className="h-12 flex items-center"><Loader2 className="w-4 h-4 text-yellow-500 animate-spin" /></div>
-                    ) : (
-                        <div ref={containerRef} className="h-12 cursor-pointer" onClick={handleClick}>
-                            <canvas ref={canvasRef} className="w-full h-full" />
-                        </div>
-                    )}
-                </div>
-            </div>
-            <p className="text-center text-[11px] text-neutral-500 mt-2">{label}</p>
-        </div>
-    );
-}
-
-// --- Track Row Waveform (inline, smaller) ---
-function TrackRowWaveform({ isActive, audioUrl }: { isActive: boolean; audioUrl?: string }) {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const containerRef = useRef<HTMLDivElement>(null);
-    const [data] = useState<number[]>(() => Array.from({ length: 60 }, () => Math.random() * 0.6 + 0.2));
-
-    useEffect(() => {
-        const canvas = canvasRef.current;
-        const container = containerRef.current;
-        if (!canvas || !container) return;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return;
-
-        const dpr = window.devicePixelRatio || 1;
-        const rect = container.getBoundingClientRect();
-        canvas.width = rect.width * dpr;
-        canvas.height = rect.height * dpr;
-        canvas.style.width = `${rect.width}px`;
-        canvas.style.height = `${rect.height}px`;
-        ctx.scale(dpr, dpr);
-
-        const width = rect.width;
-        const height = rect.height;
-        const barWidth = width / data.length;
-
-        ctx.clearRect(0, 0, width, height);
-        data.forEach((value, index) => {
-            const barHeight = value * height * 0.8;
-            const x = index * barWidth;
-            const y = (height - barHeight) / 2;
-            ctx.fillStyle = isActive ? "#eab308" : "#6b6257";
-            ctx.fillRect(x, y, barWidth - 1, barHeight);
-        });
-    }, [data, isActive]);
-
-    return (
-        <div ref={containerRef} className="w-full h-5">
-            <canvas ref={canvasRef} className="w-full h-full" />
-        </div>
-    );
 }
 
 export default function ProductPage({ params }: { params: Promise<{ id: string }> }) {
@@ -388,13 +206,15 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                         </h2>
                         <div className="space-y-5">
                             {demoUrls.map((demo) => (
-                                <Waveform
+                                <UrlAudioPlayer
                                     key={demo.key}
-                                    audioUrl={demo.url}
+                                    url={demo.url}
                                     label={demo.name || "Demos of Included Vocal Samples"}
+                                    variant="demo"
                                     isActive={playingId === `demo-${demo.key}`}
-                                    onPlay={() => setPlayingId(`demo-${demo.key}`)}
-                                    onPause={() => setPlayingId(null)}
+                                    onPlayStateChange={(playing) =>
+                                        setPlayingId(playing ? `demo-${demo.key}` : null)
+                                    }
                                 />
                             ))}
                         </div>
@@ -462,30 +282,31 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                                         name: track.contentName || "Unknown"
                                     });
                                     const tagList = [track.soundGroup, track.subGroup, track.contentType].filter(Boolean);
+                                    const trackUrl = trackUrls[track.id];
 
                                     return (
                                         <div
                                             key={track.id}
-                                            onClick={() => handleTrackPlay(track)}
-                                            className={`grid grid-cols-[40px_minmax(0,1.5fr)_minmax(0,1fr)_50px_50px_50px] gap-3 px-2 py-2.5 items-center cursor-pointer transition-all border-b border-neutral-900 ${isActive ? "bg-yellow-500/10 border-l-2 border-l-yellow-500" : "hover:bg-neutral-900/60"
+                                            className={`grid grid-cols-[40px_minmax(0,1.5fr)_minmax(0,1fr)_50px_50px_50px] gap-3 px-2 py-2.5 items-center transition-all border-b border-neutral-900 ${isActive ? "bg-yellow-500/10 border-l-2 border-l-yellow-500" : "hover:bg-neutral-900/60"
                                                 }`}
                                         >
                                             {/* Pack thumbnail */}
-                                            <div className="relative w-8 h-8 shrink-0">
+                                            <div
+                                                onClick={() => handleTrackPlay(track)}
+                                                className="relative w-8 h-8 shrink-0 cursor-pointer"
+                                            >
                                                 {boxImage ? (
                                                     <Image src={boxImage} alt="pack" fill className="object-cover rounded-sm" unoptimized />
                                                 ) : (
                                                     <div className="w-full h-full bg-neutral-800 rounded-sm" />
                                                 )}
-                                                {isActive && (
-                                                    <div className="absolute inset-0 bg-yellow-500 rounded-sm flex items-center justify-center">
-                                                        <Pause className="w-3 h-3 text-black" fill="currentColor" />
-                                                    </div>
-                                                )}
                                             </div>
 
                                             {/* Filename + tags */}
-                                            <div className="min-w-0">
+                                            <div
+                                                onClick={() => handleTrackPlay(track)}
+                                                className="min-w-0 cursor-pointer"
+                                            >
                                                 <p className={`text-[11px] truncate ${isActive ? "text-yellow-500" : "text-neutral-300"}`}>
                                                     {fileName}
                                                 </p>
@@ -498,13 +319,32 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                                                 )}
                                             </div>
 
-                                            {/* Waveform */}
-                                            <TrackRowWaveform isActive={isActive} />
+                                            {/* Waveform player (loads on first play) */}
+                                            <div className="min-w-0">
+                                                {trackUrl ? (
+                                                    <UrlAudioPlayer
+                                                        url={trackUrl}
+                                                        variant="row"
+                                                        isActive={isActive}
+                                                        onPlayStateChange={(playing) =>
+                                                            setPlayingId(playing ? track.id : null)
+                                                        }
+                                                    />
+                                                ) : (
+                                                    <button
+                                                        onClick={() => handleTrackPlay(track)}
+                                                        className="flex items-center gap-3 w-full"
+                                                    >
+                                                        <span className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 bg-neutral-800 text-neutral-400 hover:bg-neutral-700">
+                                                            <Play className="w-3 h-3 ml-0.5" fill="currentColor" />
+                                                        </span>
+                                                        <span className="flex-1 h-[1px] bg-neutral-800" />
+                                                    </button>
+                                                )}
+                                            </div>
 
                                             {/* Time */}
-                                            <span className="text-[10px] text-neutral-500 text-center font-mono">
-                                                {isActive ? "0:00" : "--"}
-                                            </span>
+                                            <span className="text-[10px] text-neutral-500 text-center font-mono">--</span>
 
                                             {/* Key */}
                                             <span className="text-[10px] text-neutral-500 text-center font-mono">
