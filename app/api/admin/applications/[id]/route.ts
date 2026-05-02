@@ -177,12 +177,19 @@ export async function PATCH(
     // Send email notification based on decision
     const applicantEmail = application.email || application.user?.email;
     const artistName = application.artistName || application.user?.name || "Artist";
+    console.log(`[Email] Status: ${status}, Email: ${applicantEmail}, Artist: ${artistName}`);
     if (applicantEmail) {
       if (status === "APPROVED") {
-        sendApprovalNotification(applicantEmail, artistName).catch(e => console.error("Failed to send approval email:", e));
+        sendApprovalNotification(applicantEmail, artistName)
+          .then(r => console.log("[Email] Approval result:", JSON.stringify(r)))
+          .catch(e => console.error("Failed to send approval email:", e));
       } else if (status === "REJECTED") {
-        sendRejectionNotification(applicantEmail, artistName).catch(e => console.error("Failed to send rejection email:", e));
+        sendRejectionNotification(applicantEmail, artistName)
+          .then(r => console.log("[Email] Rejection result:", JSON.stringify(r)))
+          .catch(e => console.error("Failed to send rejection email:", e));
       }
+    } else {
+      console.error("[Email] No applicant email found for application:", id);
     }
 
     return NextResponse.json(
